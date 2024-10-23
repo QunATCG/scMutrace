@@ -101,4 +101,4 @@ echo ""
 echo ""
 
 # main steps
-python -u ${scMutrace_src_dir}/src/3_runStep0_noisy.py -v ${vcfpath} -s ${id} -c ${cellbarcode} -l ${binsize} -L ${clustersize} -d ${minsequencingdepth} -D ${minaltdpsize} -n ${mincellnumber} -N ${minaltcellnumber} -B ${lowBaseCutoff} -o ${outdir}
+python -u ${scMutrace_src_dir}/src/3_runStep0_noisy.py --vcfpath ${vcfpath} --id ${id} --barcode ${cellbarcode} --binsize ${binsize} --clustersize ${clustersize} --dpsize ${minsequencingdepth} --altdpsize ${minaltdpsize} --cellsize ${mincellnumber} --altcellsize ${minaltcellnumber} --lowBaseCutoff ${lowBaseCutoff} --outdir ${outdir}
