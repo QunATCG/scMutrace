@@ -1,0 +1,57 @@
+## Installation
+
+## Parameter Index
+```shell
+    -a  
+    -A
+    -b  [bam] bam file path
+    -B  [lowBaseCutoff] cutoff of low base quality (default 20)
+    -c  [barcode] cell barcode path
+    -C
+    -d  [minsequencingdepth] min sequecing depth
+    -D  [min altdpsize] min alternative bases depth
+    -e  [backp] background mutant cells threshold used to filter SNPs[0.03-0.06, default: 0.05]
+    -E  [errorp] background error threshold used to filter SNPs[default: 0.006]
+    -f  [ref] reference file path
+    -F
+    -g  [contig] contig information, tab separated format for each line: Chr start end
+    -G
+    -h  [help] display this help message
+    -H
+    -i  [includeitems] files to be included, tab seperated format: path id
+    -I
+    -j
+    -J
+    -k  [iteration] number of iterations
+    -K
+    -l  [binsize]
+    -L  [clustersize]
+    -m  [maxmismatch] number max mismatch number
+    -M
+    -n  [mincellnumber] min cell number
+    -N  [minaltcellnumber] min alteration cell number
+    -o  [outdir] output directory
+    -O
+    -p  [nprocs] number of processes (default: 1)
+    -P
+    -q  [minbq] min base quality
+    -Q  [minmq] min mapping quality
+    -r  [removeitems] files to be excluded, tab seperated format: path id
+    -R
+    -s  [id] sample id
+    -S
+    -t  [ncut] number of reads bases will be trimmed (default: 10)
+    -T
+    -u
+    -U
+    -v
+    -V  [vcf directory] vicf file directory to filter SNPs
+    -W
+    -w
+    -x
+    -X
+    -y
+    -Y
+    -z
+    -Z
+```
