@@ -16,7 +16,7 @@
     -F
     -g  [contig] contig information, tab separated format for each line: Chr start end
     -G
-    -h  [help] display this help message
+    -h  [help] display help message
     -H
     -i  [includeitems] files to be included, tab seperated format: path id
     -I
