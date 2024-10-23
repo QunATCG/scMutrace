@@ -13,7 +13,7 @@ helpFunction(){
     echo "Filter noisy sites"
     echo ""
     echo "Usage:"
-    echo "$0 -v VCFDIR[str] -s SAMPLEID[str] -p nprocs[int] -r excludeitems[str] -i includeitems[str] -o OUTPUT[str]"
+    echo "$0 -v VCFDIR[str] -s SAMPLEID[str] -c CELLBARCODEFILE[str] -l BINSIZE[int] -L CLUSTERSIZE[int] -d MINDP[int] -D MINALTDP[int] -n MINCELLNUM[int] -N MINALTCELLNUM[int] -B LOWBQ[int] -o OUTPUT[str]"
     echo ""
     echo "Options:"
     echo -e "\t -v \t[vcf path] vcf path"
@@ -32,3 +32,73 @@ helpFunction(){
     exit 1
 }
 
+# check if no arguments are passed
+if [ $# -eq 0 ]; then
+    helpFunction
+fi
+
+# default parameters
+binsize=10
+clustersize=3
+minsequencingdepth=5
+minaltdpsize=2
+mincellnumber=3
+minaltcellnumber=2
+lowBaseCutoff=20
+
+# get parameters
+while getopts "v:o:s:c:l:L:d:D:n:N:B:h" opt
+do
+   case "$opt" in
+        v ) vcfpath="$OPTARG" ;;
+        o ) outdir="$OPTARG" ;;
+        s ) id="$OPTARG" ;;
+        c ) cellbarcode="$OPTARG" ;;
+        l ) binsize="$OPTARG" ;;
+        L ) clustersize="$OPTARG" ;;
+        d ) minsequencingdepth="$OPTARG" ;;
+        D ) minaltdpsize="$OPTARG" ;;
+        n ) mincellnumber="$OPTARG" ;;
+        N ) minaltcellnumber="$OPTARG" ;;
+        B ) lowBaseCutoff="$OPTARG" ;;
+        h ) helpFunction ;;
+        ? ) helpFunction ;; # Print helpFunction in case of invalid option
+   esac
+done
+
+# Print helpFunction in case parameters are empty
+if [ -z "$vcfpath" ] || [ -z "$outdir" ] || [ -z "$cellbarcode" ] || [ -z "$id" ]
+then
+    echo -e "\033[32m###################################################\033[0m"
+    echo -e "\033[32m                  Log info                         \033[0m"
+    echo -e "\033[32m###################################################\033[0m"
+    echo "Some or all of the parameters are empty"
+    [ -z "$vcfpath" ] && echo "BAMFILE: ${vcfpath}"
+    [ -z "$cellbarcode" ] && echo "REF: ${cellbarcode}"
+    [ -z "$id" ] && echo "SAMPLEID: ${id}"
+    [ -z "$outdir" ] && echo "OUTPUT: ${outdir}"
+    helpFunction
+fi
+
+# echo all parameters
+echo -e "\033[32m###################################################\033[0m"
+echo -e "\033[32m             scMutrace Version 1.0                 \033[0m"
+echo -e "\033[32m            Step4 filter noisy sites               \033[0m"
+echo -e "\033[32m###################################################\033[0m"
+echo -e "\033[32mYour input parameters:\033[0m"
+echo "VCFDIR: ${vcfpath}"
+echo "SAMPLEID: ${id}"
+echo "CELLBARCODEFILE: ${cellbarcode}"
+echo "BINSIZE: ${binsize}"
+echo "CLUSTERSIZE: ${clustersize}"
+echo "MINDP: ${minsequencingdepth}"
+echo "MINALTDP: ${minaltdpsize}"
+echo "MINCELLNUM: ${mincellnumber}"
+echo "MINALTCELLNUM: ${minaltcellnumber}"
+echo "LOWBQ: ${lowBaseCutoff}"
+echo "OUTPUT: ${outdir}"
+echo ""
+echo ""
+
+# main steps
+python -u ${scMutrace_src_dir}/src/3_runStep0_noisy.py -v ${vcfpath} -s ${id} -c ${cellbarcode} -l ${binsize} -L ${clustersize} -d ${minsequencingdepth} -D ${minaltdpsize} -n ${mincellnumber} -N ${minaltcellnumber} -B ${lowBaseCutoff} -o ${outdir}
