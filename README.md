@@ -24,8 +24,8 @@
     -J
     -k  [iteration] number of iterations
     -K
-    -l  [binsize]
-    -L  [clustersize]
+    -l  [binsize] base number between two snps
+    -L  [clustersize] number of snps in one cluster
     -m  [maxmismatch] number max mismatch number
     -M
     -n  [mincellnumber] min cell number
