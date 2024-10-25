@@ -8,7 +8,7 @@
 - [Parameter Index](#parameter-index)
 - [Models](#models)
 ## Dependencies
-**scMutrace** is a single-cell mutation tracing tool designed to identify and analyze mutations from single-cell sequencing data. It offers an efficient, one-step process for background filtering, SNP extraction, noise filtering, and population structure analysis. It can be run in [Linux](https://www.linux.org/), [MacOS](https://www.apple.com/macos/) and Windows Subsystem for Linux ([WSL](https://learn.microsoft.com/en-us/windows/wsl/install)) platform.
+**scMutrace** is a single-cell mutation tracing tool designed to identify and analyze mutations from single-cell sequencing data. It offers an efficient, one-step process for background filtering, SNP extraction, noise filtering, and population structure analysis. It can be run in [Linux](https://www.linux.org/), [MacOS](https://www.apple.com/macos/) and Windows Subsystem for Linux ([WSL](https://learn.microsoft.com/en-us/windows/wsl/install)) platforms.
 ### Requirements
 - Java 8 (https://www.java.com/en/download/manual.jsp)
 - Python 3 (https://www.python.org/downloads/)
@@ -44,7 +44,7 @@
         - mv
         - while
         - if
-- Databases
+- Databases (https://github.com/QunATCG/scMutrace/tree/main/resources)
 
 ### Installation
 **Anaconda** simplifies scientific computing in Python by bundling essential packages like NumPy, SciPy, Pandas, Matplotlib, and Jupyter. It manages dependencies and environments, making setup easier by eliminating the need to install each package individually.
