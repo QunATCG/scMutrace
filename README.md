@@ -44,8 +44,8 @@
     -T
     -u
     -U
-    -v
-    -V  [vcf directory] vicf file directory to filter SNPs
+    -v  [vcf path] vcf file full path
+    -V  [vcf directory] vcf file directory to filter SNPs
     -W
     -w
     -x
