@@ -1,8 +1,7 @@
 #!/bin/bash
 scMutrace_src_dir=$(cd `dirname $0`; pwd)
 
-# Help function
-helpFunction(){
+helpFunction() {
     echo ""
     echo -e "\033[32m###################################################\033[0m"
     echo -e "\033[32m             scMutrace Version 1.0                 \033[0m"
@@ -10,41 +9,41 @@ helpFunction(){
     echo -e "\033[32m###################################################\033[0m"
     echo ""
     echo "Description:"
-    echo "scMutrace OneStep Process"
+    echo "scMutrace is a single-cell mutation tracing tool designed to identify and analyze mutations from"
+    echo "single-cell sequencing data. It offers an efficient, one-step process for background filtering,"
+    echo "SNP extraction, noise filtering, and population structure analysis." 
     echo ""
     echo "Usage:"
-    echo "$0 -b BAMFILE[str] -f REF[str] -c CELLBARCODE[str] -t ncut[int] -s SAMPLEID[str] -p nprocs[int] -O OUTPUT[str]"
+    echo "$0 -b BAMFILE[str] -f REF[str] -c CELLBARCODE[str] -s SAMPLEID[str] -g CONTIG[str] -O OUTPUT[str]"
     echo ""
     echo "Options:"
-    # step0_excludeBGCell.sh
-    echo -e "\t -b \t[bam] bam file path to exclude background cells"
-    echo -e "\t -f \t[ref] reference file path"
-    echo -e "\t -c \t[barcode] cell barcode to be included"
-    echo -e "\t -t \t[ncut] number of reads bases will be cut (default: 10)"
-    echo -e "\t -s \t[id] sample id"
-    echo -e "\t -p \t[nprocs] number of processes (default: 1)"
-    echo -e "\t -O \t[outdir] output directory"
-    # step1_extractSNP.sh
-    echo -e "\t -g \t[contig] contig information, tab separated format for each line: Chr\tstart\tend"
-    echo -e "\t -q \t[minbq] min base quality"
-    echo -e "\t -Q \t[minmq] min mapping quality"
-    echo -e "\t -n \t[mincellnumber] min cell number"
-    echo -e "\t -N \t[minaltcellnumber] min alteration cell number"
-    echo -e "\t -m \t[maxmismatch] number max mismatch number"
-    echo -e "\t -d \t[minsequencingdepth] min sequecing depth"
-    # step2_filterSNPModel.sh
-    echo -e "\t -k \t[iteration] number of iterations"
-    echo -e "\t -e \t[backp] background mutant cells threshold used to filter SNPs[0.03-0.06, default: 0.05]"
-    echo -e "\t -E \t[errorp] background error threshold used to filter SNPs[default: 0.006]"
-    # step3_filterPopulation.sh
-    echo -e "\t -r \t[removeitems] files to be excluded, tab seperated format: path\tid"
-    echo -e "\t -i \t[includeitems] files to be included, tab seperated format: path\tid"
-    # step4_filterNoisy.sh
-    echo -e "\t -l \t[binsize] base number between two snps (MultiAlleles)"
-    echo -e "\t -L \t[clustersize] number of snps in one cluster"
-    echo -e "\t -D \t[min altdpsize] min alternative bases depth"
-    echo -e "\t -B \t[lowBaseCutoff] cutoff of low base quality (default 20)"
-    echo -e "\t -h \t[help] display this help message"
+    echo "Required Arguments:"
+    echo -e "\t -b \t[bam:str] Path to the BAM file to exclude background cells."
+    echo -e "\t -f \t[ref:str] Path to the reference file."
+    echo -e "\t -c \t[barcode:str] Cell barcode file path (tab-separated with header: Barcode CellType). If CellType is not provided, all cells will be defined as 'CellType1'."
+    echo -e "\t -s \t[id:str] Sample ID."
+    echo -e "\t -O \t[outdir:str] Output directory."
+    echo -e "\t -g \t[contig:str] Contig information in tab-separated format: Chr\tstart\tend."
+    echo "Advanced Arguments:"
+    echo -e "\t -r \t[removeitems:str] Database files to be excluded (tab-separated format: path id)."
+    echo -e "\t -i \t[includeitems:str] Database files to be included (tab-separated format: path id)."
+    echo "Optional Arguments:"
+    echo -e "\t -t \t[ncut:int] Number of read bases to be trimed cut (default: 10)."
+    echo -e "\t -p \t[nprocs:int] Number of processes to use (default: 1)."
+    echo -e "\t -q \t[minbq:int] Minimum base quality (default: 20)."
+    echo -e "\t -Q \t[minmq:int] Minimum mapping quality (default: 255). Check your mapping software's quality score range (e.g., STAR, BWA, HISAT2)."
+    echo -e "\t -n \t[mincellnumber:int] Minimum cell number (default: 3)."
+    echo -e "\t -N \t[minaltcellnumber:int] Minimum altered cell number (default: 2)."
+    echo -e "\t -m \t[maxmismatch:int] Maximum mismatch number (default: 4)."
+    echo -e "\t -d \t[minsequencingdepth:int] Minimum sequencing depth (default: 3)."
+    echo -e "\t -D \t[minaltdepth:int] Minimum alternative base depth (default: 2)."
+    echo -e "\t -k \t[iteration:int] Number of iterations (default: 1000)."
+    echo -e "\t -e \t[backp:float] Background mutant cells threshold to filter SNPs (0.03-0.06, default: 0.05)."
+    echo -e "\t -E \t[errorp:float] Background error threshold to filter SNPs (0.001-0.006, default: 0.006)."
+    echo -e "\t -l \t[binsize:int] Base number between two SNPs (default: 20)."
+    echo -e "\t -L \t[clustersize:int] Number of SNPs in one cluster (default: 3)."
+    echo -e "\t -B \t[lowBaseCutoff:int] Cutoff for low base quality (default: 20)."
+    echo -e "\t -h \t[help] Display this help message."
     exit 1
 }
 
@@ -64,6 +63,8 @@ errorp=0.006
 binsize=20
 clustersize=3
 lowBaseCutoff=20
+removeitem="NotAvailable"
+includeitem="NotAvailable"
 
 # Check if no arguments are passed
 if [ $# -eq 0 ]; then
@@ -72,39 +73,34 @@ if [ $# -eq 0 ]; then
 fi
 
 # get parameters
-while getopts "b:f:c:t:s:p:O:g:q:Q:n:N:m:d:V:k:e:E:r:i:v:l:L:D:B:h" opt
+while getopts "b:f:c:s:O:g:r:i:t:p:q:Q:n:N:m:d:D:k:e:E:l:L:B:h" opt
 do
     case "$opt" in
         b ) bam="$OPTARG" ;;
         f ) ref="$OPTARG" ;;
         c ) barcode="$OPTARG" ;;
-        t ) ncut="$OPTARG" ;;
         s ) id="$OPTARG" ;;
-        p ) nprocs="$OPTARG" ;;
         O ) outdir="$OPTARG" ;;
-
         g ) contig="$OPTARG" ;;
+        r ) removeitem="$OPTARG" ;;
+        i ) includeitem="$OPTARG" ;;
+        t ) ncut="$OPTARG" ;;
+        p ) nprocs="$OPTARG" ;;
         q ) minbq="$OPTARG" ;;
         Q ) minmq="$OPTARG" ;;
         n ) mincellnumber="$OPTARG" ;;
         N ) minaltcellnumber="$OPTARG" ;;
         m ) maxmismatch="$OPTARG" ;;
         d ) minsequencingdepth="$OPTARG" ;;
-
-
-        V ) casevcfdir="$OPTARG" ;;
+        D ) minaltdepth="$OPTARG" ;;
         k ) iteration="$OPTARG" ;;
         e ) backp="$OPTARG" ;;
         E ) errorp="$OPTARG" ;;
-
-        r ) removeitem="$OPTARG" ;;
-        i ) includeitem="$OPTARG" ;;
         l ) binsize="$OPTARG" ;;
         L ) clustersize="$OPTARG" ;;
-        D ) minaltdepth="$OPTARG" ;;
         B ) lowBaseCutoff="$OPTARG" ;;
         h ) helpFunction ;;
-        ? ) helpFunction ;; # Print helpFunction in case of invalid option
+        ? ) helpFunction ;;
     esac
 done
 
