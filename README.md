@@ -1,9 +1,8 @@
 ## Installation
 ### Requirements
-```shell
-Java 8 (https://www.java.com/en/download/manual.jsp)
-Python 3 (https://www.python.org/downloads/)
-    > Modules
+- Java 8 (https://www.java.com/en/download/manual.jsp)
+- Python 3 (https://www.python.org/downloads/)
+    - Modules
         - math (https://docs.python.org/3/library/math.html)
         - pysam 0.21+ (https://pysam.readthedocs.io/en/latest/index.html)
         - linecache (https://docs.python.org/3/library/linecache.html)
@@ -19,8 +18,8 @@ Python 3 (https://www.python.org/downloads/)
         - pandas (https://pypi.org/project/pandas/)
         - multiprocessing (https://pypi.org/project/multiprocessing/)
         - re (https://docs.python.org/3/library/re.html)
-Unix Shell (https://github.com/QunATCG/shell-scripting-tutorial)
-    > Common commands
+- Unix Shell (https://github.com/QunATCG/shell-scripting-tutorial)
+    - Common commands
         - cat
         - mkdir
         - echo
@@ -35,7 +34,7 @@ Unix Shell (https://github.com/QunATCG/shell-scripting-tutorial)
         - mv
         - while
         - if
-```
+
 ### Installation
 ```shell
 conda create -n scMutrace
