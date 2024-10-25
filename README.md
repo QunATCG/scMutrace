@@ -30,8 +30,8 @@
     -M
     -n  [mincellnumber] min cell number
     -N  [minaltcellnumber] min alteration cell number
-    -o  [outdir] output directory
-    -O
+    -o  [outputpath] output path
+    -O  [outdir] output directory
     -p  [nprocs] number of processes (default: 1)
     -P
     -q  [minbq] min base quality

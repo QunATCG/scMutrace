@@ -13,11 +13,11 @@ helpFunction(){
     echo "Filter noisy sites"
     echo ""
     echo "Usage:"
-    echo "$0 -v VCFDIR[str] -s SAMPLEID[str] -c CELLBARCODEFILE[str] -l BINSIZE[int] -L CLUSTERSIZE[int] -d MINDP[int] -D MINALTDP[int] -n MINCELLNUM[int] -N MINALTCELLNUM[int] -B LOWBQ[int] -o OUTPUT[str]"
+    echo "$0 -v VCFDIR[str] -s SAMPLEID[str] -c CELLBARCODEFILE[str] -l BINSIZE[int] -L CLUSTERSIZE[int] -d MINDP[int] -D MINALTDP[int] -n MINCELLNUM[int] -N MINALTCELLNUM[int] -B LOWBQ[int] -O OUTPUT[str]"
     echo ""
     echo "Options:"
     echo -e "\t -v \t[vcf path] vcf path"
-    echo -e "\t -o \t[outdir] output directory"
+    echo -e "\t -O \t[outdir] output directory"
     echo -e "\t -s \t[id] sample ID"
     echo -e "\t -c \t[barcode]  barcode file [tab separated file with header: Barcode CellType]"
     echo -e "\t -l \t[binsize] base number between two snps (MultiAlleles)"
@@ -47,11 +47,11 @@ minaltcellnumber=2
 lowBaseCutoff=20
 
 # get parameters
-while getopts "v:o:s:c:l:L:d:D:n:N:B:h" opt
+while getopts "v:O:s:c:l:L:d:D:n:N:B:h" opt
 do
    case "$opt" in
         v ) vcfpath="$OPTARG" ;;
-        o ) outdir="$OPTARG" ;;
+        O ) outdir="$OPTARG" ;;
         s ) id="$OPTARG" ;;
         c ) cellbarcode="$OPTARG" ;;
         l ) binsize="$OPTARG" ;;

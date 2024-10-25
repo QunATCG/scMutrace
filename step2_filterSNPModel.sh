@@ -13,7 +13,7 @@ helpFunction(){
     echo "Filter SNPs based on scMutrace Model"
     echo ""
     echo "Usage:"
-    echo "$0 -V VCFDIR[str] -s SAMPLEID[str] -p nprocs[int] -k iteration[int] -e backp[float] -E errorp[float] -o OUTPUT[str]"
+    echo "$0 -V VCFDIR[str] -s SAMPLEID[str] -p nprocs[int] -k iteration[int] -e backp[float] -E errorp[float] -O OUTPUT[str]"
     echo ""
     echo "Options:"
     echo -e "\t -V \t[vcf] vicf file directory to filter SNPs"
@@ -22,7 +22,7 @@ helpFunction(){
     echo -e "\t -k \t[iteration] number of iterations"
     echo -e "\t -e \t[backp] background mutant cells threshold used to filter SNPs[0.03-0.06, default: 0.05]"
     echo -e "\t -E \t[errorp] background error threshold used to filter SNPs[default: 0.006]"
-    echo -e "\t -o \t[outdir] output directory"
+    echo -e "\t -O \t[outdir] output directory"
     echo -e "\t -h \t[help] display this help message"
     echo -e "\t Author: QunLi (liqun95@163.com)"
     exit 1
@@ -41,7 +41,7 @@ errorp=0.006
 
 
 # get parameters
-while getopts "V:s:p:k:e:E:o:h" opt
+while getopts "V:s:p:k:e:E:O:h" opt
 do
    case "$opt" in
         V ) vcfdir="$OPTARG" ;;
@@ -50,7 +50,7 @@ do
         k ) iteration="$OPTARG" ;;
         e ) backp="$OPTARG" ;;
         E ) errorp="$OPTARG" ;;
-        o ) outdir="$OPTARG" ;;
+        O ) outdir="$OPTARG" ;;
         h ) helpFunction ;;
         ? ) helpFunction ;; # Print helpFunction in case of invalid option
    esac

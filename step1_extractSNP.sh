@@ -13,7 +13,7 @@ helpFunction(){
     echo "Extract SNPs from bam file"
     echo ""
     echo "Usage:"
-    echo "$0 -b BAMFILE[str] -f REF[str] -g CONTIG[str] -s SAMPLEID[str] -p nprocs[int] -q minbq[int] -Q minmq[int] -n mincellnumber[int] -N minaltcellnumber[int] -m minmismatch[int] -d minsequencingdepth[int] -o OUTPUT[str]"
+    echo "$0 -b BAMFILE[str] -f REF[str] -g CONTIG[str] -s SAMPLEID[str] -p nprocs[int] -q minbq[int] -Q minmq[int] -n mincellnumber[int] -N minaltcellnumber[int] -m minmismatch[int] -d minsequencingdepth[int] -O OUTPUT[str]"
     echo ""
     echo "Options:"
     echo -e "\t -b \t[bam] bam file path to extract SNPs"
@@ -27,7 +27,7 @@ helpFunction(){
     echo -e "\t -N \t[minaltcellnumber] min alteration cell number"
     echo -e "\t -m \t[maxmismatch] number max mismatch number"
     echo -e "\t -d \t[minsequencingdepth] min sequecing depth"
-    echo -e "\t -o \t[outdir] output directory"
+    echo -e "\t -O \t[outdir] output directory"
     echo -e "\t -h \t[help] display this help message"
     echo -e "\t Author: QunLi (liqun95@163.com)"
     exit 1
@@ -48,7 +48,7 @@ maxmismatch=4
 minsequencingdepth=5
 
 # get parameters
-while getopts "b:f:g:s:p:q:Q:n:N:m:d:o:h" opt
+while getopts "b:f:g:s:p:q:Q:n:N:m:d:O:h" opt
 do
    case "$opt" in
         b ) bam="$OPTARG" ;;
@@ -62,7 +62,7 @@ do
         N ) minaltcellnumber="$OPTARG" ;;
         m ) maxmismatch="$OPTARG" ;;
         d ) minsequencingdepth="$OPTARG" ;;
-        o ) outdir="$OPTARG" ;;
+        O ) outdir="$OPTARG" ;;
         h ) helpFunction ;;
         ? ) helpFunction ;; # Print helpFunction in case of invalid option
    esac

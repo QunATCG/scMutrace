@@ -15,7 +15,7 @@ helpFunction(){
     echo "Exclude background cells and trim sequencing reads"
     echo ""
     echo "Usage:"
-    echo "$0 -b BAMFILE[str] -f REF[str] -c CELLBARCODE[str] -t ncut[int] -s SAMPLEID[str] -p nprocs[int] -o OUTPUT[str]"
+    echo "$0 -b BAMFILE[str] -f REF[str] -c CELLBARCODE[str] -t ncut[int] -s SAMPLEID[str] -p nprocs[int] -O OUTPUT[str]"
     echo ""
     echo "Options:"
     echo -e "\t -b \t[bam] bam file path to exclude background cells"
@@ -24,7 +24,7 @@ helpFunction(){
     echo -e "\t -t \t[ncut] number of reads bases will be cut (default: 10)"
     echo -e "\t -s \t[id] sample id"
     echo -e "\t -p \t[nprocs] number of processes (default: 1)"
-    echo -e "\t -o \t[outdir] output directory"
+    echo -e "\t -O \t[outdir] output directory"
     echo -e "\t -h \t[help] display this help message"
     echo -e "\t Author: QunLi (liqun95@163.com) "
     exit 1
@@ -41,7 +41,7 @@ if [ $# -eq 0 ]; then
 fi
 
 # get parameters
-while getopts "b:f:c:t:s:p:o:h" opt
+while getopts "b:f:c:t:s:p:O:h" opt
 do
    case "$opt" in
         b ) bam="$OPTARG" ;;
@@ -50,7 +50,7 @@ do
         t ) ncut="$OPTARG" ;;
         s ) id="$OPTARG" ;;
         p ) nprocs="$OPTARG" ;;
-        o ) outdir="$OPTARG" ;;
+        O ) outdir="$OPTARG" ;;
         h ) helpFunction ;;
         ? ) helpFunction ;; # Print helpFunction in case of invalid option
    esac

@@ -13,10 +13,10 @@ helpFunction(){
     echo "Filter SNPs based on public databases"
     echo ""
     echo "Usage:"
-    echo "$0 -V VCFDIR[str] -s SAMPLEID[str] -p nprocs[int] -r excludeitems[str] -i includeitems[str] -o OUTPUT[str]"
+    echo "$0 -V VCFDIR[str] -s SAMPLEID[str] -p nprocs[int] -r excludeitems[str] -i includeitems[str] -O OUTPUT[str]"
     echo ""
     echo "Options:"
-    echo -e "\t -o \t[outdir] output directory"
+    echo -e "\t -O \t[outdir] output directory"
     echo -e "\t -V \t[casevcfdir] case vcf directory"
     echo -e "\t -s \t[id] sample ID"
     echo -e "\t -r \t[removeitems] files to be excluded, tab seperated format: path\tid"
@@ -38,10 +38,10 @@ removeitem="NotAvailable"
 includeitem="NotAvailable"
 
 # get parameters
-while getopts "o:V:s:r:i:p:h" opt
+while getopts "O:V:s:r:i:p:h" opt
 do
    case "$opt" in
-        o ) outdir="$OPTARG" ;;
+        O ) outdir="$OPTARG" ;;
         V ) casevcfdir="$OPTARG" ;;
         s ) id="$OPTARG" ;;
         r ) removeitem="$OPTARG" ;;
