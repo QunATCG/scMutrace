@@ -151,6 +151,29 @@ echo "lowBaseCutoff: ${lowBaseCutoff}"
 echo ""
 echo ""
 
+# Check the header of the barcode file
+header=$(head -n 1 "${barcode}")
+first_column=$(echo "${header}" | awk '{print $1}')
+second_column=$(echo "${header}" | awk '{print $2}')
+
+# Validate and correct the first column name if needed
+if [ "${first_column}" != "Barcode" ]; then
+    echo "The first column header is not 'Barcode'. Found '${first_column}' instead. Adding 'Barcode' as the header."
+    sed -i '1s/^/Barcode\tCellType\n/' "${barcode}"
+    # Refresh header variables after update
+    header=$(head -n 1 "${barcode}")
+    first_column=$(echo "${header}" | awk '{print $1}')
+    second_column=$(echo "${header}" | awk '{print $2}')
+fi
+
+# Validate and correct the second column name if needed
+if [ "${second_column}" != "CellType" ]; then
+    echo "The second column header is not 'CellType'. Found '${second_column}' instead. Adding 'CellType' as the header and setting all values to 'CellType1'."
+    awk 'BEGIN{OFS="\t"} NR==1{$2="CellType"} NR>1{$2="CellType1"}1' "${barcode}" > "${barcode}.tmp" && mv "${barcode}.tmp" "${barcode}"
+fi
+
+echo "Barcode file header and format are correct."
+
 # main steps
 # step0_excludeBGCell.sh
 echo "making the output directory.."${id}
