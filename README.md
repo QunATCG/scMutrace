@@ -1,4 +1,56 @@
 ## Installation
+### Requirements
+```shell
+Java 8 (https://www.java.com/en/download/manual.jsp)
+Python 3 (https://www.python.org/downloads/)
+    > Modules
+        - math (https://docs.python.org/3/library/math.html)
+        - pysam 0.21+ (https://pysam.readthedocs.io/en/latest/index.html)
+        - linecache (https://docs.python.org/3/library/linecache.html)
+        - subprocess (https://docs.python.org/3/library/subprocess.html)
+        - collections (https://docs.python.org/3/library/collections.html)
+        - numpy (https://pypi.org/project/numpy/)
+        - scipy (https://pypi.org/project/scipy/)
+        - random (https://docs.python.org/3/library/random.html)
+        - itertools (https://docs.python.org/3/library/itertools.html)
+        - statsmodels (https://pypi.org/project/statsmodels/)
+        - argparse (https://pypi.org/project/argparse/)
+        - timeit (https://docs.python.org/3/library/timeit.html)
+        - pandas (https://pypi.org/project/pandas/)
+        - multiprocessing (https://pypi.org/project/multiprocessing/)
+        - re (https://docs.python.org/3/library/re.html)
+Unix Shell (https://github.com/QunATCG/shell-scripting-tutorial)
+    > Common commands
+        - cat
+        - mkdir
+        - echo
+        - head
+        - sed
+        - awk
+        - grep
+        - cd
+        - dirname
+        - pwd
+        - rm
+        - mv
+        - while
+        - if
+```
+### Installation
+```shell
+conda create -n scMutRNA
+conda activate scMutRNA
+conda install -c bioconda pysam=0.21.0
+conda install -c conda-forge numpy
+conda install -c conda-forge scipy
+conda install -c bioconda bedtools
+conda install -c conda-forge statsmodels
+conda install -c conda-forge biopython
+conda install -c conda-forge argparse
+conda install -c conda-forge scikit-allel
+conda install etetoolkit ete3
+conda clean -a
+```
 
 ## Help information
 ```shell
