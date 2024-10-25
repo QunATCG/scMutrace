@@ -21,6 +21,7 @@ helpFunction() {
     echo -e "\t -b \t[bam:str] Path to the BAM file to exclude background cells."
     echo -e "\t -f \t[ref:str] Path to the reference file."
     echo -e "\t -c \t[barcode:str] Cell barcode file path (tab-separated with header: Barcode CellType). If CellType is not provided, all cells will be defined as 'CellType1'."
+    echo -e "\t -C \t[barcodetag:str] Cell barcode tag in the BAM file (default: CB)."
     echo -e "\t -s \t[id:str] Sample ID."
     echo -e "\t -O \t[outdir:str] Output directory."
     echo -e "\t -g \t[contig:str] Contig information in tab-separated format: Chr\tstart\tend."
@@ -65,6 +66,7 @@ clustersize=3
 lowBaseCutoff=20
 removeitem="NotAvailable"
 includeitem="NotAvailable"
+cellbarcodetag="CB"
 
 # Check if no arguments are passed
 if [ $# -eq 0 ]; then
@@ -73,12 +75,13 @@ if [ $# -eq 0 ]; then
 fi
 
 # get parameters
-while getopts "b:f:c:s:O:g:r:i:t:p:q:Q:n:N:m:d:D:k:e:E:l:L:B:h" opt
+while getopts "b:f:c:C:s:O:g:r:i:t:p:q:Q:n:N:m:d:D:k:e:E:l:L:B:h" opt
 do
     case "$opt" in
         b ) bam="$OPTARG" ;;
         f ) ref="$OPTARG" ;;
         c ) barcode="$OPTARG" ;;
+        C ) cellbarcodetag="$OPTARG" ;;
         s ) id="$OPTARG" ;;
         O ) outdir="$OPTARG" ;;
         g ) contig="$OPTARG" ;;
@@ -128,6 +131,7 @@ echo -e "\033[32mYour input parameters:\033[0m"
 echo "BAMFILE: ${bam}"
 echo "REF: ${ref}"
 echo "CELLBARCODE: ${barcode}"
+echo "CELLBARCODETAG: ${cellbarcodetag}"
 echo "ncut: ${ncut}"
 echo "SAMPLEID: ${id}"
 echo "nprocs: ${nprocs}"
@@ -159,12 +163,18 @@ second_column=$(echo "${header}" | awk '{print $2}')
 # Validate and correct the first column name if needed
 if [ "${first_column}" != "Barcode" ]; then
     echo "The first column header is not 'Barcode'. Found '${first_column}' instead. Adding 'Barcode' as the header."
-    sed -i '1s/^/Barcode\tCellType\n/' "${barcode}"
+    # Use cross-platform sed command for in-place edit
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' '1s/^/Barcode\tCellType\n/' "${barcode}"  # macOS requires '' for in-place editing
+    else
+        sed -i '1s/^/Barcode\tCellType\n/' "${barcode}"     # Linux and WSL
+    fi
     # Refresh header variables after update
     header=$(head -n 1 "${barcode}")
     first_column=$(echo "${header}" | awk '{print $1}')
     second_column=$(echo "${header}" | awk '{print $2}')
 fi
+
 
 # Validate and correct the second column name if needed
 if [ "${second_column}" != "CellType" ]; then
@@ -178,20 +188,20 @@ echo "Barcode file header and format are correct."
 # step0_excludeBGCell.sh
 echo "making the output directory.."${id}
 echo "running step0_excludeBGCell.sh"
-bash ${scMutrace_src_dir}/step0_excludeBGCell.sh -b ${bam} -f ${ref} -c ${barcode} -t ${ncut} -s ${id} -p ${nprocs} -O ${outdir}
+${scMutrace_src_dir}/step0_excludeBGCell.sh -b ${bam} -f ${ref} -c ${barcode} -C ${cellbarcodetag} -t ${ncut} -s ${id} -p ${nprocs} -O ${outdir}
 
 # step1_extractSNP.sh
 echo "running step1_extractSNP.sh"
-bash ${scMutrace_src_dir}/step1_extractSNP.sh -b ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam -f ${ref} -g ${contig} -s ${id} -p ${nprocs} -q ${minbq} -Q ${minmq} -n ${mincellnumber} -N ${minaltcellnumber} -m ${maxmismatch} -d ${minsequencingdepth} -O ${outdir}
+${scMutrace_src_dir}/step1_extractSNP.sh -b ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam -f ${ref} -C ${cellbarcodetag} -g ${contig} -s ${id} -p ${nprocs} -q ${minbq} -Q ${minmq} -n ${mincellnumber} -N ${minaltcellnumber} -m ${maxmismatch} -d ${minsequencingdepth} -O ${outdir}
 
 # step2_filterSNPModel.sh
 echo "running step2_filterSNPModel.sh"
-bash ${scMutrace_src_dir}/step2_filterSNPModel.sh -V ${outdir}/VCFPOS/ -s ${id} -p ${nprocs} -k ${iteration} -e ${backp} -E ${errorp} -O ${outdir}
+${scMutrace_src_dir}/step2_filterSNPModel.sh -V ${outdir}/VCFPOS/ -s ${id} -p ${nprocs} -k ${iteration} -e ${backp} -E ${errorp} -O ${outdir}
 
 # step3_filterPopulation.sh
 echo "running step3_filterPopulation.sh"
-bash ${scMutrace_src_dir}/step3_filterPopulation.sh -O ${outdir} -V ${outdir}/filterVCF/ -s ${id} -r ${removeitem} -i ${includeitem} -p ${nprocs}
+${scMutrace_src_dir}/step3_filterPopulation.sh -O ${outdir} -V ${outdir}/filterVCF/ -s ${id} -r ${removeitem} -i ${includeitem} -p ${nprocs}
 
 # step4_filterNoisy.sh
 echo "running step4_filterNoisy.sh"
-bash ${scMutrace_src_dir}/step4_filterNoisy.sh -v ${outdir}/${id}_scmutrace.vcf -s ${id} -c ${barcode} -l ${binsize} -L ${clustersize} -d ${minsequencingdepth} -D ${minaltdpsize} -n ${mincellnumber} -N ${minaltcellnumber} -B ${lowBaseCutoff} -O ${outdir}
+${scMutrace_src_dir}/step4_filterNoisy.sh -v ${outdir}/${id}_scmutrace.vcf -s ${id} -c ${barcode} -l ${binsize} -L ${clustersize} -d ${minsequencingdepth} -D ${minaltdepth} -n ${mincellnumber} -N ${minaltcellnumber} -B ${lowBaseCutoff}  -O ${outdir}/

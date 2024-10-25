@@ -41,6 +41,7 @@ def initialize_parser():
     parser.add_argument('--bam', type=str, help='BAM file to be analysed', required = True)
     parser.add_argument('--ref', type=str, help='Path to reference genome version. *fai must be available in the same directory as the reference genome file', required = True)
     parser.add_argument('--barcode', type=str, help='Barcode path', required = True)
+    parser.add_argument('--barcodetag', type=str, help='Barcode tag', required = True)
     parser.add_argument('--splitCheck', action='store_true', help='A boolean flag')
     parser.add_argument('--id', help='Prefix used to name output file.', required = True)
     parser.add_argument('--ncut', default = 10, help='Number of cut reads bases [Default: 10]',required=False,type = int)
@@ -65,7 +66,7 @@ def generate_config_range(refasta):
     return configDic, chrList
 
 # split bam based on barcode
-def split_bam_basedList(bam_Path, barcodeSubList, ChrList, configValue, subam_path, seqTag, nameOut, ncut):
+def split_bam_basedList(bam_Path, barcodeSubList, ChrList, configValue, subam_path, seqTag, nameOut, ncut, barcodetag):
     bam = pysam.AlignmentFile(bam_Path, 'rb')
     count_num = 0
     chrtmp = str(configValue.split("_")[0])
@@ -82,8 +83,8 @@ def split_bam_basedList(bam_Path, barcodeSubList, ChrList, configValue, subam_pa
         count_num += 1
         if count_num % 500000 == 0:
             print("Processed " + str(count_num) + " reads")
-        if read.has_tag("CB"):
-            cb_read = read.get_tag('CB').split('-')[0]
+        if read.has_tag(barcodetag):
+            cb_read = read.get_tag(barcodetag).split('-')[0]
             chr_read = read.reference_name
             if cb_read in barcodeSubList and chr_read in ChrList:
                 # cut each read's first left and right bases
@@ -113,6 +114,7 @@ def main():
     bam_Path = args.bam
     ref_Path = args.ref
     barcodePath = args.barcode
+    barcodetag = args.barcodetag
     split_check = args.splitCheck
     nameSplitBamTag = args.id
     seqTag = "SMT"
@@ -142,7 +144,7 @@ def main():
             print("Your cores is " + str(COREUSE))
             results = []
             for value in configDic.values():
-                p.apply_async(split_bam_basedList, args = (bam_Path, barcodeListCell, chrList, value, outDirPath, seqTag, nameSplitBamTag, ncut,), error_callback = err_call_back)
+                p.apply_async(split_bam_basedList, args = (bam_Path, barcodeListCell, chrList, value, outDirPath, seqTag, nameSplitBamTag, ncut, barcodetag,), error_callback = err_call_back)
             print('Waiting for all subprocesses done...')
             p.close()
             p.join()
@@ -151,7 +153,7 @@ def main():
             print('All subprocesses done.')
         else:
             for value in configDic.values():
-                split_bam_basedList(bam_Path = bam_Path, barcodeSubList = barcodeListCell, ChrList = chrList, configValue = value, subam_path = outDirPath, seqTag = seqTag, nameOut = nameSplitBamTag, ncut=ncut)
+                split_bam_basedList(bam_Path = bam_Path, barcodeSubList = barcodeListCell, ChrList = chrList, configValue = value, subam_path = outDirPath, seqTag = seqTag, nameOut = nameSplitBamTag, ncut=ncut, barcodetag=barcodetag)
 
 if __name__=='__main__':
     start = timeit.default_timer()

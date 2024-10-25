@@ -215,9 +215,9 @@ def filter_SNP_f1(PathVCFIn, PathVCFOut, PathVCFInBed, excludeFilePath=None, inc
             else:
                 for tmp_id_in, tmp_list_in in in_dic.items():
                     if loc in tmp_list_in:
-                        tag.append("PASS_" + tmp_id_in)
+                        tag.append("In_" + tmp_id_in)
                     else:
-                        tag.append("NonePASS_" + tmp_id_in)
+                        tag.append("Not_in_" + tmp_id_in)
             tagsql = ";".join(tag)
             sql = line.strip() + "\t" + tagsql + "\n"
             VCFout.writelines(sql)

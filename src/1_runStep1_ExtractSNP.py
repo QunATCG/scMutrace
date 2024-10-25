@@ -13,6 +13,7 @@ def initialize_parser():
     parser = argparse.ArgumentParser(description='Script to obtain a list of base and cell counts in scRNA bam file')
     parser.add_argument('--bam', type=str, default='', help='BAM file to be analysed', required=True)
     parser.add_argument('--ref', type=str, default='', help='Path to reference genome version. *fai must be available in the same directory as the reference genome file', required=True)
+    parser.add_argument('--cbtag', type=str, default='CB', help='cell barcode tag', required=True)
     parser.add_argument('--contig', type=str, help='Contig. Chr_Start_End', required=True)
     parser.add_argument('--minmq', type=int, default=255, help='min mapping quality [Default: 255]', required=False)
     parser.add_argument('--minbq', type=int, default=20, help='min base quality [[Default: 20]]', required=False)
@@ -63,6 +64,7 @@ def main():
     bam_Path = args.bam
     ref_Path = args.ref
     config_info = args.contig
+    cbtag = args.cbtag
     nameSplitBamTag = args.id
     minmq = args.minmq
     minbq = args.minbq
@@ -117,7 +119,7 @@ def main():
             p = mp.get_context("fork").Pool(COREUSE)
             print("Your cores is " + str(COREUSE))
             for config_i in K:
-                p.apply_async(count_mut_information, args=(bam_Path, ref_Path, outDirPathVCFTmp, config_i, minbq, minmq, True, True, True, nmCheckStates, min_cov, min_alt, min_cell, max_nm), error_callback=err_call_back)
+                p.apply_async(count_mut_information, args=(bam_Path, ref_Path, outDirPathVCFTmp, config_i, minbq, minmq, True, True, True, nmCheckStates, min_cov, min_alt, min_cell, max_nm, cbtag,), error_callback=err_call_back)
             print('Waiting for all subprocesses done...')
             p.close()
             p.join()
@@ -126,7 +128,7 @@ def main():
             print("Your cores is 1")
             for config_i in K:
                 print(config_i)
-                count_mut_information(BamPath=bam_Path, referencePath=ref_Path, outVcfPath=outDirPathVCFTmp, config_posList=config_i, min_bq=minbq, min_mq=minmq, dp_check=True, alt_check=True, cell_check=True, nm_check=nmCheckStates, min_cov=min_cov, min_alt=min_alt, min_cell=min_cell, max_nm=max_nm)
+                count_mut_information(BamPath=bam_Path, referencePath=ref_Path, outVcfPath=outDirPathVCFTmp, config_posList=config_i, min_bq=minbq, min_mq=minmq, dp_check=True, alt_check=True, cell_check=True, nm_check=nmCheckStates, min_cov=min_cov, min_alt=min_alt, min_cell=min_cell, max_nm=max_nm, cbtag=cbtag)
         
         print("Merging... " + bam_Path + " of Chromosome: " + str(config_info.split("_")[0]))
         merge_VCF_filesShell(VcfPOSOUT, outDirPathVCFTmp, nameSplitBamTag, str(config_info.split("_")[0]))

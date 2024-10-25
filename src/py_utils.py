@@ -460,7 +460,7 @@ def cal_pError_fromBaseQuality(baseQuality):
     pError = 10 ** (-int(baseQuality) / 10)
     return pError
 
-def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_alt, min_cell, max_nm):
+def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_alt, min_cell, max_nm, cbtag):
     """
     Count mutation information from BAM file and write to VCF file.
 
@@ -562,9 +562,9 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
                 # print(READ_ALIGNMENT.is_duplicate, READ_ALIGNMENT.is_secondary, READ_ALIGNMENT.is_supplementary, READ_ALIGNMENT.is_mapped)
                 if READ_ALIGNMENT.is_duplicate == False and  READ_ALIGNMENT.is_secondary == False and READ_ALIGNMENT.is_supplementary == False and READ_ALIGNMENT.is_mapped == True:
                     # CELLS
-                    tagCheck = READ_ALIGNMENT.has_tag("CB")
+                    tagCheck = READ_ALIGNMENT.has_tag(cbtag)
                     if tagCheck:
-                        CELLBARCODE = READ_ALIGNMENT.opt("CB").split("-")[0]
+                        CELLBARCODE = READ_ALIGNMENT.opt(cbtag).split("-")[0]
                     else:
                         continue
                     # num_mismatch

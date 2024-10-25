@@ -18,6 +18,7 @@ helpFunction(){
     echo "Options:"
     echo -e "\t -b \t[bam] bam file path to extract SNPs"
     echo -e "\t -f \t[ref] reference file path"
+    echo -e "\t -C \t[cellbarcodetag] cell barcode tag in bam file (default: CB)"
     echo -e "\t -g \t[contig] contig information, tab separated format for each line: Chr\tstart\tend"
     echo -e "\t -s \t[id] sample id"
     echo -e "\t -p \t[nprocs] number of processes"
@@ -42,17 +43,19 @@ fi
 nprocs=1
 minbq=20
 minmq=255
-mincellnumber=2
+mincellnumber=3
 minaltcellnumber=2
 maxmismatch=4
-minsequencingdepth=5
+minsequencingdepth=3
+cellbarcodetag="CB"
 
 # get parameters
-while getopts "b:f:g:s:p:q:Q:n:N:m:d:O:h" opt
+while getopts "b:f:C:g:s:p:q:Q:n:N:m:d:O:h" opt
 do
    case "$opt" in
         b ) bam="$OPTARG" ;;
         f ) ref="$OPTARG" ;;
+        C ) cellbarcodetag="$OPTARG" ;;
         g ) contig="$OPTARG" ;;
         s ) id="$OPTARG" ;;
         p ) nprocs="$OPTARG" ;;
@@ -91,6 +94,7 @@ echo -e "\033[32m###################################################\033[0m"
 echo -e "\033[32mYour input parameters:\033[0m"
 echo "BAMFILE: ${bam}"
 echo "REF: ${ref}"
+echo "CELLBARCODETAG: ${cellbarcodetag}"
 echo "CONTIG: ${contig}"
 echo "SAMPLEID: ${id}"
 echo "nprocs: ${nprocs}"
@@ -109,6 +113,6 @@ while read chrtmp starttmp endtmp
 do
     tmpConfig=${chrtmp}_${starttmp}_${endtmp}
     echo "Extracting SNPs for ${tmpConfig}"
-    python -u ${scMutrace_src_dir}/src/1_runStep1_ExtractSNP.py --bam ${bam} --ref ${ref} --contig ${tmpConfig} --nprocs ${nprocs} --nmcheck --outdir ${outdir} --id ${id} --minmq ${minmq} --minbq ${minbq} --mincell ${mincellnumber} \
+    python -u ${scMutrace_src_dir}/src/1_runStep1_ExtractSNP.py --bam ${bam} --ref ${ref} --cbtag ${cellbarcodetag} --contig ${tmpConfig} --nprocs ${nprocs} --nmcheck --outdir ${outdir} --id ${id} --minmq ${minmq} --minbq ${minbq} --mincell ${mincellnumber} \
         --minalt ${minaltcellnumber} --maxnm ${maxmismatch} --mindp ${minsequencingdepth}
 done < ${contig}
