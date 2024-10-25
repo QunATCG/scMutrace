@@ -44,6 +44,7 @@
         - mv
         - while
         - if
+- Databases
 
 ### Installation
 **Anaconda** simplifies scientific computing in Python by bundling essential packages like NumPy, SciPy, Pandas, Matplotlib, and Jupyter. It manages dependencies and environments, making setup easier by eliminating the need to install each package individually.
