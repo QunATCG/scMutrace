@@ -1,9 +1,9 @@
 ## Table of Contents
-- [Installation](##installation)
-    - [Requirements](###requirements)
-    - [Installation](###installation)
-- [Help information](##help-information)
-- [Parameter Index](##parameter-index)
+- [Installation](#installation)
+    - [Requirements](#requirements)
+    - [Installation](#installation)
+- [Help information](#help-information)
+- [Parameter Index](#parameter-index)
 ## Installation
 ### Requirements
 - Java 8 (https://www.java.com/en/download/manual.jsp)
