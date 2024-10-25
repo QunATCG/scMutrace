@@ -194,4 +194,4 @@ bash ${scMutrace_src_dir}/step3_filterPopulation.sh -O ${outdir} -V ${outdir}/fi
 
 # step4_filterNoisy.sh
 echo "running step4_filterNoisy.sh"
-bash ${scMutrace_src_dir}/step4_filterNoisy.sh -v ${outdir}/${id}_scmutrace.vcf --id ${id} --barcode ${barcode} --binsize ${binsize} --clustersize ${clustersize} --dpsize ${minsequencingdepth} --altdpsize ${minaltdpsize} --cellsize ${mincellnumber} --altcellsize ${minaltcellnumber} --lowBaseCutoff ${lowBaseCutoff} --outdir ${outdir}
+bash ${scMutrace_src_dir}/step4_filterNoisy.sh -v ${outdir}/${id}_scmutrace.vcf -s ${id} -c ${barcode} -l ${binsize} -L ${clustersize} -d ${minsequencingdepth} -D ${minaltdpsize} -n ${mincellnumber} -N ${minaltcellnumber} -B ${lowBaseCutoff} -O ${outdir}

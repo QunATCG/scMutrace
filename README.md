@@ -29,21 +29,7 @@
         - multiprocessing (https://pypi.org/project/multiprocessing/)
         - re (https://docs.python.org/3/library/re.html)
 - Shell (https://github.com/QunATCG/shell-scripting-tutorial)
-    - Common commands
-        - cat
-        - mkdir
-        - echo
-        - head
-        - sed
-        - awk
-        - grep
-        - cd
-        - dirname
-        - pwd
-        - rm
-        - mv
-        - while
-        - if
+    - `cat, mkdir, echo, head, sed, awk, grep, cd, dirname, pwd, rm, mv, while, if, uniq`
 - Databases (https://github.com/QunATCG/scMutrace/tree/main/resources)
 
 ### Installation

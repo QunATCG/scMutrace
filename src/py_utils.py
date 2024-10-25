@@ -93,6 +93,9 @@ def split_multi_files(CORES, pathdir):
 
     for filename, posnum in zip(totalfilenames, fileposnum):
         tmpfilePath = os.path.join(pathdir, filename)
+        # if tmpfilePath size is zero then skip
+        if posnum == 0:
+            continue
         if posnum > binsize:
             split_file_by_lines(tmpfilePath, filename, binsize, pathdir)
         else:
