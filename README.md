@@ -14,7 +14,7 @@ scMutrace is a single-cell mutation tracing tool designed to identify and analyz
 - Python 3 (https://www.python.org/downloads/)
     - Modules
         - math (https://docs.python.org/3/library/math.html)
-        - pysam 0.21+ (https://pysam.readthedocs.io/en/latest/index.html)
+        - **pysam 0.21+** (https://pysam.readthedocs.io/en/latest/index.html)
         - linecache (https://docs.python.org/3/library/linecache.html)
         - subprocess (https://docs.python.org/3/library/subprocess.html)
         - collections (https://docs.python.org/3/library/collections.html)
@@ -26,7 +26,7 @@ scMutrace is a single-cell mutation tracing tool designed to identify and analyz
         - argparse (https://pypi.org/project/argparse/)
         - timeit (https://docs.python.org/3/library/timeit.html)
         - pandas (https://pypi.org/project/pandas/)
-        - multiprocessing (https://pypi.org/project/multiprocessing/)
+        - **multiprocessing** (https://pypi.org/project/multiprocessing/)
         - re (https://docs.python.org/3/library/re.html)
 - Shell (https://github.com/QunATCG/shell-scripting-tutorial)
     - Common commands
@@ -51,6 +51,7 @@ Anaconda simplifies scientific computing in Python by bundling essential package
 
 > https://docs.anaconda.com/free/miniconda/index.html
 #### conda installation
+If you haven't installed conda before, you can do so with the following commands:
 ``` shell
 mkdir -p ~/miniconda3
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
