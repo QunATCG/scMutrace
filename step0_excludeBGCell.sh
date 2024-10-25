@@ -1,8 +1,6 @@
 #!/bin/bash
 scMutrace_src_dir=$(cd `dirname $0`; pwd)
 
-#!/bin/bash
-
 # Help function
 helpFunction(){
     echo ""
