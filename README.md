@@ -8,10 +8,10 @@
     -B  [lowBaseCutoff] cutoff of low base quality (default 20)
     -c  [barcode] cell barcode path
     -C
-    -d  [minsequencingdepth] min sequecing depth
-    -D  [min altdpsize] min alternative bases depth
+    -d  [minsequencingdepth] min sequecing depth (default: 3)
+    -D  [min altdpsize] min alternative bases depth (default: 2)
     -e  [backp] background mutant cells threshold used to filter SNPs[0.03-0.06, default: 0.05]
-    -E  [errorp] background error threshold used to filter SNPs[default: 0.006]
+    -E  [errorp] background error threshold used to filter SNPs[0.001-0.006, default: 0.006]
     -f  [ref] reference file path
     -F
     -g  [contig] contig information, tab separated format for each line: Chr start end
@@ -22,20 +22,20 @@
     -I
     -j
     -J
-    -k  [iteration] number of iterations
+    -k  [iteration] number of iterations (default: 1000)
     -K
-    -l  [binsize] base number between two snps
-    -L  [clustersize] number of snps in one cluster
-    -m  [maxmismatch] number max mismatch number
+    -l  [binsize] base number between two snps (default: 20)
+    -L  [clustersize] number of snps in one cluster (default: 3)
+    -m  [maxmismatch] number max mismatch number (default: 4)
     -M
-    -n  [mincellnumber] min cell number
-    -N  [minaltcellnumber] min alteration cell number
+    -n  [mincellnumber] min cell number (default: 3)
+    -N  [minaltcellnumber] min alteration cell number (default: 2)
     -o  [outputpath] output path
     -O  [outdir] output directory
     -p  [nprocs] number of processes (default: 1)
     -P
-    -q  [minbq] min base quality
-    -Q  [minmq] min mapping quality
+    -q  [minbq] min base quality (default: 20)
+    -Q  [minmq] min mapping quality (default: 255)
     -r  [removeitems] files to be excluded, tab seperated format: path id
     -R
     -s  [id] sample id
