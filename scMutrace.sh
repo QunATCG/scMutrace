@@ -155,6 +155,36 @@ echo "lowBaseCutoff: ${lowBaseCutoff}"
 echo ""
 echo ""
 
+# Check if the output directory exists
+if [ ! -d "${outdir}" ]; then
+    mkdir -p "${outdir}"
+fi
+
+# Check if the barcode file exists
+if [ ! -f "${barcode}" ]; then
+    echo "The barcode file does not exist. Please provide a valid barcode file."
+    exit 1
+fi
+
+# Check if the reference file exists
+if [ ! -f "${ref}" ]; then
+    echo "The reference file does not exist. Please provide a valid reference file."
+    exit 1
+fi
+
+# Check if the BAM file exists
+if [ ! -f "${bam}" ]; then
+    echo "The BAM file does not exist. Please provide a valid BAM file."
+    exit 1
+fi
+
+# Check if the contig file exists
+if [ ! -f "${contig}" ]; then
+    echo "The contig file does not exist. Please provide a valid contig file."
+    exit 1
+fi
+
+# Check if the barcode file is in the correct format
 # Check the header of the barcode file
 header=$(head -n 1 "${barcode}")
 first_column=$(echo "${header}" | awk '{print $1}')
