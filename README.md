@@ -38,8 +38,8 @@ Unix Shell (https://github.com/QunATCG/shell-scripting-tutorial)
 ```
 ### Installation
 ```shell
-conda create -n scMutRNA
-conda activate scMutRNA
+conda create -n scMutrace
+conda activate scMutrace
 conda install -c bioconda pysam=0.21.0
 conda install -c conda-forge numpy
 conda install -c conda-forge scipy
