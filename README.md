@@ -1,10 +1,14 @@
 ## Table of Contents
-- [Installation](#installation)
+- [Dependencies](#dependencies)
     - [Requirements](#requirements)
     - [Installation](#installation)
+        - [conda installation](#conda-installation)
+        - [conda install packages](#conda-install-packages)
 - [Help information](#help-information)
 - [Parameter Index](#parameter-index)
-## Installation
+- [Models](#models)
+## Dependencies
+scMutrace is a single-cell mutation tracing tool designed to identify and analyze mutations from single-cell sequencing data. It offers an efficient, one-step process for background filtering, SNP extraction, noise filtering, and population structure analysis. It can be run in [Linux](https://www.linux.org/), [MacOS](https://www.apple.com/macos/) and Windows Subsystem for Linux ([WSL](https://learn.microsoft.com/en-us/windows/wsl/install)) platform.
 ### Requirements
 - Java 8 (https://www.java.com/en/download/manual.jsp)
 - Python 3 (https://www.python.org/downloads/)
@@ -24,7 +28,7 @@
         - pandas (https://pypi.org/project/pandas/)
         - multiprocessing (https://pypi.org/project/multiprocessing/)
         - re (https://docs.python.org/3/library/re.html)
-- Unix Shell (https://github.com/QunATCG/shell-scripting-tutorial)
+- Shell (https://github.com/QunATCG/shell-scripting-tutorial)
     - Common commands
         - cat
         - mkdir
@@ -42,6 +46,19 @@
         - if
 
 ### Installation
+Anaconda simplifies scientific computing in Python by bundling essential packages like NumPy, SciPy, Pandas, Matplotlib, and Jupyter. It manages dependencies and environments, making setup easier by eliminating the need to install each package individually.
+> https://anaconda.org/anaconda/conda
+
+> https://docs.anaconda.com/free/miniconda/index.html
+#### conda installation
+``` shell
+mkdir -p ~/miniconda3
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
+bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
+rm -rf ~/miniconda3/miniconda.sh
+```
+
+#### conda install packages
 ```shell
 conda create -n scMutrace
 conda activate scMutrace
@@ -151,3 +168,5 @@ Optional Arguments:
     -z
     -Z
 ```
+
+## Models
