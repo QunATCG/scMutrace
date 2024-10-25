@@ -19,7 +19,7 @@ helpFunction(){
     echo -e "\t -b \t[bam] bam file path to exclude background cells"
     echo -e "\t -f \t[ref] reference file path"
     echo -e "\t -c \t[barcode] cell barcode to be included"
-    echo -e "\t -C \t[barcodetag] cell barcode tag in bam file (default: CB)"
+    echo -e "\t -C \t[cellbarcodetag] cell barcode tag in bam file (default: CB)"
     echo -e "\t -t \t[ncut] number of reads bases will be cut (default: 10)"
     echo -e "\t -s \t[id] sample id"
     echo -e "\t -p \t[nprocs] number of processes (default: 1)"
@@ -32,7 +32,7 @@ helpFunction(){
 # Default parameters
 ncut=10
 nprocs=1
-barcodetag="CB"
+cellbarcodetag="CB"
 
 # Check if no arguments are passed
 if [ $# -eq 0 ]; then
@@ -47,7 +47,7 @@ do
         b ) bam="$OPTARG" ;;
         f ) ref="$OPTARG" ;;
         c ) barcode="$OPTARG" ;;
-        C ) barcodetag="$OPTARG" ;;
+        C ) cellbarcodetag="$OPTARG" ;;
         t ) ncut="$OPTARG" ;;
         s ) id="$OPTARG" ;;
         p ) nprocs="$OPTARG" ;;
@@ -80,7 +80,7 @@ echo -e "\033[32mYour input parameters:\033[0m"
 echo "BAMFILE: ${bam}"
 echo "REF: ${ref}"
 echo "CELLBARCODE: ${barcode}"
-echo "CELLBARCODETAG: ${barcodetag}"
+echo "CELLBARCODETAG: ${cellbarcodetag}"
 echo "ncut: ${ncut}"
 echo "SAMPLEID: ${id}"
 echo "nprocs: ${nprocs}"
