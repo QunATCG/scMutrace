@@ -105,7 +105,7 @@ do
 done
 
 # Check if required parameters are empty
-if [ -z "$bam" ] || [ -z "$ref" ] || [ -z "$barcode" ] || [ -z "$id" ] || [ -z "$outdir" ]; then
+if [ -z "$bam" ] || [ -z "$ref" ] || [ -z "$barcode" ] || [ -z "$id" ] || [ -z "$outdir" ] || [ -z "$contig" ]; then
     echo -e "\033[32m###################################################\033[0m"
     echo -e "\033[32m                  Log info                         \033[0m"
     echo -e "\033[32m###################################################\033[0m"
@@ -114,8 +114,9 @@ if [ -z "$bam" ] || [ -z "$ref" ] || [ -z "$barcode" ] || [ -z "$id" ] || [ -z "
     [ -z "$ref" ] && echo "  REF is missing"
     [ -z "$barcode" ] && echo "  CELLBARCODE is missing"
     [ -z "$id" ] && echo "  SAMPLEID is missing"
+    [ -z "$contig" ] && echo "  CONTIG is missing"
     [ -z "$outdir" ] && echo "  OUTPUT directory is missing"
-    helpFunction  # Display the help info and exit
+    helpFunction
 fi
 
 # print all parameters
@@ -131,6 +132,22 @@ echo "ncut: ${ncut}"
 echo "SAMPLEID: ${id}"
 echo "nprocs: ${nprocs}"
 echo "OUTPUT: ${outdir}"
+echo "CONTIG: ${contig}"
+echo "removeitem: ${removeitem}"
+echo "includeitem: ${includeitem}"
+echo "minbq: ${minbq}"
+echo "minmq: ${minmq}"
+echo "mincellnumber: ${mincellnumber}"
+echo "minaltcellnumber: ${minaltcellnumber}"
+echo "maxmismatch: ${maxmismatch}"
+echo "minsequencingdepth: ${minsequencingdepth}"
+echo "minaltdepth: ${minaltdepth}"
+echo "iteration: ${iteration}"
+echo "backp: ${backp}"
+echo "errorp: ${errorp}"
+echo "binsize: ${binsize}"
+echo "clustersize: ${clustersize}"
+echo "lowBaseCutoff: ${lowBaseCutoff}"
 echo ""
 echo ""
 
@@ -154,4 +171,4 @@ bash ${scMutrace_src_dir}/step3_filterPopulation.sh -O ${outdir} -V ${outdir}/fi
 
 # step4_filterNoisy.sh
 echo "running step4_filterNoisy.sh"
-bash ${scMutrace_src_dir}/step4_filterNoisy.sh -v ${outdir}/${id}_scmutrace.vcf --id ${id} --barcode ${cellbarcode} --binsize ${binsize} --clustersize ${clustersize} --dpsize ${minsequencingdepth} --altdpsize ${minaltdpsize} --cellsize ${mincellnumber} --altcellsize ${minaltcellnumber} --lowBaseCutoff ${lowBaseCutoff} --outdir ${outdir}
+bash ${scMutrace_src_dir}/step4_filterNoisy.sh -v ${outdir}/${id}_scmutrace.vcf --id ${id} --barcode ${barcode} --binsize ${binsize} --clustersize ${clustersize} --dpsize ${minsequencingdepth} --altdpsize ${minaltdpsize} --cellsize ${mincellnumber} --altcellsize ${minaltcellnumber} --lowBaseCutoff ${lowBaseCutoff} --outdir ${outdir}
