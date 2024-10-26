@@ -101,7 +101,7 @@ echo "samtools index..${id}"
 samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.bam
 rm ${outdir}/ExcludeBG_${id}.bam
 rm ${outdir}/*tmp.SMT.bam*
-samtools view -@ ${nprocs} -h ${outdir}/ExcludeBG_${id}.sort.bam | sed 's/CB:Z:\([A-Z]*\)-1/CB:Z:\1/g' | samtools view -@ ${nprocs} -b -o ${outdir}/ExcludeBG_${id}.sort.reCB.bam
+samtools view -@ ${nprocs} -h ${outdir}/ExcludeBG_${id}.sort.bam | perl -pe 's/CB:Z:([A-Z]*)-1/CB:Z:$1/' | samtools view -@ ${nprocs} -b -o ${outdir}/ExcludeBG_${id}.sort.reCB.bam
 samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.reCB.bam
 echo "picard rmdup.."${id}
 java -jar ${scMutrace_src_dir}/software/picard.jar MarkDuplicates --BARCODE_TAG CB --MOLECULAR_IDENTIFIER_TAG UB --INPUT ${outdir}/ExcludeBG_${id}.sort.reCB.bam --METRICS_FILE ${outdir}/ExcludeBG_${id}.picard_dup_metrics.txt --OUTPUT ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
