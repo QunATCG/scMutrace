@@ -618,7 +618,7 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
             # CELL MUTINFO Total
             COUNTINFOCELL, COUNTINFOALT, COUNTOTALCELL, COUNTOTALALT, COUNTOTALCELLALT = get_mut_total(CELL_COUNTS_DIC, REF_BASE)
             #CELL_NUM = len(set(CELLS))
-            if cell_check == True and COUNTOTALCELLALT < int(min_cell):
+            if cell_check == True and COUNTOTALCELL < int(min_cell):
                 continue
             CELLUNIQ, CELLMUTCOUNTINFO = get_mut_bycell(CELL_COUNTS_DIC)
             CELLUNIQ_F, CELLMUTCOUNTINFO_F = get_mut_bycell(CELL_COUNTS_F_DIC)
