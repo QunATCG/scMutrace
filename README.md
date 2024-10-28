@@ -89,7 +89,8 @@ Advanced Arguments:
 	 -r 	[removeitems:str] Database files to be excluded (tab-separated format: path id).
 	 -i 	[includeitems:str] Database files to be included (tab-separated format: path id).
 Optional Arguments:
-     -C      [barcode tag] cell barcode tag in bam file (default: CB)
+     -x     [barcodecheck:str] if barcode check, split bam based on cell barcodes (false or true, default: true.).]
+     -C     [barcodetag:str] cell barcode tag in bam file (default: CB)
 	 -t 	[ncut:int] Number of read bases to be trimed cut (default: 10).
 	 -p 	[nprocs:int] Number of processes to use (default: 1).
 	 -q 	[minbq:int] Minimum base quality (default: 20).
@@ -107,7 +108,7 @@ Optional Arguments:
 	 -B 	[lowBaseCutoff:int] Cutoff for low base quality (default: 20).
 	 -h 	[help] Display this help message.
 ```
-If you don't have a cell barcode file, all cells will be included. You can obtain all cell barcodes using the following command, with `ENCFF491HQL.bam` as an example:
+If you don't have a cell barcode file, all cells will be included. You can use `-x false` to skip the cell barcode filtering process. Alternatively, you can obtain all cell barcodes using the following command, with `ENCFF491HQL.bam` as an example:
 
 ```shell
 samtools view ENCFF491HQL.bam | cut -f 12- | tr "\t" "\n" | grep "CB:Z:" | uniq | awk -F':' '{print $3}' > ENCFF491HQL.cellbarcode
