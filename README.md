@@ -11,6 +11,7 @@
 **scMutrace** is a single-cell mutation tracing tool designed to identify and analyze mutations from single-cell sequencing data. It offers an efficient, one-step process for background filtering, SNP extraction, noise filtering, and population structure analysis. It can be run in [Linux](https://www.linux.org/), [MacOS](https://www.apple.com/macos/) and Windows Subsystem for Linux ([WSL](https://learn.microsoft.com/en-us/windows/wsl/install)) platforms.
 ### Requirements
 - Java 8 (https://www.java.com/en/download/manual.jsp)
+    - picard.jar (https://broadinstitute.github.io/picard/)
 - Python 3 (https://www.python.org/downloads/)
     - Modules
         - math (https://docs.python.org/3/library/math.html)
@@ -28,9 +29,9 @@
         - pandas (https://pypi.org/project/pandas/)
         - multiprocessing (https://pypi.org/project/multiprocessing/)
         - re (https://docs.python.org/3/library/re.html)
+- Databases (https://github.com/QunATCG/scMutrace/tree/main/resources)
 - Shell (https://github.com/QunATCG/shell-scripting-tutorial)
     - `cat, mkdir, echo, head, sed, awk, grep, cd, dirname, pwd, rm, mv, while, if, uniq`
-- Databases (https://github.com/QunATCG/scMutrace/tree/main/resources)
 
 ### Installation
 **Anaconda** simplifies scientific computing in Python by bundling essential packages like NumPy, SciPy, Pandas, Matplotlib, and Jupyter. It manages dependencies and environments, making setup easier by eliminating the need to install each package individually.
@@ -63,6 +64,10 @@ conda clean -a
 ```
 
 ## Help information
+You can obtain help information using the following command
+
+`./scMutrace.sh -h`
+
 ```shell
 Description:
 scMutrace is a single-cell mutation tracing tool designed to identify and analyze mutations from
@@ -84,6 +89,7 @@ Advanced Arguments:
 	 -r 	[removeitems:str] Database files to be excluded (tab-separated format: path id).
 	 -i 	[includeitems:str] Database files to be included (tab-separated format: path id).
 Optional Arguments:
+     -C      [barcode tag] cell barcode tag in bam file (default: CB)
 	 -t 	[ncut:int] Number of read bases to be trimed cut (default: 10).
 	 -p 	[nprocs:int] Number of processes to use (default: 1).
 	 -q 	[minbq:int] Minimum base quality (default: 20).
@@ -101,14 +107,24 @@ Optional Arguments:
 	 -B 	[lowBaseCutoff:int] Cutoff for low base quality (default: 20).
 	 -h 	[help] Display this help message.
 ```
-## Parameter Index
+If you don't have a cell barcode file, all cells will be included. You can obtain all cell barcodes using the following command, with `ENCFF491HQL.bam` as an example:
+
 ```shell
+samtools view ENCFF491HQL.bam | cut -f 12- | tr "\t" "\n" | grep "CB:Z:" | uniq | awk -F':' '{print $3}' > ENCFF491HQL.cellbarcode
+```
+
+## Parameter Index
+You can check and search parameters using the following command:
+
+`./scMutrace.sh -h`
+
+```
     -a  
     -A
     -b  [bam] bam file path
     -B  [lowBaseCutoff] cutoff of low base quality (default 20)
     -c  [barcode] cell barcode path
-    -C
+    -C  [barcode tag] cell barcode tag in bam file (default: CB)
     -d  [minsequencingdepth] min sequecing depth (default: 3)
     -D  [min altdpsize] min alternative bases depth (default: 2)
     -e  [backp] background mutant cells threshold used to filter SNPs[0.03-0.06, default: 0.05]
