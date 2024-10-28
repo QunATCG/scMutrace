@@ -29,6 +29,7 @@ helpFunction() {
     echo -e "\t -r \t[removeitems:str] Database files to be excluded (tab-separated format: path id)."
     echo -e "\t -i \t[includeitems:str] Database files to be included (tab-separated format: path id)."
     echo "Optional Arguments:"
+    echo -e "\t -x \t[barcodecheck:str] if barcode check, split bam based on cell barcodes (false or true, default: true.)."
     echo -e "\t -t \t[ncut:int] Number of read bases to be trimed cut (default: 10)."
     echo -e "\t -p \t[nprocs:int] Number of processes to use (default: 1)."
     echo -e "\t -q \t[minbq:int] Minimum base quality (default: 20)."
@@ -67,6 +68,7 @@ lowBaseCutoff=20
 removeitem="NotAvailable"
 includeitem="NotAvailable"
 cellbarcodetag="CB"
+barcodecheck="true"
 
 # Check if no arguments are passed
 if [ $# -eq 0 ]; then
@@ -75,11 +77,12 @@ if [ $# -eq 0 ]; then
 fi
 
 # get parameters
-while getopts "b:f:c:C:s:O:g:r:i:t:p:q:Q:n:N:m:d:D:k:e:E:l:L:B:h" opt
+while getopts "b:f:x:c:C:s:O:g:r:i:t:p:q:Q:n:N:m:d:D:k:e:E:l:L:B:h" opt
 do
     case "$opt" in
         b ) bam="$OPTARG" ;;
         f ) ref="$OPTARG" ;;
+        x ) barcodecheck="$OPTARG" ;;
         c ) barcode="$OPTARG" ;;
         C ) cellbarcodetag="$OPTARG" ;;
         s ) id="$OPTARG" ;;
@@ -107,6 +110,12 @@ do
     esac
 done
 
+# check barcodecheck
+if [ "${barcodecheck}" != "true" ] && [ "${barcodecheck}" != "false" ]; then
+    echo "Invalid value for -x. Please provide 'true' or 'false'."
+    exit 1
+fi
+
 # Check if required parameters are empty
 if [ -z "$bam" ] || [ -z "$ref" ] || [ -z "$barcode" ] || [ -z "$id" ] || [ -z "$outdir" ] || [ -z "$contig" ]; then
     echo -e "\033[32m###################################################\033[0m"
@@ -130,6 +139,7 @@ echo -e "\033[32m###################################################\033[0m"
 echo -e "\033[32mYour input parameters:\033[0m"
 echo "BAMFILE: ${bam}"
 echo "REF: ${ref}"
+echo "CELLBARCODECheck: ${barcodecheck}"
 echo "CELLBARCODE: ${barcode}"
 echo "CELLBARCODETAG: ${cellbarcodetag}"
 echo "ncut: ${ncut}"
@@ -218,7 +228,7 @@ echo "Barcode file header and format are correct."
 # step0_excludeBGCell.sh
 echo "making the output directory.."${id}
 echo "running step0_excludeBGCell.sh"
-${scMutrace_src_dir}/step0_excludeBGCell.sh -b ${bam} -f ${ref} -c ${barcode} -C ${cellbarcodetag} -t ${ncut} -s ${id} -p ${nprocs} -O ${outdir}
+${scMutrace_src_dir}/step0_excludeBGCell.sh -b ${bam} -f ${ref} -x ${barcodecheck} -c ${barcode} -C ${cellbarcodetag} -t ${ncut} -s ${id} -p ${nprocs} -O ${outdir}
 
 # step1_extractSNP.sh
 echo "running step1_extractSNP.sh"
