@@ -107,3 +107,4 @@ echo "picard rmdup.."${id}
 java -jar ${scMutrace_src_dir}/software/picard.jar MarkDuplicates --BARCODE_TAG CB --REMOVE_DUPLICATES --INPUT ${outdir}/ExcludeBG_${id}.sort.reCB.bam --METRICS_FILE ${outdir}/ExcludeBG_${id}.picard_dup_metrics.txt --OUTPUT ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
 echo "samtools index rmdup.."${id}
 samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
+rm ${outdir}/ExcludeBG_${id}.sort.reCB.bam ${outdir}/ExcludeBG_${id}.sort.reCB.bam.bai
