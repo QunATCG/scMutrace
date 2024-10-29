@@ -13,7 +13,7 @@ helpFunction(){
     echo "Extract SNPs from bam file"
     echo ""
     echo "Usage:"
-    echo "$0 -b BAMFILE[str] -f REF[str] -g CONTIG[str] -s SAMPLEID[str] -p nprocs[int] -q minbq[int] -Q minmq[int] -n mincellnumber[int] -N minaltcellnumber[int] -m minmismatch[int] -d minsequencingdepth[int] -O OUTPUT[str]"
+    echo "$0 -b BAMFILE[str] -f REF[str] -g CONTIG[str] -s SAMPLEID[str] -p nprocs[int] -q minbq[int] -Q minmq[int] -n mincellnumber[int] -N minaltcellnumber[int] -m maxmismatch[int] -d minsequencingdepth[int] -O OUTPUT[str]"
     echo ""
     echo "Options:"
     echo -e "\t -b \t[bam] bam file path to extract SNPs"
