@@ -227,9 +227,9 @@ if [ ! -f "${contig}" ]; then
     exit 1
 fi
 
-cp "$cellbarcode" "${cellbarcode}.bak"
-validate_and_correct_headers "$cellbarcode"
-validate_column_count "$cellbarcode"
+cp "$barcode" "${barcode}.bak"
+validate_and_correct_headers "$barcode"
+validate_column_count "$barcode"
 
 echo "Barcode file header and format are correct."
 
