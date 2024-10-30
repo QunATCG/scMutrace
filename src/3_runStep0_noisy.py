@@ -70,7 +70,7 @@ def filter_VCF_withoutCB(vcfilePathIn, vcfilePathOut, binsize, clustersize, dpsi
     vcfilePathOutmp0 = vcfilePathOut + ".f0"
     vcfilePathOutmp1 = vcfilePathOut + ".f1"
     # Remove existing output files if they exist
-    for path in [vcfilePathOut, vcfilePathOutmp0, vcfilePathOutmp1]:
+    for path in [vcfilePathOutmp0, vcfilePathOutmp1]:
         if os.path.exists(path):
             try:
                 subprocess.run(['rm', path], check=True)
