@@ -80,6 +80,42 @@ then
     helpFunction
 fi
 
+# Check if the barcode file exists
+if [ ! -f "${cellbarcode}" ]; then
+    echo "The barcode file does not exist. Please provide a valid barcode file."
+    exit 1
+fi
+
+# Check if the barcode file is in the correct format
+# Check the header of the barcode file
+header=$(head -n 1 "${cellbarcode}")
+first_column=$(echo "${header}" | awk '{print $1}')
+second_column=$(echo "${header}" | awk '{print $2}')
+
+# Validate and correct the first column name if needed
+if [ "${first_column}" != "Barcode" ]; then
+    echo "The first column header is not 'Barcode'. Found '${first_column}' instead. Adding 'Barcode' as the header."
+    # Use cross-platform sed command for in-place edit
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' '1s/^/Barcode\tCellType\n/' "${cellbarcode}"  # macOS requires '' for in-place editing
+    else
+        sed -i '1s/^/Barcode\tCellType\n/' "${cellbarcode}"     # Linux and WSL
+    fi
+    # Refresh header variables after update
+    header=$(head -n 1 "${cellbarcode}")
+    first_column=$(echo "${header}" | awk '{print $1}')
+    second_column=$(echo "${header}" | awk '{print $2}')
+fi
+
+
+# Validate and correct the second column name if needed
+if [ "${second_column}" != "CellType" ]; then
+    echo "The second column header is not 'CellType'. Found '${second_column}' instead. Adding 'CellType' as the header and setting all values to 'CellType1'."
+    awk 'BEGIN{OFS="\t"} NR==1{$2="CellType"} NR>1{$2="CellType1"}1' "${cellbarcode}" > "${cellbarcode}.tmp" && mv "${cellbarcode}.tmp" "${cellbarcode}"
+fi
+
+echo "Barcode file header and format are correct."
+
 # echo all parameters
 echo -e "\033[32m###################################################\033[0m"
 echo -e "\033[32m             scMutrace Version 1.0                 \033[0m"
