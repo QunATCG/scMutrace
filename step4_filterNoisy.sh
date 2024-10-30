@@ -113,10 +113,10 @@ if [ "${second_column}" != "CellType" ]; then
     awk 'BEGIN{OFS="\t"} NR==1{$2="CellType"} NR>1{$2="CellType1"}1' "${cellbarcode}" > "${cellbarcode}.tmp" && mv "${cellbarcode}.tmp" "${cellbarcode}"
 fi
 
-# if the barcode file second line dont have two columns, then setting the second column as "CellType1"
+# if the barcode file second line dont have two columns, then setting the all column as "CellType1"
 if [ $(awk '{print NF}' "${cellbarcode}" | sort -nu | tail -n 1) -ne 2 ]; then
     echo "The barcode file does not have two columns in the second line. Setting the second column as 'CellType1'."
-    awk 'BEGIN{OFS="\t"} NR==1{print} NR>1{$2="CellType1"; print}' "${cellbarcode}" > "${cellbarcode}.tmp" && mv "${cellbarcode}.tmp" "${cellbarcode}"
+    awk 'BEGIN{OFS="\t"} NR==1{$2="CellType"} NR>1{$2="CellType1"}1' "${cellbarcode}" > "${cellbarcode}.tmp" && mv "${cellbarcode}.tmp" "${cellbarcode}"
 fi
 
 
