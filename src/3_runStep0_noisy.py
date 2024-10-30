@@ -230,7 +230,7 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
         integrate_baseQua = integrate_baseQuality_onesite(baseQualityInfoOnesite)
         lowwtBasenum, lowmutBasenum = split_baseQua_lowqualitynum(refBase, integrate_baseQua, lowBaseCutoff)
         # fisher test for lowQualityBases
-        p_fisher_lowBase = stats.fisher_exact([[int(lowmutBasenum), int(lowwtBasenum)], [int(altReadsnum) - int(lowmutBasenum), int(totalReadsnum) - int(altReadsnum) - int(lowwtBasenum)]]).pvalue
+        p_fisher_lowBase = stats.fisher_exact([[int(lowmutBasenum), int(lowwtBasenum)], [int(altReadsnum) - int(lowmutBasenum), int(totalReadsnum) - int(altReadsnum) - int(lowwtBasenum)]])[1]
         if p_fisher_lowBase <= 0.05:
             tag_fisher_lowBase = "NonePASS_fisherLB"
         else:
