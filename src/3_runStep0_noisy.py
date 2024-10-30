@@ -279,7 +279,7 @@ def main():
     altcellsize = args.altcellsize
     lowBaseCutoff = args.lowBaseCutoff
     CellTypeDictmp = generate_cellType_dic(barcodePath, ["CellType"])
-    finalOutPath = outpath + ".clean.vcf"
+    finalOutPath = outpath + ".scmutrace.clean.vcf"
     filter_VCF_withoutCB(vcfpath, outpath, binsize, clustersize, dpsize, altsize)
     get_cellmutInfo_forTest(outpath + ".f1", finalOutPath, CellTypeDictmp, cellsize, altcellsize, lowBaseCutoff)
     cmdrm = "rm " + outpath + ".f1"
