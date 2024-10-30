@@ -49,6 +49,39 @@ helpFunction() {
     exit 1
 }
 
+# Function to check and correct headers
+function validate_and_correct_headers {
+    local file="$1"
+    local header=$(head -n 1 "$file")
+    local first_column=$(echo "$header" | awk '{print $1}')
+    local second_column=$(echo "$header" | awk '{print $2}')
+
+    # Check and correct the first column header
+    if [ "$first_column" != "Barcode" ]; then
+        echo "WARNING: First column header is not 'Barcode'. Found '$first_column' instead. Adding 'Barcode' as the header."
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' '1s/^/Barcode\tCellType\n/' "$file"
+        else
+            sed -i '1s/^/Barcode\tCellType\n/' "$file"
+        fi
+    fi
+
+    # Check and correct the second column header
+    if [ "$second_column" != "CellType" ]; then
+        echo "WARNING: Second column header is not 'CellType'. Found '$second_column' instead. Adding 'CellType' as the header and setting all values to 'CellType1'."
+        awk 'BEGIN{OFS="\t"} NR==1{$2="CellType"} NR>1{$2="CellType1"}1' "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
+    fi
+}
+
+# Function to ensure two columns throughout the file
+function validate_column_count {
+    local file="$1"
+    if [ $(awk '{print NF}' "$file" | sort -nu | tail -n 1) -ne 2 ]; then
+        echo "ERROR: Some rows do not have two columns. Setting second column to 'CellType1' where missing."
+        awk 'BEGIN{OFS="\t"} NR==1{$2="CellType"} NR>1{$2="CellType1"}1' "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
+    fi
+}
+
 # Default parameters
 ncut=10
 nprocs=1
@@ -194,33 +227,9 @@ if [ ! -f "${contig}" ]; then
     exit 1
 fi
 
-# Check if the barcode file is in the correct format
-# Check the header of the barcode file
-header=$(head -n 1 "${barcode}")
-first_column=$(echo "${header}" | awk '{print $1}')
-second_column=$(echo "${header}" | awk '{print $2}')
-
-# Validate and correct the first column name if needed
-if [ "${first_column}" != "Barcode" ]; then
-    echo "The first column header is not 'Barcode'. Found '${first_column}' instead. Adding 'Barcode' as the header."
-    # Use cross-platform sed command for in-place edit
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        sed -i '' '1s/^/Barcode\tCellType\n/' "${barcode}"  # macOS requires '' for in-place editing
-    else
-        sed -i '1s/^/Barcode\tCellType\n/' "${barcode}"     # Linux and WSL
-    fi
-    # Refresh header variables after update
-    header=$(head -n 1 "${barcode}")
-    first_column=$(echo "${header}" | awk '{print $1}')
-    second_column=$(echo "${header}" | awk '{print $2}')
-fi
-
-
-# Validate and correct the second column name if needed
-if [ "${second_column}" != "CellType" ]; then
-    echo "The second column header is not 'CellType'. Found '${second_column}' instead. Adding 'CellType' as the header and setting all values to 'CellType1'."
-    awk 'BEGIN{OFS="\t"} NR==1{$2="CellType"} NR>1{$2="CellType1"}1' "${barcode}" > "${barcode}.tmp" && mv "${barcode}.tmp" "${barcode}"
-fi
+cp "$cellbarcode" "${cellbarcode}.bak"
+validate_and_correct_headers "$cellbarcode"
+validate_column_count "$cellbarcode"
 
 echo "Barcode file header and format are correct."
 
