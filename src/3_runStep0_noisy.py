@@ -227,6 +227,11 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
         altGT = linsets[27].strip()
         clusterCheck = linsets[22].strip()
         baseQualityInfoOnesite = linsets[11].strip()
+        prob = 1 - stats.binom.cdf(altReadsnum, totalReadsnum, 10 ** -(lowBaseCutoff/10))
+        if prob >= 0.0001:
+            tag_sequencing = "PASS_sequencing"
+        else:
+            tag_sequencing = "NonePASS_sequencing"
         integrate_baseQua = integrate_baseQuality_onesite(baseQualityInfoOnesite)
         lowwtBasenum, lowmutBasenum = split_baseQua_lowqualitynum(refBase, integrate_baseQua, lowBaseCutoff)
         # fisher test for lowQualityBases
@@ -244,7 +249,7 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
             tag_lowBaseQuality = "NonePASS_NLB"
         else:
             tag_lowBaseQuality = "PASS_NLB"
-        otherfilterInfo = ";".join([linsets[21].strip(), tag_fisher_lowBase, tag_lowBaseQuality])
+        otherfilterInfo = ";".join([linsets[21].strip(), tag_fisher_lowBase, tag_lowBaseQuality, tag_sequencing])
         if totalCellnum < cellsize:
             continue
         mutCellnum = 0
