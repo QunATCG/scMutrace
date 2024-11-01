@@ -172,18 +172,43 @@ def generate_cellType_countDic(cellTypeDic, totalCellBarcodeList, mutcellBarcode
     return CellTypeCountDic, altCellType, MultiCellType
 
 def integrate_baseQuality_onesite(oneSiteBaseQua):
-    # Example: 32||||20|;27:32||||20|;32:37|||||
+    # Define basic base labels
     basicBase = ["A", "T", "C", "G", "D", "I"]
     baseQuaDic = {base: [] for base in basicBase}
+    # Split the input by semicolons to process each cell
     cellsBaseQuaList = oneSiteBaseQua.split(";")
     for cell in cellsBaseQuaList:
         cellBaseList = cell.split("|")
         for index_base, cellBase in enumerate(cellBaseList):
             if cellBase:
+                # Map base to quality score and store it in the dictionary
                 base = basicBase[index_base]
                 baseQuaDic[base].append(cellBase)
-    integrate_baseQuality = "|".join(":".join(baseQuaDic[base]) for base in basicBase)
+    # Join each base's list of qualities, handling cases where some may be empty
+    integrate_baseQuality = "|".join(":".join(baseQuaDic[base]) if baseQuaDic[base] else "" for base in basicBase)
     return integrate_baseQuality
+
+
+def get_ref_alt_baseQuality_onesite(oneSiteBaseQua, refBase):
+    # Define basic base labels
+    basicBase = ["A", "T", "C", "G", "D", "I"]
+    # Check if refBase is valid
+    if refBase not in basicBase:
+        raise ValueError(f"Invalid reference base '{refBase}'")
+    altBase = [base for base in basicBase if base != refBase]
+    baseQuainfoList = oneSiteBaseQua.split("|")
+    # Get quality values for the reference base
+    try:
+        refBaseQua = [int(i) for i in baseQuainfoList[basicBase.index(refBase)].split(":") if i]
+    except (IndexError, ValueError):
+        refBaseQua = []  # Handle missing or malformed reference base quality data
+    # Get quality values for the alternative bases
+    altBaseQua = []
+    for base in altBase:
+        base_index = basicBase.index(base)
+        if base_index < len(baseQuainfoList) and baseQuainfoList[base_index]:
+            altBaseQua.extend(int(i) for i in baseQuainfoList[base_index].split(":") if i)
+    return refBaseQua, altBaseQua
 
 # cal lowquality base
 def split_baseQua_lowqualitynum(refBase, oneCellBaseQua, lowBaseCutoff):
@@ -227,6 +252,7 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
         altGT = linsets[27].strip()
         clusterCheck = linsets[22].strip()
         baseQualityInfoOnesite = linsets[11].strip()
+        # sequencing error
         prob = 1 - stats.binom.cdf(altReadsnum, totalReadsnum, 10 ** -(lowBaseCutoff/10))
         if prob >= 0.0001:
             tag_sequencing = "PASS_sequencing"
@@ -249,7 +275,14 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
             tag_lowBaseQuality = "NonePASS_NLB"
         else:
             tag_lowBaseQuality = "PASS_NLB"
-        otherfilterInfo = ";".join([linsets[21].strip(), tag_fisher_lowBase, tag_lowBaseQuality, tag_sequencing])
+        # base call error
+        refBaseQua, altBaseQua = get_ref_alt_baseQuality_onesite(integrate_baseQua, refBase)
+        p_value_basecall = stats.mannwhitneyu(altBaseQua, refBaseQua, alternative='two-sided')[1]
+        if p_value_basecall < 0.05:
+            tag_basecall = "NonePASS_basecall"
+        else:
+            tag_basecall = "PASS_basecall"
+        otherfilterInfo = ";".join([linsets[21].strip(), tag_fisher_lowBase, tag_lowBaseQuality, tag_sequencing, tag_basecall])
         if totalCellnum < cellsize:
             continue
         mutCellnum = 0
