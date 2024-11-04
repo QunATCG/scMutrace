@@ -672,7 +672,6 @@ def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList
     Returns:
     None
     """
-    print('Run task ' + str(os.getpid()) + '...')
     pysamData = pysam.AlignmentFile(BamPath, 'rb')
     # chr
     chr = str(config_posList[0])
@@ -689,9 +688,6 @@ def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList
     outPath = os.path.join(outVcfPath, f"VCF_{chr}_{config_posList[1]}_{config_posList[1]}_random.vcf")
     outVcfFile = open(outPath, "w+")
     for bam_pileup in bam_pileups:
-        count_num_iter += 1
-        if count_num_iter % 500000 == 0:
-            print("Processed " + str(count_num_iter) + " reads")
         # PileupColumn
         # the position in the reference sequence (0-based)
         # -------------------------------------------------
@@ -832,7 +828,6 @@ def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList
             outVcfFile.flush()
     refFasta.close()
     outVcfFile.close()
-    print(f'count_mut_information ###---### sub task was done: {chr}_{start}_{end}')
 
 # generate matrix data
 def generate_matrix_fromvcf(vcfilePath, barcodePath, posIndexPath):

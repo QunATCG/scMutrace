@@ -4,6 +4,7 @@ import argparse
 import subprocess
 from py_utils import *
 import scipy.stats as stats
+import multiprocessing as mp
 
 def initialize_parser():
     parser = argparse.ArgumentParser(description='filter SNP based on public database')
@@ -23,6 +24,7 @@ def initialize_parser():
     parser.add_argument('--min_mq', type=int, default=255, help='cutoff mapping quality', required = False)
     parser.add_argument('--cbtag', type=str, default='CB', help='cell barcode tag', required = False)
     parser.add_argument('--lowBaseCutoff', type=int, default=20, help='cutoff low base quality', required = False)
+    parser.add_argument('--nprocs', type=int, default=1, help='number of threads', required = False)
     return (parser)
 
 def err_call_back(err):
@@ -103,7 +105,7 @@ def filter_VCF_withoutCB(vcfilePathIn, vcfilePathOut, binsize, clustersize, dpsi
     with open(vcfilePathOutmp0, "r") as vcfileIn, open(vcfilePathOutmp1, "w") as vcfileOut:
         for line in vcfileIn:
             dp, alt = int(line.split("\t")[3]), int(line.split("\t")[5])
-            if dp < dpsize or alt < altsize:
+            if dp <= dpsize or alt <= altsize:
                 continue
             chr, pos, refBase, sitmutinfo = line.split("\t")[0], line.split("\t")[1], line.split("\t")[2], line.split("\t")[4]
             m1, m2, m3, m4, m5 = assign_mutype_snpindex(sitmutinfo, refBase)
@@ -251,15 +253,16 @@ def check_noisy_bg(targetVcfPath, pos, altGTCheck):
         if lineeach.startswith("#"):
             continue
         line = lineeach.strip().split("\t")
-        if int(line[1]) == pos:
-            continue
         if int(line[5]) > 0:
             mutCount = mutCount + 1
             altgt_tmp = assign_alt_gt(line[2], line[4])
             # check if the altGT is intersect with the altGTCheck
             if altGTCheck != "None" and altgt_tmp != "None":
-                if set(altgt_tmp.split(",")) & set(altGTCheck.split(",")):
-                    sameMutCount = sameMutCount + 1
+                if set(altgt_tmp.split(",")) & set(altGTCheck):
+                    if abs(int(line[1]) - int(pos)) > 10:
+                        sameMutCount = sameMutCount + 1
+                    if abs(int(line[1]) - int(pos)) <= 10:
+                        sameMutCount = sameMutCount + 2
     return mutCount, sameMutCount
 
 # get cell mutation info
@@ -301,7 +304,11 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
     sqlHeaderList = ["chr", "pos", "refbase", "altbase", "mode", "altCellType", "totalCellNumber", "totalReadsNumber", "isMultiAlleles", "isMultiCellType", "isCluster", "SNP", "INDEL", "otherFilter"] + [i for i in cellTypeDic.keys()]
     sqlHeader = "\t".join(sqlHeaderList)
     vcfOut.writelines(sqlHeader + "\n")
+    iter_count = 0
     for line in vcfIn:
+        iter_count += 1
+        if iter_count % 5000 == 0:
+            print(f"Processing line {iter_count}")
         linsets = line.split("\t")
         totalCellBarcodeList = []
         mutCellBarcodeList = []
@@ -322,7 +329,7 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
         clusterCheck = linsets[22].strip()
         baseQualityInfoOnesite = linsets[11].strip()
         # sequencing error
-        prob_seqerror = 1 - stats.binom.cdf(altReadsnum, totalReadsnum, 10 ** -(lowBaseCutoff/10))
+        prob_seqerror = 1 - stats.binom.cdf(int(altReadsnum), int(totalReadsnum), 10 ** -(lowBaseCutoff/10))
         if prob_seqerror <= 0.001:
             tag_sequencing = "PASS_sequencing"
         else:
@@ -346,26 +353,30 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
             tag_lowBaseQuality = "PASS_NLB"
         # base call error
         refBaseQua, altBaseQua = get_ref_alt_baseQuality_onesite(integrate_baseQua, refBase)
-        p_value_basecall = stats.mannwhitneyu(altBaseQua, refBaseQua, alternative='two-sided')[1]
-        if p_value_basecall < 0.05:
-            tag_basecall = "NonePASS_basecall"
-        else:
-            tag_basecall = "PASS_basecall"
+        # if altBaseQua is empty, set it to 0
+        if not refBaseQua:
+            refBaseQua = [20, 20, 20]
+        #p_value_basecall = stats.mannwhitneyu(altBaseQua, refBaseQua, alternative='two-sided')[1]
+        #if p_value_basecall < 0.001:
+        #    tag_basecall = "NonePASS_basecall"
+        #else:
+        #    tag_basecall = "PASS_basecall"
         # small range filter
-        target_extractsnp_fromBAM(bamPath, refPath, outdirTmp, chr + "_" + str(pos) + "_" + str(pos), min_bq, min_mq, True, False, False, False, 1, 1, 1, 5, cbtag)
-        targetVcfPath = outdirTmp + "/" + chr + "_" + str(int(pos)) + "_" + str(int(pos)) + ".vcf"
-        mutCount, sameMutCount = check_noisy_bg(targetVcfPath, pos, altGT)
+        target_extractsnp_fromBAM(bamPath, refPath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, False, False, False, 1, 1, 1, 5, cbtag)
+        targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_random.vcf")
+        altGTCheck = [j.split("[")[0] for j in altGT.split(",")]
+        mutCount, sameMutCount = check_noisy_bg(targetVcfPath, pos, altGTCheck)
         if mutCount >= 5:
             tag_noisyCluster0 = "NonePASS_noisyClusterBackground"
         else:
             tag_noisyCluster0 = "PASS_noisyClusterBackground"
-        if sameMutCount >= 2:
+        if sameMutCount >= 3:
             tag_noisyCluster1 = "NonePASS_noisyClusterSameGT"
         else:
             tag_noisyCluster1 = "PASS_noisyClusterSameGT"
-        if refBase == "A" and altGT and "G" in altGT.split(","):
+        if refBase == "A" and altGT and "G" in altGTCheck:
             tag_noisyCluster2 = "Maybe_RNAediting"
-        elif refBase == "C" and altGT and "T" in altGT.split(","):
+        elif refBase == "C" and altGT and "T" in altGTCheck:
             tag_noisyCluster2 = "Maybe_RNAediting"
         else:
             tag_noisyCluster2 = "None"
@@ -374,7 +385,7 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
             subprocess.run(cmdrm, shell=True, check=True)
         except subprocess.CalledProcessError as e:
             print(f"Error executing command '{cmdrm}': {e}")
-        otherfilterInfo = ";".join([linsets[21].strip(), tag_fisher_lowBase, tag_lowBaseQuality, tag_sequencing, tag_basecall, tag_noisyCluster0, tag_noisyCluster1, tag_noisyCluster2])
+        otherfilterInfo = ";".join([linsets[21].strip(), tag_fisher_lowBase, tag_lowBaseQuality, tag_sequencing, tag_noisyCluster0, tag_noisyCluster1, tag_noisyCluster2])
         if totalCellnum < cellsize:
             continue
         mutCellnum = 0
@@ -410,7 +421,8 @@ def main():
     lowBaseCutoff = args.lowBaseCutoff
     bamPath = args.bam
     refPath = args.ref
-    outdirTmp = outpathtmp + "/tmp"
+    outdirTmp = outpathtmp + "/tmp/"
+    CORES=args.nprocs
     if not os.path.exists(outdirTmp):
         os.makedirs(outdirTmp)
     min_bq = args.min_bq
@@ -419,8 +431,35 @@ def main():
     CellTypeDictmp = generate_cellType_dic(barcodePath, ["CellType"])
     finalOutPath = outpath + ".scmutrace.clean.vcf"
     filter_VCF_withoutCB(vcfpath, outpath, binsize, clustersize, dpsize, altsize)
-    get_cellmutInfo_forTest(outpath + ".f1", finalOutPath, CellTypeDictmp, cellsize, altcellsize, lowBaseCutoff, bamPath, refPath, outdirTmp, min_bq, min_mq, cbtag)
+    lines_per_file = int(get_Vcf_rownum(vcfpath) / CORES)
+    split_file_by_lines(outpath + ".f1", "clean_" + id + "_", lines_per_file, outpathtmp)
+    tmpSplitFiles = [f for f in os.listdir(outpathtmp) if f.startswith("splitVcf_clean_" + id + "_")]
+    if CORES > 1:
+        pool = mp.Pool(CORES)
+        for tmpSplitFile in tmpSplitFiles:
+            pool.apply_async(get_cellmutInfo_forTest, args=(outpathtmp + "/" + tmpSplitFile, outpathtmp + "/" + tmpSplitFile + ".vcf", CellTypeDictmp, cellsize, altcellsize, lowBaseCutoff, bamPath, refPath, outdirTmp, min_bq, min_mq, cbtag,), error_callback=err_call_back)
+        pool.close()
+        pool.join()
+    else:
+        for tmpSplitFile in tmpSplitFiles:
+            get_cellmutInfo_forTest(outpathtmp + "/" + tmpSplitFile, outpathtmp + "/" + tmpSplitFile + ".vcf", CellTypeDictmp, cellsize, altcellsize, lowBaseCutoff, bamPath, refPath, outdirTmp, min_bq, min_mq, cbtag)
     cmdrm = "rm " + outpath + ".f1"
+    try:
+        subprocess.run(cmdrm, shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing command '{cmdrm}': {e}")
+    vcfOut = open(finalOutPath, "w")
+    sqlHeaderList = ["chr", "pos", "refbase", "altbase", "mode", "altCellType", "totalCellNumber", "totalReadsNumber", "isMultiAlleles", "isMultiCellType", "isCluster", "SNP", "INDEL", "otherFilter"] + [i for i in CellTypeDictmp.keys()]
+    sqlHeader = "\t".join(sqlHeaderList)
+    vcfOut.writelines(sqlHeader + "\n")
+    for tmpSplitFile in tmpSplitFiles:
+        with open(outpathtmp + "/" + tmpSplitFile + ".vcf", "r") as vcfIn:
+            for line in vcfIn:
+                if line.split("\t")[0] == "chr":
+                    continue
+                vcfOut.writelines(line)
+    vcfOut.close()
+    cmdrm = "rm " + outpathtmp + "/splitVcf_clean_" + id + "_*"
     try:
         subprocess.run(cmdrm, shell=True, check=True)
     except subprocess.CalledProcessError as e:

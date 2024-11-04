@@ -13,9 +13,11 @@ helpFunction(){
     echo "Filter noisy sites"
     echo ""
     echo "Usage:"
-    echo "$0 -v VCFPath[str] -s SAMPLEID[str] -c CELLBARCODEFILE[str] -l BINSIZE[int] -L CLUSTERSIZE[int] -d MINDP[int] -D MINALTDP[int] -n MINCELLNUM[int] -N MINALTCELLNUM[int] -B LOWBQ[int] -O OUTPUT[str]"
+    echo "$0 -b BAMFILE[str] -r REF[str] -v VCFPath[str] -s SAMPLEID[str] -c CELLBARCODEFILE[str] -C CELLBARCODETAG[str] -l BINSIZE[int] -L CLUSTERSIZE[int] -d MINDP[int] -D MINALTDP[int] -n MINCELLNUM[int] -N MINALTCELLNUM[int] -B LOWBQ[int] -q minBQ[int] -Q minMQ[str] -O OUTPUT[str]"
     echo ""
     echo "Options:"
+    echo -e "\t -b \t[bam path] bam path"
+    echo -e "\t -r \t[ref path] reference path"
     echo -e "\t -v \t[vcf path] vcf path"
     echo -e "\t -O \t[outdir] output directory"
     echo -e "\t -s \t[id] sample ID"
@@ -27,6 +29,10 @@ helpFunction(){
     echo -e "\t -n \t[mincellnumber] min cell number"
     echo -e "\t -N \t[minaltcellnumber] min alteration cell number"
     echo -e "\t -B \t[lowBaseCutoff] cutoff of low base quality (default 20)"
+    echo -e "\t -C \t[cbtag] cell barcode tag (default CB)"
+    echo -e "\t -q \t[min_bq] min base quality (default 10)"
+    echo -e "\t -Q \t[min_mq] min mapping quality (default 255)"
+    echo -e "\t -p \t[nprocs] number of processors to use (default 1)"
     echo -e "\t -h \t[help] display this help message"
     echo -e "\t Author: QunLi (liqun95@163.com)"
     exit 1
@@ -78,11 +84,17 @@ minaltdpsize=2
 mincellnumber=3
 minaltcellnumber=2
 lowBaseCutoff=20
+min_bq=10
+min_mq=255
+cbtag="CB"
+nprocs=1
 
 # get parameters
-while getopts "v:O:s:c:l:L:d:D:n:N:B:h" opt
+while getopts "b:r:v:O:s:c:l:L:d:D:n:N:B:C:q:Q:p:h" opt
 do
    case "$opt" in
+        b ) bamfile="$OPTARG" ;;
+        r ) ref="$OPTARG" ;;
         v ) vcfpath="$OPTARG" ;;
         O ) outdir="$OPTARG" ;;
         s ) id="$OPTARG" ;;
@@ -94,18 +106,24 @@ do
         n ) mincellnumber="$OPTARG" ;;
         N ) minaltcellnumber="$OPTARG" ;;
         B ) lowBaseCutoff="$OPTARG" ;;
+        C ) cbtag="$OPTARG" ;;
+        q ) min_bq="$OPTARG" ;;
+        Q ) min_mq="$OPTARG" ;;
+        p ) nprocs="$OPTARG" ;;
         h ) helpFunction ;;
         ? ) helpFunction ;; # Print helpFunction in case of invalid option
    esac
 done
 
 # Print helpFunction in case parameters are empty
-if [ -z "$vcfpath" ] || [ -z "$outdir" ] || [ -z "$cellbarcode" ] || [ -z "$id" ]
+if [ -z "$vcfpath" ] || [ -z "$outdir" ] || [ -z "$cellbarcode" ] || [ -z "$id" ] || [ -z "$bamfile" ] || [ -z "$ref" ]
 then
     echo -e "\033[32m###################################################\033[0m"
     echo -e "\033[32m                  Log info                         \033[0m"
     echo -e "\033[32m###################################################\033[0m"
     echo "Some or all of the parameters are empty"
+    [ -z "$bamfile" ] && echo "BAMFILE: ${bamfile}"
+    [ -z "$ref" ] && echo "REF: ${ref}"
     [ -z "$vcfpath" ] && echo "BAMFILE: ${vcfpath}"
     [ -z "$cellbarcode" ] && echo "REF: ${cellbarcode}"
     [ -z "$id" ] && echo "SAMPLEID: ${id}"
@@ -131,6 +149,8 @@ echo -e "\033[32m             scMutrace Version 1.0                 \033[0m"
 echo -e "\033[32m            Step4 filter noisy sites               \033[0m"
 echo -e "\033[32m###################################################\033[0m"
 echo -e "\033[32mYour input parameters:\033[0m"
+echo "BAMFILE: ${bamfile}"
+echo "REF: ${ref}"
 echo "VCFPath: ${vcfpath}"
 echo "SAMPLEID: ${id}"
 echo "CELLBARCODEFILE: ${cellbarcode}"
@@ -146,4 +166,4 @@ echo ""
 echo ""
 
 # main steps
-python -u ${scMutrace_src_dir}/src/3_runStep0_noisy.py --vcfpath ${vcfpath} --id ${id} --barcode ${cellbarcode} --binsize ${binsize} --clustersize ${clustersize} --dpsize ${minsequencingdepth} --altdpsize ${minaltdpsize} --cellsize ${mincellnumber} --altcellsize ${minaltcellnumber} --lowBaseCutoff ${lowBaseCutoff} --outdir ${outdir}
+python -u ${scMutrace_src_dir}/src/3_runStep0_noisy.py --vcfpath ${vcfpath} --id ${id} --barcode ${cellbarcode} --binsize ${binsize} --clustersize ${clustersize} --dpsize ${minsequencingdepth} --altdpsize ${minaltdpsize} --cellsize ${mincellnumber} --altcellsize ${minaltcellnumber} --lowBaseCutoff ${lowBaseCutoff} --outdir ${outdir} --bam ${bamfile} --ref ${ref} --min_bq ${min_bq} --min_mq ${min_mq} --cbtag ${cbtag} --nprocs ${nprocs}
