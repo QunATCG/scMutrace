@@ -299,109 +299,109 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
             subprocess.run(['rm', vcfPathOut], check=True)
         except subprocess.CalledProcessError as e:
             print(f"Error removing file {vcfPathOut}: {e}")
-    vcfIn = open(vcfPathIn, "r")
-    vcfOut = open(vcfPathOut, "w")
-    sqlHeaderList = ["chr", "pos", "refbase", "altbase", "mode", "altCellType", "totalCellNumber", "totalReadsNumber", "isMultiAlleles", "isMultiCellType", "isCluster", "SNP", "INDEL", "otherFilter"] + [i for i in cellTypeDic.keys()]
-    sqlHeader = "\t".join(sqlHeaderList)
-    vcfOut.writelines(sqlHeader + "\n")
-    iter_count = 0
-    for line in vcfIn:
-        iter_count += 1
-        if iter_count % 5000 == 0:
-            print(f"Processing line {iter_count}")
-        linsets = line.split("\t")
-        totalCellBarcodeList = []
-        mutCellBarcodeList = []
-        mutCellMutInfoList = []
-        chr = linsets[0].strip()
-        pos = linsets[1].strip()
-        refBase = linsets[2].strip()
-        totalReadsnum = linsets[3].strip()
-        altReadsnum = linsets[5].strip()
-        cellbarcodeList = linsets[9].split(";")
-        cellmutInfoList = linsets[10].split(";")
-        mode = linsets[19]
-        totalCellnum = len(cellbarcodeList)
-        MultiAllelesCheck = linsets[25].strip()
-        SNPCheck = linsets[24].strip()
-        INDELCheck = linsets[23].strip()
-        altGT = linsets[27].strip()
-        clusterCheck = linsets[22].strip()
-        baseQualityInfoOnesite = linsets[11].strip()
-        # sequencing error
-        prob_seqerror = 1 - stats.binom.cdf(int(altReadsnum), int(totalReadsnum), 10 ** -(lowBaseCutoff/10))
-        if prob_seqerror <= 0.001:
-            tag_sequencing = "PASS_sequencing"
-        else:
-            tag_sequencing = "NonePASS_sequencing"
-        integrate_baseQua = integrate_baseQuality_onesite(baseQualityInfoOnesite)
-        lowwtBasenum, lowmutBasenum = split_baseQua_lowqualitynum(refBase, integrate_baseQua, lowBaseCutoff)
-        # fisher test for lowQualityBases
-        p_fisher_lowBase = stats.fisher_exact([[int(lowmutBasenum), int(lowwtBasenum)], [int(altReadsnum) - int(lowmutBasenum), int(totalReadsnum) - int(altReadsnum) - int(lowwtBasenum)]])[1]
-        if p_fisher_lowBase <= 0.05:
-            tag_fisher_lowBase = "NonePASS_fisherLB"
-        else:
-            tag_fisher_lowBase = "PASS_fisherLB"
-        frq_lowMutbase_totalMutbase = int(lowmutBasenum)/int(altReadsnum)
-        if int(totalReadsnum) - int(altReadsnum) > 0:
-            frq_lowWTbase_totalMutbase = int(lowwtBasenum)/(int(totalReadsnum) - int(altReadsnum))
-        else:
-            frq_lowWTbase_totalMutbase = int(lowwtBasenum)/(int(totalReadsnum) - int(altReadsnum) + 1)
-        if frq_lowMutbase_totalMutbase >= 0.2 or frq_lowWTbase_totalMutbase >= 0.2:
-            tag_lowBaseQuality = "NonePASS_NLB"
-        else:
-            tag_lowBaseQuality = "PASS_NLB"
-        # base call error
-        refBaseQua, altBaseQua = get_ref_alt_baseQuality_onesite(integrate_baseQua, refBase)
-        # if altBaseQua is empty, set it to 0
-        if not refBaseQua:
-            refBaseQua = [20, 20, 20]
-        #p_value_basecall = stats.mannwhitneyu(altBaseQua, refBaseQua, alternative='two-sided')[1]
-        #if p_value_basecall < 0.001:
-        #    tag_basecall = "NonePASS_basecall"
-        #else:
-        #    tag_basecall = "PASS_basecall"
-        # small range filter
-        target_extractsnp_fromBAM(bamPath, refPath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, False, False, False, 1, 1, 1, 5, cbtag)
-        targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_random.vcf")
-        altGTCheck = [j.split("[")[0] for j in altGT.split(",")]
-        mutCount, sameMutCount = check_noisy_bg(targetVcfPath, pos, altGTCheck)
-        if mutCount >= 5:
-            tag_noisyCluster0 = "NonePASS_noisyClusterBackground"
-        else:
-            tag_noisyCluster0 = "PASS_noisyClusterBackground"
-        if sameMutCount >= 3:
-            tag_noisyCluster1 = "NonePASS_noisyClusterSameGT"
-        else:
-            tag_noisyCluster1 = "PASS_noisyClusterSameGT"
-        if refBase == "A" and altGT and "G" in altGTCheck:
-            tag_noisyCluster2 = "Maybe_RNAediting"
-        elif refBase == "C" and altGT and "T" in altGTCheck:
-            tag_noisyCluster2 = "Maybe_RNAediting"
-        else:
-            tag_noisyCluster2 = "None"
-        cmdrm = "rm " + targetVcfPath
-        try:
-            subprocess.run(cmdrm, shell=True, check=True)
-        except subprocess.CalledProcessError as e:
-            print(f"Error executing command '{cmdrm}': {e}")
-        otherfilterInfo = ";".join([linsets[21].strip(), tag_fisher_lowBase, tag_lowBaseQuality, tag_sequencing, tag_noisyCluster0, tag_noisyCluster1, tag_noisyCluster2])
-        if totalCellnum < cellsize:
-            continue
-        mutCellnum = 0
-        for i in range(0, totalCellnum):
-            totalCellBarcodeList.append(cellbarcodeList[i])
-            checkMut = check_ifMut_oneCell(cellmutInfoList[i], refBase)
-            if checkMut:
-                mutCellnum += 1
-                mutCellBarcodeList.append(cellbarcodeList[i])
-                mutCellMutInfoList.append(cellmutInfoList[i])
-        if mutCellnum < altcellsize:
-            continue
-        CellTypeCountDic, altCellType, MultiCellType = generate_cellType_countDic(cellTypeDic, totalCellBarcodeList, mutCellBarcodeList, mutCellMutInfoList, refBase)
-        sqlinlineList = [chr, pos, refBase, altGT, mode, ",".join(altCellType), str(mutCellnum) + "|" + str(totalCellnum), str(altReadsnum) + "|" + str(totalReadsnum), MultiAllelesCheck, MultiCellType, clusterCheck, SNPCheck, INDELCheck, otherfilterInfo] + [i for i in CellTypeCountDic.values()]
-        sqlinline = "\t".join(sqlinlineList)
-        vcfOut.writelines(sqlinline + "\n")
+    with open(vcfPathIn, "r") as vcfIn, open(vcfPathOut, "w") as vcfOut:
+        sqlHeaderList = ["chr", "pos", "refbase", "altbase", "mode", "altCellType", "totalCellNumber", "totalReadsNumber", "isMultiAlleles", "isMultiCellType", "isCluster", "SNP", "INDEL", "otherFilter"] + [i for i in cellTypeDic.keys()]
+        sqlHeader = "\t".join(sqlHeaderList)
+        vcfOut.writelines(sqlHeader + "\n")
+        iter_count = 0
+        for line in vcfIn:
+            iter_count += 1
+            if iter_count % 5000 == 0:
+                print(f"Processing line {iter_count}")
+            linsets = line.split("\t")
+            totalCellBarcodeList = []
+            mutCellBarcodeList = []
+            mutCellMutInfoList = []
+            chr = linsets[0].strip()
+            pos = linsets[1].strip()
+            refBase = linsets[2].strip()
+            totalReadsnum = linsets[3].strip()
+            altReadsnum = linsets[5].strip()
+            cellbarcodeList = linsets[9].split(";")
+            cellmutInfoList = linsets[10].split(";")
+            mode = linsets[19]
+            totalCellnum = len(cellbarcodeList)
+            MultiAllelesCheck = linsets[25].strip()
+            SNPCheck = linsets[24].strip()
+            INDELCheck = linsets[23].strip()
+            altGT = linsets[27].strip()
+            clusterCheck = linsets[22].strip()
+            baseQualityInfoOnesite = linsets[11].strip()
+            # sequencing error
+            prob_seqerror = 1 - stats.binom.cdf(int(altReadsnum), int(totalReadsnum), 10 ** -(lowBaseCutoff/10))
+            if prob_seqerror <= 0.001:
+                tag_sequencing = "PASS_sequencing"
+            else:
+                tag_sequencing = "NonePASS_sequencing"
+            integrate_baseQua = integrate_baseQuality_onesite(baseQualityInfoOnesite)
+            lowwtBasenum, lowmutBasenum = split_baseQua_lowqualitynum(refBase, integrate_baseQua, lowBaseCutoff)
+            # fisher test for lowQualityBases
+            p_fisher_lowBase = stats.fisher_exact([[int(lowmutBasenum), int(lowwtBasenum)], [int(altReadsnum) - int(lowmutBasenum), int(totalReadsnum) - int(altReadsnum) - int(lowwtBasenum)]])[1]
+            if p_fisher_lowBase <= 0.05:
+                tag_fisher_lowBase = "NonePASS_fisherLB"
+            else:
+                tag_fisher_lowBase = "PASS_fisherLB"
+            frq_lowMutbase_totalMutbase = int(lowmutBasenum)/int(altReadsnum)
+            if int(totalReadsnum) - int(altReadsnum) > 0:
+                frq_lowWTbase_totalMutbase = int(lowwtBasenum)/(int(totalReadsnum) - int(altReadsnum))
+            else:
+                frq_lowWTbase_totalMutbase = int(lowwtBasenum)/(int(totalReadsnum) - int(altReadsnum) + 1)
+            if frq_lowMutbase_totalMutbase >= 0.2 or frq_lowWTbase_totalMutbase >= 0.2:
+                tag_lowBaseQuality = "NonePASS_NLB"
+            else:
+                tag_lowBaseQuality = "PASS_NLB"
+            # base call error
+            #refBaseQua, altBaseQua = get_ref_alt_baseQuality_onesite(integrate_baseQua, refBase)
+            # if altBaseQua is empty, set it to 0
+            #if not refBaseQua:
+            #    refBaseQua = [20, 20, 20]
+            #p_value_basecall = stats.mannwhitneyu(altBaseQua, refBaseQua, alternative='two-sided')[1]
+            #if p_value_basecall < 0.001:
+            #    tag_basecall = "NonePASS_basecall"
+            #else:
+            #    tag_basecall = "PASS_basecall"
+            # small range filter
+            target_extractsnp_fromBAM(bamPath, refPath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, False, False, False, 1, 1, 1, 5, cbtag)
+            targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_random.vcf")
+            altGTCheck = [j.split("[")[0] for j in altGT.split(",")]
+            mutCount, sameMutCount = check_noisy_bg(targetVcfPath, pos, altGTCheck)
+            if mutCount >= 5:
+                tag_noisyCluster0 = "NonePASS_noisyClusterBackground"
+            else:
+                tag_noisyCluster0 = "PASS_noisyClusterBackground"
+            if sameMutCount >= 3:
+                tag_noisyCluster1 = "NonePASS_noisyClusterSameGT"
+            else:
+                tag_noisyCluster1 = "PASS_noisyClusterSameGT"
+            if refBase == "A" and altGT and "G" in altGTCheck:
+                tag_noisyCluster2 = "Maybe_RNAediting"
+            elif refBase == "C" and altGT and "T" in altGTCheck:
+                tag_noisyCluster2 = "Maybe_RNAediting"
+            else:
+                tag_noisyCluster2 = "None"
+            cmdrm = "rm " + targetVcfPath
+            try:
+                subprocess.run(cmdrm, shell=True, check=True)
+            except subprocess.CalledProcessError as e:
+                print(f"Error executing command '{cmdrm}': {e}")
+            otherfilterInfo = ";".join([linsets[21].strip(), tag_fisher_lowBase, tag_lowBaseQuality, tag_sequencing, tag_noisyCluster0, tag_noisyCluster1, tag_noisyCluster2])
+            if totalCellnum < cellsize:
+                continue
+            mutCellnum = 0
+            for i in range(0, totalCellnum):
+                totalCellBarcodeList.append(cellbarcodeList[i])
+                checkMut = check_ifMut_oneCell(cellmutInfoList[i], refBase)
+                if checkMut:
+                    mutCellnum += 1
+                    mutCellBarcodeList.append(cellbarcodeList[i])
+                    mutCellMutInfoList.append(cellmutInfoList[i])
+            if mutCellnum < altcellsize:
+                continue
+            CellTypeCountDic, altCellType, MultiCellType = generate_cellType_countDic(cellTypeDic, totalCellBarcodeList, mutCellBarcodeList, mutCellMutInfoList, refBase)
+            sqlinlineList = [chr, pos, refBase, altGT, mode, ",".join(altCellType), str(mutCellnum) + "|" + str(totalCellnum), str(altReadsnum) + "|" + str(totalReadsnum), MultiAllelesCheck, MultiCellType, clusterCheck, SNPCheck, INDELCheck, otherfilterInfo] + [i for i in CellTypeCountDic.values()]
+            sqlinline = "\t".join(sqlinlineList)
+            vcfOut.writelines(sqlinline + "\n")
+            vcfOut.flush()
 
 
 def main():
@@ -452,17 +452,17 @@ def main():
         subprocess.run(cmdrm, shell=True, check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error executing command '{cmdrm}': {e}")
-    vcfOut = open(finalOutPath, "w")
+    vcfOutfinal = open(finalOutPath, "w")
     sqlHeaderList = ["chr", "pos", "refbase", "altbase", "mode", "altCellType", "totalCellNumber", "totalReadsNumber", "isMultiAlleles", "isMultiCellType", "isCluster", "SNP", "INDEL", "otherFilter"] + [i for i in CellTypeDictmp.keys()]
     sqlHeader = "\t".join(sqlHeaderList)
-    vcfOut.writelines(sqlHeader + "\n")
+    vcfOutfinal.writelines(sqlHeader + "\n")
     for tmpSplitFile in tmpSplitFiles:
         with open(outpathtmp + "/" + tmpSplitFile + ".vcf", "r") as vcfIn:
             for line in vcfIn:
                 if line.split("\t")[0] == "chr":
                     continue
-                vcfOut.writelines(line)
-    vcfOut.close()
+                vcfOutfinal.writelines(line)
+    vcfOutfinal.close()
     cmdrm = "rm " + outpathtmp + "/splitVcf_clean_" + id + "_*"
     try:
         subprocess.run(cmdrm, shell=True, check=True)
