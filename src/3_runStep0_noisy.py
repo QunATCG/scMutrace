@@ -254,7 +254,7 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
         baseQualityInfoOnesite = linsets[11].strip()
         # sequencing error
         prob = 1 - stats.binom.cdf(altReadsnum, totalReadsnum, 10 ** -(lowBaseCutoff/10))
-        if prob >= 0.0001:
+        if prob <= 0.001:
             tag_sequencing = "PASS_sequencing"
         else:
             tag_sequencing = "NonePASS_sequencing"
