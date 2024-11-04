@@ -431,7 +431,7 @@ def main():
     CellTypeDictmp = generate_cellType_dic(barcodePath, ["CellType"])
     finalOutPath = outpath + ".scmutrace.clean.vcf"
     filter_VCF_withoutCB(vcfpath, outpath, binsize, clustersize, dpsize, altsize)
-    lines_per_file = int(get_Vcf_rownum(vcfpath) / CORES)
+    lines_per_file = int(get_Vcf_rownum(outpath + ".f1") / CORES)
     split_file_by_lines(outpath + ".f1", "clean_" + id + "_", lines_per_file, outpathtmp)
     tmpSplitFiles = [f for f in os.listdir(outpathtmp) if f.startswith("splitVcf_clean_" + id + "_")]
     if CORES > 1:
