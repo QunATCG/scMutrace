@@ -20,8 +20,6 @@ def initialize_parser():
     parser.add_argument('--outdir', default = '.', help='Out folder', required = False)
     return (parser)
 
-def err_call_back(err):
-    print(f'apply_async error:{str(err)}')
 
 def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_alt, min_cell, max_nm, cbtag):
     """
@@ -60,7 +58,7 @@ def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList
     bam_pileups = pysamData.pileup(contig = str(chr), start = int(start), end = int(end), max_depth = 100000000, min_base_quality = min_bq, min_mapping_quality = min_mq)
     count_num_iter = 0
     # out vcf
-    outPath = os.path.join(outVcfPath, f"VCF_{chr}_{start}_{end}_random.vcf")
+    outPath = os.path.join(outVcfPath, f"VCF_{chr}_{config_posList[1]}_{config_posList[1]}_random.vcf")
     outVcfFile = open(outPath, "w+")
     for bam_pileup in bam_pileups:
         count_num_iter += 1
@@ -220,13 +218,6 @@ def main():
     cbtag = args.cbtag
     make_dir_check(outDirPath)
     target_extractsnp_fromBAM(BamPath, referencePath, outDirPath, config_info.split("_"), 10, min_mq, True, False, False, False, 1, 1, 1, 5, cbtag)
-    randomTmpfiles = [i for i in os.listdir(outDirPath) if re.search("VCF_" + str(config_info.split("_")[0]), i ) != None]
-    randomTmpfilePaths = [outDirPath + i for i in randomTmpfiles]
-    fileSql = " ".join(randomTmpfilePaths)
-    cmd0 = "cat " + fileSql + " > " + outDirPath + "random_vcf_" + str(config_info.split("_")[0]) + ".vcf"
-    cmd1 = "rm " + fileSql
-    os.system(cmd0)
-    os.system(cmd1)
 
 if __name__=='__main__':
     starttime = timeit.default_timer()

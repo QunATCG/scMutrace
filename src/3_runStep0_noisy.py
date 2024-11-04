@@ -2,20 +2,26 @@ import os
 import timeit
 import argparse
 import subprocess
+from py_utils import *
 import scipy.stats as stats
 
 def initialize_parser():
     parser = argparse.ArgumentParser(description='filter SNP based on public database')
     parser.add_argument('--outdir', type=str, default='', help='out file path', required = True)
+    parser.add_argument('--bam', type=str, default='', help='bam file path', required = True)
+    parser.add_argument('--ref', type=str, default='', help='reference file path', required = True)
     parser.add_argument('--vcfpath', type=str, default='', help='Vcf path', required = True)
     parser.add_argument('--id', type=str, default='', help='sample id', required = True)
     parser.add_argument('--barcode', type=str, default='', help='barcode file [tab separated file with header: Barcode CellType]', required = True)
-    parser.add_argument('--binsize', type=int, default=5, help='base number between two snps (MultiAlleles)', required = False)
-    parser.add_argument('--clustersize', type=int, default=4, help='number of MultiAlleles snps', required = False)
+    parser.add_argument('--binsize', type=int, default=20, help='base number between two snps (MultiAlleles)', required = False)
+    parser.add_argument('--clustersize', type=int, default=2, help='number of MultiAlleles snps', required = False)
     parser.add_argument('--dpsize', type=int, default=10, help='min depth', required = False)
     parser.add_argument('--altdpsize', type=int, default=5, help='min alternative depth', required = False)
     parser.add_argument('--cellsize', type=int, default=10, help='min cell number', required = False)
     parser.add_argument('--altcellsize', type=int, default=5, help='min mut cell number', required = False)
+    parser.add_argument('--min_bq', type=int, default=10, help='cutoff base quality', required = False)
+    parser.add_argument('--min_mq', type=int, default=255, help='cutoff mapping quality', required = False)
+    parser.add_argument('--cbtag', type=str, default='CB', help='cell barcode tag', required = False)
     parser.add_argument('--lowBaseCutoff', type=int, default=20, help='cutoff low base quality', required = False)
     return (parser)
 
@@ -220,8 +226,71 @@ def split_baseQua_lowqualitynum(refBase, oneCellBaseQua, lowBaseCutoff):
     lowaltBaseNum = sum(len([int(j) for j in baseQuainfoList[basicBase.index(base)].split(":") if j and int(j) <= lowBaseCutoff]) for base in altBase)
     return lowrefBaseNum, lowaltBaseNum
 
+# assign alt genotype
+def assign_alt_gt(refBase, sitemutinfo):
+    indelBase = {"D", "I"}
+    snpBase = {"A", "T", "C", "G"}
+    basicBase = {"A", "T", "C", "G", "D", "I"}
+    countDic = {base: 0 for base in basicBase}
+    check_base = basicBase - {refBase}
+    sitemutinfoList = list(map(int, sitemutinfo.split(":")))
+    for base, count in zip(["A", "T", "C", "G", "D", "I"], sitemutinfoList):
+        countDic[base] += count
+    gtList = [base for base in check_base if countDic[base] != 0]
+    indelintersection = indelBase & set(gtList)
+    snpintersection = snpBase & set(gtList)
+    altGT = ",".join(f"{base}" for base in snpintersection | indelintersection)
+    return altGT
+
+# generate random pool
+def check_noisy_bg(targetVcfPath, pos, altGTCheck):
+    data = open(targetVcfPath, "r")
+    mutCount = 0
+    sameMutCount = 0
+    for lineeach in data:
+        if lineeach.startswith("#"):
+            continue
+        line = lineeach.strip().split("\t")
+        if int(line[1]) == pos:
+            continue
+        if int(line[5]) > 0:
+            mutCount = mutCount + 1
+            altgt_tmp = assign_alt_gt(line[2], line[4])
+            # check if the altGT is intersect with the altGTCheck
+            if altGTCheck != "None" and altgt_tmp != "None":
+                if set(altgt_tmp.split(",")) & set(altGTCheck.split(",")):
+                    sameMutCount = sameMutCount + 1
+    return mutCount, sameMutCount
+
+# get cell mutation info
+'''
+def generate_random_pool(targetVcfPath, pos, altGTCheck):
+    data = open(targetVcfPath, "r")
+    totalReadsnum = 0
+    altReadsnum = 0
+    mutCount = 0
+    sameMutCount = 0
+    for lineeach in data:
+        if lineeach.startswith("#"):
+            continue
+        line = lineeach.strip().split("\t")
+        if int(line[1]) == pos:
+            continue
+        totalReadsnum = totalReadsnum + int(line[3])
+        altReadsnum = altReadsnum + int(line[5])
+        if int(line[5]) > 0:
+            mutCount = mutCount + 1
+            altgt_tmp = assign_alt_gt(line[2], line[4])
+            # check if the altGT is intersect with the altGTCheck
+            if altGTCheck != "None" and altgt_tmp != "None":
+                if set(altgt_tmp.split(",")) & set(altGTCheck.split(",")):
+                    sameMutCount = sameMutCount + 1
+    randomPool = [0] * (totalReadsnum - altReadsnum) + [1] * altReadsnum
+    return randomPool, mutCount, sameMutCount
+'''
+
 # get cell mutation info 
-def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcellsize, lowBaseCutoff):
+def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcellsize, lowBaseCutoff, bamPath, refPath, outdirTmp, min_bq, min_mq, cbtag):
     if os.path.exists(vcfPathOut):
         try:
             subprocess.run(['rm', vcfPathOut], check=True)
@@ -253,8 +322,8 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
         clusterCheck = linsets[22].strip()
         baseQualityInfoOnesite = linsets[11].strip()
         # sequencing error
-        prob = 1 - stats.binom.cdf(altReadsnum, totalReadsnum, 10 ** -(lowBaseCutoff/10))
-        if prob <= 0.001:
+        prob_seqerror = 1 - stats.binom.cdf(altReadsnum, totalReadsnum, 10 ** -(lowBaseCutoff/10))
+        if prob_seqerror <= 0.001:
             tag_sequencing = "PASS_sequencing"
         else:
             tag_sequencing = "NonePASS_sequencing"
@@ -282,7 +351,30 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
             tag_basecall = "NonePASS_basecall"
         else:
             tag_basecall = "PASS_basecall"
-        otherfilterInfo = ";".join([linsets[21].strip(), tag_fisher_lowBase, tag_lowBaseQuality, tag_sequencing, tag_basecall])
+        # small range filter
+        target_extractsnp_fromBAM(bamPath, refPath, outdirTmp, chr + "_" + str(pos) + "_" + str(pos), min_bq, min_mq, True, False, False, False, 1, 1, 1, 5, cbtag)
+        targetVcfPath = outdirTmp + "/" + chr + "_" + str(int(pos)) + "_" + str(int(pos)) + ".vcf"
+        mutCount, sameMutCount = check_noisy_bg(targetVcfPath, pos, altGT)
+        if mutCount >= 5:
+            tag_noisyCluster0 = "NonePASS_noisyClusterBackground"
+        else:
+            tag_noisyCluster0 = "PASS_noisyClusterBackground"
+        if sameMutCount >= 2:
+            tag_noisyCluster1 = "NonePASS_noisyClusterSameGT"
+        else:
+            tag_noisyCluster1 = "PASS_noisyClusterSameGT"
+        if refBase == "A" and altGT and "G" in altGT.split(","):
+            tag_noisyCluster2 = "Maybe_RNAediting"
+        elif refBase == "C" and altGT and "T" in altGT.split(","):
+            tag_noisyCluster2 = "Maybe_RNAediting"
+        else:
+            tag_noisyCluster2 = "None"
+        cmdrm = "rm " + targetVcfPath
+        try:
+            subprocess.run(cmdrm, shell=True, check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Error executing command '{cmdrm}': {e}")
+        otherfilterInfo = ";".join([linsets[21].strip(), tag_fisher_lowBase, tag_lowBaseQuality, tag_sequencing, tag_basecall, tag_noisyCluster0, tag_noisyCluster1, tag_noisyCluster2])
         if totalCellnum < cellsize:
             continue
         mutCellnum = 0
@@ -316,10 +408,18 @@ def main():
     cellsize = args.cellsize
     altcellsize = args.altcellsize
     lowBaseCutoff = args.lowBaseCutoff
+    bamPath = args.bam
+    refPath = args.ref
+    outdirTmp = outpathtmp + "/tmp"
+    if not os.path.exists(outdirTmp):
+        os.makedirs(outdirTmp)
+    min_bq = args.min_bq
+    min_mq = args.min_mq
+    cbtag = args.cbtag
     CellTypeDictmp = generate_cellType_dic(barcodePath, ["CellType"])
     finalOutPath = outpath + ".scmutrace.clean.vcf"
     filter_VCF_withoutCB(vcfpath, outpath, binsize, clustersize, dpsize, altsize)
-    get_cellmutInfo_forTest(outpath + ".f1", finalOutPath, CellTypeDictmp, cellsize, altcellsize, lowBaseCutoff)
+    get_cellmutInfo_forTest(outpath + ".f1", finalOutPath, CellTypeDictmp, cellsize, altcellsize, lowBaseCutoff, bamPath, refPath, outdirTmp, min_bq, min_mq, cbtag)
     cmdrm = "rm " + outpath + ".f1"
     try:
         subprocess.run(cmdrm, shell=True, check=True)
