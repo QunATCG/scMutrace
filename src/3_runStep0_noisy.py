@@ -422,7 +422,7 @@ def main():
     bamPath = args.bam
     refPath = args.ref
     outdirTmp = outpathtmp + "/tmp/"
-    CORES=args.nprocs
+    COREUSE=args.nprocs
     if not os.path.exists(outdirTmp):
         os.makedirs(outdirTmp)
     min_bq = args.min_bq
@@ -431,15 +431,19 @@ def main():
     CellTypeDictmp = generate_cellType_dic(barcodePath, ["CellType"])
     finalOutPath = outpath + ".scmutrace.clean.vcf"
     filter_VCF_withoutCB(vcfpath, outpath, binsize, clustersize, dpsize, altsize)
-    lines_per_file = int(get_Vcf_rownum(outpath + ".f1") / CORES)
+    lines_per_file = int(get_Vcf_rownum(outpath + ".f1") / COREUSE)
     split_file_by_lines(outpath + ".f1", "clean_" + id + "_", lines_per_file, outpathtmp)
     tmpSplitFiles = [f for f in os.listdir(outpathtmp) if f.startswith("splitVcf_clean_" + id + "_")]
-    if CORES > 1:
-        pool = mp.Pool(CORES)
+    if COREUSE > 1:
+        print('Parent process %s.' % os.getpid())
+        p = mp.get_context("fork").Pool(COREUSE)
+        print("Your cores is " + str(COREUSE))
         for tmpSplitFile in tmpSplitFiles:
-            pool.apply_async(get_cellmutInfo_forTest, args=(outpathtmp + "/" + tmpSplitFile, outpathtmp + "/" + tmpSplitFile + ".vcf", CellTypeDictmp, cellsize, altcellsize, lowBaseCutoff, bamPath, refPath, outdirTmp, min_bq, min_mq, cbtag,), error_callback=err_call_back)
-        pool.close()
-        pool.join()
+            p.apply_async(get_cellmutInfo_forTest, args=(outpathtmp + "/" + tmpSplitFile, outpathtmp + "/" + tmpSplitFile + ".vcf", CellTypeDictmp, cellsize, altcellsize, lowBaseCutoff, bamPath, refPath, outdirTmp, min_bq, min_mq, cbtag,), error_callback=err_call_back)
+        print('Waiting for all subprocesses done...')
+        p.close()
+        p.join()
+        print('All subprocesses done.')
     else:
         for tmpSplitFile in tmpSplitFiles:
             get_cellmutInfo_forTest(outpathtmp + "/" + tmpSplitFile, outpathtmp + "/" + tmpSplitFile + ".vcf", CellTypeDictmp, cellsize, altcellsize, lowBaseCutoff, bamPath, refPath, outdirTmp, min_bq, min_mq, cbtag)
