@@ -253,7 +253,7 @@ def check_noisy_bg(targetVcfPath, pos, altGTCheck):
         if lineeach.startswith("#"):
             continue
         line = lineeach.strip().split("\t")
-        if int(line[5]) > 1:
+        if int(line[5]) > 0:
             mutCount = mutCount + 1
             altgt_tmp = assign_alt_gt(line[2], line[4])
             # check if the altGT is intersect with the altGTCheck
@@ -365,7 +365,7 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
             targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_random.vcf")
             altGTCheck = [j.split("[")[0] for j in altGT.split(",")]
             mutCount, sameMutCount = check_noisy_bg(targetVcfPath, pos, altGTCheck)
-            if mutCount >= 4:
+            if mutCount >= 3:
                 tag_noisyCluster0 = "NonePASS_noisyClusterBackground"
             else:
                 tag_noisyCluster0 = "PASS_noisyClusterBackground"

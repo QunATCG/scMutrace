@@ -676,9 +676,9 @@ def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList
     # chr
     chr = str(config_posList[0])
     # start
-    start = int(config_posList[1]) - 100
+    start = int(config_posList[1]) - 50
     # end
-    end = int(config_posList[2]) + 100
+    end = int(config_posList[2]) + 50
     # ref
     refFasta = pysam.FastaFile(referencePath)
     # pileups
