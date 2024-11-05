@@ -683,7 +683,6 @@ def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList
     refFasta = pysam.FastaFile(referencePath)
     # pileups
     bam_pileups = pysamData.pileup(contig = str(chr), start = int(start), end = int(end), max_depth = 100000000, min_base_quality = min_bq, min_mapping_quality = min_mq)
-    count_num_iter = 0
     # out vcf
     outPath = os.path.join(outVcfPath, f"VCF_{chr}_{config_posList[1]}_{config_posList[1]}_random.vcf")
     outVcfFile = open(outPath, "w+")

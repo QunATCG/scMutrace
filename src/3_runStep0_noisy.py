@@ -105,7 +105,7 @@ def filter_VCF_withoutCB(vcfilePathIn, vcfilePathOut, binsize, clustersize, dpsi
     with open(vcfilePathOutmp0, "r") as vcfileIn, open(vcfilePathOutmp1, "w") as vcfileOut:
         for line in vcfileIn:
             dp, alt = int(line.split("\t")[3]), int(line.split("\t")[5])
-            if dp <= dpsize or alt <= altsize:
+            if dp < dpsize or alt < altsize:
                 continue
             chr, pos, refBase, sitmutinfo = line.split("\t")[0], line.split("\t")[1], line.split("\t")[2], line.split("\t")[4]
             m1, m2, m3, m4, m5 = assign_mutype_snpindex(sitmutinfo, refBase)
@@ -253,7 +253,7 @@ def check_noisy_bg(targetVcfPath, pos, altGTCheck):
         if lineeach.startswith("#"):
             continue
         line = lineeach.strip().split("\t")
-        if int(line[5]) > 0:
+        if int(line[5]) > 1:
             mutCount = mutCount + 1
             altgt_tmp = assign_alt_gt(line[2], line[4])
             # check if the altGT is intersect with the altGTCheck
@@ -365,7 +365,7 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
             targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_random.vcf")
             altGTCheck = [j.split("[")[0] for j in altGT.split(",")]
             mutCount, sameMutCount = check_noisy_bg(targetVcfPath, pos, altGTCheck)
-            if mutCount >= 5:
+            if mutCount >= 4:
                 tag_noisyCluster0 = "NonePASS_noisyClusterBackground"
             else:
                 tag_noisyCluster0 = "PASS_noisyClusterBackground"
