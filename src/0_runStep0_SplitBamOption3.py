@@ -54,7 +54,7 @@ def err_call_back(err):
 
 # get config data from fasta
 def generate_config_range(refasta):
-    basicChr = list(str(i) for i in range(1, 40)) + ["chr" + str(i) for i in range(1, 40)] + ['X', 'Y', 'chrX', 'chrY', 'MT', 'chrMT', 'mt', 'chrmt','x', 'y', 'chrx', 'chry']
+    basicChr = list(str(i) for i in range(1, 40)) + ["chr" + str(i) for i in range(1, 40)] + ['X', 'Y', 'chrX', 'chrY', 'M', 'chrM', 'm', 'chrm', 'MT', 'chrMT', 'mt', 'chrmt','x', 'y', 'chrx', 'chry']
     refChrTotal = refasta.references
     configDic = {}
     chrList = []
