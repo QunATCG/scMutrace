@@ -13,11 +13,11 @@ helpFunction(){
     echo "Filter noisy sites"
     echo ""
     echo "Usage:"
-    echo "$0 -b BAMFILE[str] -r REF[str] -v VCFPath[str] -s SAMPLEID[str] -c CELLBARCODEFILE[str] -C CELLBARCODETAG[str] -l BINSIZE[int] -L CLUSTERSIZE[int] -d MINDP[int] -D MINALTDP[int] -n MINCELLNUM[int] -N MINALTCELLNUM[int] -B LOWBQ[int] -q minBQ[int] -Q minMQ[str] -O OUTPUT[str]"
+    echo "$0 -b BAMFILE[str] -f REF[str] -v VCFPath[str] -s SAMPLEID[str] -c CELLBARCODEFILE[str] -C CELLBARCODETAG[str] -l BINSIZE[int] -L CLUSTERSIZE[int] -d MINDP[int] -D MINALTDP[int] -n MINCELLNUM[int] -N MINALTCELLNUM[int] -B LOWBQ[int] -q minBQ[int] -Q minMQ[str] -O OUTPUT[str]"
     echo ""
     echo "Options:"
     echo -e "\t -b \t[bam path] bam path"
-    echo -e "\t -r \t[ref path] reference path"
+    echo -e "\t -f \t[ref path] reference path"
     echo -e "\t -v \t[vcf path] vcf path"
     echo -e "\t -O \t[outdir] output directory"
     echo -e "\t -s \t[id] sample ID"
@@ -90,11 +90,11 @@ cbtag="CB"
 nprocs=1
 
 # get parameters
-while getopts "b:r:v:O:s:c:l:L:d:D:n:N:B:C:q:Q:p:h" opt
+while getopts "b:f:v:O:s:c:l:L:d:D:n:N:B:C:q:Q:p:h" opt
 do
    case "$opt" in
         b ) bamfile="$OPTARG" ;;
-        r ) ref="$OPTARG" ;;
+        f ) ref="$OPTARG" ;;
         v ) vcfpath="$OPTARG" ;;
         O ) outdir="$OPTARG" ;;
         s ) id="$OPTARG" ;;

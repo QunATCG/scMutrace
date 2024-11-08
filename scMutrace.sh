@@ -253,4 +253,4 @@ ${scMutrace_src_dir}/step3_filterPopulation.sh -O ${outdir} -V ${outdir}/filterV
 
 # step4_filterNoisy.sh
 echo "running step4_filterNoisy.sh"
-${scMutrace_src_dir}/step4_filterNoisy.sh -v ${outdir}/${id}_scmutrace.vcf -b ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam -r ${ref} -p ${nprocs} -s ${id} -c ${barcode} -C ${cellbarcodetag} -l ${binsize} -L ${clustersize} -d ${minsequencingdepth} -D ${minaltdepth} -n ${mincellnumber} -N ${minaltcellnumber} -B ${lowBaseCutoff} -O ${outdir}/
+${scMutrace_src_dir}/step4_filterNoisy.sh -v ${outdir}/${id}_scmutrace.vcf -b ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam -f ${ref} -p ${nprocs} -s ${id} -c ${barcode} -C ${cellbarcodetag} -l ${binsize} -L ${clustersize} -d ${minsequencingdepth} -D ${minaltdepth} -n ${mincellnumber} -N ${minaltcellnumber} -B ${lowBaseCutoff} -O ${outdir}/
