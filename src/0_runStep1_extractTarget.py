@@ -216,7 +216,7 @@ def main():
     outDirPath = args.outdir
     cbtag = args.cbtag
     make_dir_check(outDirPath)
-    target_extractsnp_fromBAM(BamPath, referencePath, outDirPath, config_info.split("_"), 10, min_mq, True, False, False, False, 1, 1, 1, 5, cbtag)
+    target_extractsnp_fromBAM(BamPath, referencePath, outDirPath, config_info.split("_"), 10, min_mq, True, False, False, False, 2, 2, 2, 5, cbtag)
 
 if __name__=='__main__':
     starttime = timeit.default_timer()
