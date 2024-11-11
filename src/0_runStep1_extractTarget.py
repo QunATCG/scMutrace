@@ -15,7 +15,6 @@ def initialize_parser():
     parser.add_argument('--ref', type=str, default=1, help='Path to reference genome version. *fai must be available in the same directory as the reference genome file', required = True)
     parser.add_argument('--contig', type=str, help='Config. Chr_Start_End', required = True)
     parser.add_argument('--minmq', default = 255, help='mapping quality', required = False, type = int)
-    parser.add_argument('--maxcheck', action='store_true', help='A boolean flag for best performance checking, it will use full cpus')
     parser.add_argument('--cbtag', default= "CB", help='cell barcode tag', required = False)
     parser.add_argument('--outdir', default = '.', help='Out folder', required = False)
     return (parser)
@@ -49,9 +48,9 @@ def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList
     # chr
     chr = str(config_posList[0])
     # start
-    start = int(config_posList[1]) - 100
+    start = int(config_posList[1]) - 50
     # end
-    end = int(config_posList[2]) + 100
+    end = int(config_posList[2]) + 50
     # ref
     refFasta = pysam.FastaFile(referencePath)
     # pileups
