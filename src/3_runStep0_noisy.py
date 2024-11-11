@@ -361,7 +361,7 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
             #else:
             #    tag_basecall = "PASS_basecall"
             # small range filter
-            target_extractsnp_fromBAM(bamPath, refPath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, False, False, False, 1, 1, 1, 5, cbtag)
+            target_extractsnp_fromBAM(bamPath, refPath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, False, False, False, 2, 2, 2, 5, cbtag)
             targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_random.vcf")
             altGTCheck = [j.split("[")[0] for j in altGT.split(",")]
             mutCount, sameMutCount = check_noisy_bg(targetVcfPath, pos, altGTCheck)
