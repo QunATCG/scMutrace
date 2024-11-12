@@ -365,14 +365,14 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
             targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_random.vcf")
             altGTCheck = [j.split("[")[0] for j in altGT.split(",")]
             mutCount, sameMutCount = check_noisy_bg(targetVcfPath, pos, altGTCheck)
-            if mutCount >= 3:
-                tag_noisyCluster0 = "NonePASS_noisyClusterBackground"
+            if mutCount >= 5:
+                tag_noisyCluster0 = "NonePASS_noisyClusterBackground:" + str(mutCount) 
             else:
-                tag_noisyCluster0 = "PASS_noisyClusterBackground"
+                tag_noisyCluster0 = "PASS_noisyClusterBackground:" + str(mutCount)
             if sameMutCount >= 3:
-                tag_noisyCluster1 = "NonePASS_noisyClusterSameGT"
+                tag_noisyCluster1 = "NonePASS_noisyClusterSameGT:" + str(sameMutCount)
             else:
-                tag_noisyCluster1 = "PASS_noisyClusterSameGT"
+                tag_noisyCluster1 = "PASS_noisyClusterSameGT:" + str(sameMutCount)
             if refBase == "A" and altGT and "G" in altGTCheck:
                 tag_noisyCluster2 = "Maybe_RNAediting"
             elif refBase == "C" and altGT and "T" in altGTCheck:
