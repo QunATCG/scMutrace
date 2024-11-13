@@ -16,7 +16,7 @@ def get_cell_info(cellMutInfo):
     if cellMutInfo != "":
         cells = [cell.split("-")[0] for cell in cellsInfo.split(":")]
     else:
-        cells = []   
+        cells = []
     return cells
 
 # generate gCellSNP matrix
