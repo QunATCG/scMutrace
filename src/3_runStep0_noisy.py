@@ -293,7 +293,7 @@ def generate_random_pool(targetVcfPath, pos, altGTCheck):
 '''
 
 # get cell mutation info 
-def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcellsize, lowBaseCutoff, bamPath, refPath, outdirTmp, min_bq, min_mq, cbtag):
+def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcellsize, lowBaseCutoff, bamPath, refPath, outdirTmp, min_bq, min_mq, cbtag, id):
     if os.path.exists(vcfPathOut):
         try:
             subprocess.run(['rm', vcfPathOut], check=True)
@@ -361,8 +361,8 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
             #else:
             #    tag_basecall = "PASS_basecall"
             # small range filter
-            target_extractsnp_fromBAM(bamPath, refPath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, False, False, False, 2, 2, 2, 5, cbtag)
-            targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_random.vcf")
+            target_extractsnp_fromBAM(bamPath, refPath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, False, False, False, 2, 2, 2, 5, cbtag, 50, id)
+            targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_{id}_random.vcf")
             altGTCheck = [j.split("[")[0] for j in altGT.split(",")]
             mutCount, sameMutCount = check_noisy_bg(targetVcfPath, pos, altGTCheck)
             if mutCount >= 5:
@@ -439,14 +439,14 @@ def main():
         p = mp.get_context("fork").Pool(COREUSE)
         print("Your cores is " + str(COREUSE))
         for tmpSplitFile in tmpSplitFiles:
-            p.apply_async(get_cellmutInfo_forTest, args=(outpathtmp + "/" + tmpSplitFile, outpathtmp + "/" + tmpSplitFile + ".vcf", CellTypeDictmp, cellsize, altcellsize, lowBaseCutoff, bamPath, refPath, outdirTmp, min_bq, min_mq, cbtag,), error_callback=err_call_back)
+            p.apply_async(get_cellmutInfo_forTest, args=(outpathtmp + "/" + tmpSplitFile, outpathtmp + "/" + tmpSplitFile + ".vcf", CellTypeDictmp, cellsize, altcellsize, lowBaseCutoff, bamPath, refPath, outdirTmp, min_bq, min_mq, cbtag, id,), error_callback=err_call_back)
         print('Waiting for all subprocesses done...')
         p.close()
         p.join()
         print('All subprocesses done.')
     else:
         for tmpSplitFile in tmpSplitFiles:
-            get_cellmutInfo_forTest(outpathtmp + "/" + tmpSplitFile, outpathtmp + "/" + tmpSplitFile + ".vcf", CellTypeDictmp, cellsize, altcellsize, lowBaseCutoff, bamPath, refPath, outdirTmp, min_bq, min_mq, cbtag)
+            get_cellmutInfo_forTest(outpathtmp + "/" + tmpSplitFile, outpathtmp + "/" + tmpSplitFile + ".vcf", CellTypeDictmp, cellsize, altcellsize, lowBaseCutoff, bamPath, refPath, outdirTmp, min_bq, min_mq, cbtag, id)
     cmdrm = "rm " + outpath + ".f1"
     try:
         subprocess.run(cmdrm, shell=True, check=True)

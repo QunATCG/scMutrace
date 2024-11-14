@@ -649,7 +649,7 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
     print(f'count_mut_information ###---### sub task was done: {chr}_{start}_{end}')
 
 # target extract snp from bam
-def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_alt, min_cell, max_nm, cbtag):
+def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_alt, min_cell, max_nm, cbtag, binSize, id):
     """
     Count mutation information from BAM file and write to VCF file.
 
@@ -676,15 +676,15 @@ def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList
     # chr
     chr = str(config_posList[0])
     # start
-    start = int(config_posList[1]) - 50
+    start = int(config_posList[1]) - binSize
     # end
-    end = int(config_posList[2]) + 50
+    end = int(config_posList[2]) + binSize
     # ref
     refFasta = pysam.FastaFile(referencePath)
     # pileups
     bam_pileups = pysamData.pileup(contig = str(chr), start = int(start), end = int(end), max_depth = 100000000, min_base_quality = min_bq, min_mapping_quality = min_mq)
     # out vcf
-    outPath = os.path.join(outVcfPath, f"VCF_{chr}_{config_posList[1]}_{config_posList[1]}_random.vcf")
+    outPath = os.path.join(outVcfPath, f"VCF_{chr}_{config_posList[1]}_{config_posList[1]}_{id}_random.vcf")
     outVcfFile = open(outPath, "w+")
     for bam_pileup in bam_pileups:
         # PileupColumn

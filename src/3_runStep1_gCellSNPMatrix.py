@@ -2,13 +2,85 @@ import os
 import timeit
 import argparse
 import pandas as pd
+from py_utils import *
+import multiprocessing as mp
 
 # Function to generate gCellSNP matrix
 def initialize_parser():
     parser = argparse.ArgumentParser(description='generate gCellSNP matrix')
-    parser.add_argument('--outpath', type=str, default='', help='out file path', required = True)
-    parser.add_argument('--vcfpath', type=str, default='', help='Vcf path', required = True)
+    parser.add_argument('--outdir', type=str, default='', help='out file directory', required = True)
+    parser.add_argument('--jobconfig', type=str, default='', help='config file path, tab separate file, with the format [ID\tVCFPATH\tBAMPATH]', required = True)
+    parser.add_argument('--reference', type=str, default='', help='reference path', required = True)
+    parser.add_argument('--min_bq', type=int, default=10, help='cutoff base quality', required = False)
+    parser.add_argument('--min_mq', type=int, default=255, help='cutoff mapping quality', required = False)
+    parser.add_argument('--cbtag', type=str, default='CB', help='cell barcode tag', required = False)
+    parser.add_argument('--nprocs', type=int, default=1, help='number of cores', required = False)
     return (parser)
+
+def err_call_back(err):
+    print(f'apply_async error:{str(err)}')
+
+
+# merge multiple mut info and remove duplicates
+def merge_mut_info(jobconfigPath, mutinfoPath):
+    tmpCheck = []
+    with open(jobconfigPath, "r") as jobconfig, open(mutinfoPath, "w") as mutinfo:
+        for line in jobconfig:
+            lineSets = line.strip().split("\t")
+            with open(lineSets[1], "r") as vcfTmp:
+                for vcfLine in vcfTmp:
+                    vcfLineSets = vcfLine.strip().split("\t")
+                    if vcfLineSets[0] == "chr":
+                        continue
+                    if vcfLineSets[0] + "_" + vcfLineSets[1] not in tmpCheck:
+                        tmpCheck.append(vcfLineSets[0] + "_" + vcfLineSets[1])
+                        sql = str(vcfLineSets[0]) + "\t" + str(vcfLineSets[1]) + "\t" + str(vcfLineSets[2])
+                        mutinfo.write(sql + "\n")
+
+# check if a mutation is in a cell
+def check_ifMut_oneCell(cellInfo, refBase):
+    basicBase = ["A", "T", "C", "G", "D", "I"]
+    countDic = {base: 0 for base in basicBase}
+    check_base = list(set(basicBase) - {refBase})
+    cellInfoList = list(map(int, cellInfo.split("|")))
+    for base, count in zip(basicBase, cellInfoList):
+        countDic[base] += count
+    numCheck = sum(countDic[base] for base in check_base)
+    if numCheck >= 1:
+        return "Mut"
+    else:
+        return "WT"
+
+# get cell info of all mutations
+def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir ,referencePath, min_bq, min_mq, cbtag):
+    foutFile = open(outpathDir + "/gCellSNPMatrix.step0.txt", "w")
+    outdirTmp = outpathDir + "/tmp/"
+    make_dir_check(outdirTmp)
+    with open(mutinfoPath, "r") as mutinfo:
+        for line in mutinfo:
+            lineSets = line.strip().split("\t")
+            chr = str(lineSets[0])
+            pos = int(lineSets[1])
+            refBase = str(lineSets[2])
+            with open(jobconfigPath, "r") as jobconfig:
+                for jobLine in jobconfig:
+                    jobLineSets = jobLine.strip().split("\t")
+                    idtmp = jobLineSets[0]
+                    bamTmp = jobLineSets[2]
+                    target_extractsnp_fromBAM(bamTmp, referencePath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, True, True, True, 1, 1, 1, 5, cbtag, 2, idtmp)
+                    targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_{idtmp}_random.vcf")
+                    with open(targetVcfPath, "r") as targetVcf:
+                        for vcfLine in targetVcf:
+                            vcfLineSets = vcfLine.strip().split("\t")
+                            posTmp = int(vcfLineSets[1])
+                            if posTmp == pos:
+                                cellsList = vcfLineSets[9].split(";")
+                                cellsMutInfo = [check_ifMut_oneCell(i, refBase) for i in vcfLineSets[10].split(";")]
+                                for cell, cellMutInfo in zip(cellsList, cellsMutInfo):
+                                    foutFile.writelines(chr + "\t" + str(pos) + "\t" + cell + "\t" + idtmp + "\t" + str(cellMutInfo) + "\n")
+                    # remove target vcf file
+                    os.remove(targetVcfPath)
+    foutFile.close()
 
 # get cell info
 def get_cell_info(cellMutInfo):
@@ -46,9 +118,32 @@ def generate_gCellSNP_matrix(outpath, vcfpath):
 def main():
     parser = initialize_parser()
     args = parser.parse_args()
-    outpath = args.outpath
-    vcfpath = args.vcfpath
-    generate_gCellSNP_matrix(outpath, vcfpath)
+    outdir = args.outdir
+    jobconfig = args.jobconfig
+    min_bq = args.min_bq
+    min_mq = args.min_mq
+    reference = args.reference
+    cbtag = args.cbtag
+    COREUSE = args.nprocs
+    make_dir_check(outdir)
+    mutinfoPath = outdir + "/mutinfo.txt"
+    merge_mut_info(jobconfig, mutinfoPath)
+    totalMut = get_Vcf_rownum(mutinfoPath)
+    split_file_by_lines(mutinfoPath, "split_mutInfo_", int(totalMut/COREUSE), outdir)
+    split_fileList = [outdir + "/" + f for f in os.listdir(outdir) if "split_mutInfo_" in f]
+    if COREUSE > 1:
+        print('Parent process %s.' % os.getpid())
+        p = mp.get_context("fork").Pool(COREUSE)
+        print("Your cores is " + str(COREUSE))
+        for split_file in split_fileList:
+            p.apply_async(get_all_mut_info, args=(split_file, jobconfig, outdir ,reference, min_bq, min_mq, cbtag,), error_callback=err_call_back)
+        print('Waiting for all subprocesses done...')
+        p.close()
+        p.join()
+        print('All subprocesses done.')
+    else:
+        for split_file in split_fileList:
+            get_all_mut_info(split_file, jobconfig, outdir ,reference, min_bq, min_mq, cbtag)
 
 if __name__ == "__main__":
     start = timeit.default_timer()
