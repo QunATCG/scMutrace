@@ -96,7 +96,7 @@ def exclude_control_mut(gCSMPath, jobconfigPath, outpathDir):
     with open(gCSMPath, "r") as gCSM:
         for line in gCSM:
             lineSets = line.strip().split("\t")
-            if lineSets[1].split("_")[0] in ControlIDs:
+            if lineSets[1].split("_")[0] in ControlIDs and lineSets[2] == "Mut":
                 SNPsControl.append(lineSets[0])
     with open(gCSMPath, "r") as gCSM:
         for line in gCSM:
@@ -129,6 +129,7 @@ def main():
     totalMut = get_Vcf_rownum(mutinfoPath)
     split_file_by_lines(mutinfoPath, "split_mutInfo_", int(totalMut/COREUSE), outdir)
     split_fileList = [outdir + "/" + f for f in os.listdir(outdir) if "split_mutInfo_" in f]
+    print(">>> Start to get all mutations info")
     if COREUSE > 1:
         print('Parent process %s.' % os.getpid())
         p = mp.get_context("fork").Pool(COREUSE)
@@ -143,6 +144,7 @@ def main():
         for split_file in split_fileList:
             get_all_mut_info(split_file, jobconfig, outdir ,reference, min_bq, min_mq, cbtag)
     # merge all mut info
+    print(">>> Merge all mut info")
     for split_file in split_fileList:
         os.remove(split_file)
     merge_file = outdir + "/gCellSNPMatrix.step0.txt"
@@ -154,7 +156,10 @@ def main():
                     merge_f.write(line)
         os.remove(split_file)
     # exclude control mutations
+    print(">>> Exclude control mutations")
     exclude_control_mut(merge_file, jobconfig, outdir)
+    os.remove(merge_file)
+    print(">>> Generate gCellSNP matrix")
     finalResult = outdir + "/gCellSNPMatrix.step3.csv"
     generate_gCellSNP_matrix(finalResult, outdir + "/gCellSNPMatrix.step2.txt")
 
