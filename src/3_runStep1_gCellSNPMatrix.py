@@ -85,7 +85,7 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir ,referencePath, min_
 
 # exclude control mutations
 def exclude_control_mut(gCSMPath, jobconfigPath, outpathDir):
-    foutFile = open(outpathDir + "gCellSNPMatrix.step2.txt", "w")
+    foutFile = open(outpathDir + "/gCellSNPMatrix.step2.txt", "w")
     ControlIDs = []
     with open(jobconfigPath, "r") as jobconfig:
         for jobLine in jobconfig:
