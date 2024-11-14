@@ -53,7 +53,7 @@ def check_ifMut_oneCell(cellInfo, refBase):
 
 # get cell info of all mutations
 def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir ,referencePath, min_bq, min_mq, cbtag):
-    foutFile = open(outpathDir + "/gCellSNPMatrix.step0.txt", "w")
+    foutFile = open(mutinfoPath + "gCellSNPMatrix.step0.txt", "w")
     outdirTmp = outpathDir + "/tmp/"
     make_dir_check(outdirTmp)
     with open(mutinfoPath, "r") as mutinfo:
@@ -77,7 +77,7 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir ,referencePath, min_
                                 cellsList = vcfLineSets[9].split(";")
                                 cellsMutInfo = [check_ifMut_oneCell(i, refBase) for i in vcfLineSets[10].split(";")]
                                 for cell, cellMutInfo in zip(cellsList, cellsMutInfo):
-                                    foutFile.writelines(chr + "\t" + str(pos) + "\t" + cell + "\t" + idtmp + "\t" + str(cellMutInfo) + "\n")
+                                    foutFile.writelines(chr + "_" + str(pos) + "\t" + cell + "_" + idtmp + "\t" + str(cellMutInfo) + "\n")
                     # remove target vcf file
                     os.remove(targetVcfPath)
     foutFile.close()
@@ -144,6 +144,19 @@ def main():
     else:
         for split_file in split_fileList:
             get_all_mut_info(split_file, jobconfig, outdir ,reference, min_bq, min_mq, cbtag)
+    # merge all mut info
+    for split_file in split_fileList:
+        os.remove(split_file)
+    merge_file = outdir + "/gCellSNPMatrix.step0.txt"
+    split_gCellSM_fileList = [outdir + "/" + f for f in os.listdir(outdir) if "split_mutInfo_" in f]
+    for split_file in split_gCellSM_fileList:
+        with open(split_file, "r") as f:
+            for line in f:
+                with open(merge_file, "a") as merge_f:
+                    merge_f.write(line)
+        os.remove(split_file)
+
+
 
 if __name__ == "__main__":
     start = timeit.default_timer()
