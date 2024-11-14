@@ -83,6 +83,28 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir ,referencePath, min_
                     os.remove(targetVcfPath)
     foutFile.close()
 
+# exclude control mutations
+def exclude_control_mut(gCSMPath, jobconfigPath, outpathDir):
+    foutFile = open(outpathDir + "gCellSNPMatrix.step2.txt", "w")
+    ControlIDs = []
+    with open(jobconfigPath, "r") as jobconfig:
+        for jobLine in jobconfig:
+            jobLineSets = jobLine.strip().split("\t")
+            if jobLineSets[3].strip() == "Control":
+                ControlIDs.append(jobLineSets[0])
+    SNPsControl = []
+    with open(gCSMPath, "r") as gCSM:
+        for line in gCSM:
+            lineSets = line.strip().split("\t")
+            if lineSets[1].split("_")[0] in ControlIDs:
+                SNPsControl.append(lineSets[0])
+    with open(gCSMPath, "r") as gCSM:
+        for line in gCSM:
+            lineSets = line.strip().split("\t")
+            if lineSets[0] not in SNPsControl:
+                foutFile.write(line)
+    foutFile.close()
+
 # generate gCellSNP matrix
 def generate_gCellSNP_matrix(outpath, vcfpath):
     df = pd.read_csv(vcfpath, sep='\t', header=None, names=['Location', 'Cell', 'Status'])
@@ -131,8 +153,10 @@ def main():
                 with open(merge_file, "a") as merge_f:
                     merge_f.write(line)
         os.remove(split_file)
-    finalResult = outdir + "/gCellSNPMatrix.step1.csv"
-    generate_gCellSNP_matrix(finalResult, merge_file)
+    # exclude control mutations
+    exclude_control_mut(merge_file, jobconfig, outdir)
+    finalResult = outdir + "/gCellSNPMatrix.step3.csv"
+    generate_gCellSNP_matrix(finalResult, outdir + "/gCellSNPMatrix.step2.txt")
 
 
 if __name__ == "__main__":
