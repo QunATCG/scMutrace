@@ -2,6 +2,7 @@ import os
 import timeit
 import argparse
 import pandas as pd
+import numpy as np
 from py_utils import *
 import multiprocessing as mp
 
@@ -77,43 +78,18 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir ,referencePath, min_
                                 cellsList = vcfLineSets[9].split(";")
                                 cellsMutInfo = [check_ifMut_oneCell(i, refBase) for i in vcfLineSets[10].split(";")]
                                 for cell, cellMutInfo in zip(cellsList, cellsMutInfo):
-                                    foutFile.writelines(chr + "_" + str(pos) + "\t" + cell + "_" + idtmp + "\t" + str(cellMutInfo) + "\n")
+                                    foutFile.writelines(chr + "_" + str(pos) + "\t" + idtmp + "_" + cell + "\t" + str(cellMutInfo) + "\n")
                     # remove target vcf file
                     os.remove(targetVcfPath)
     foutFile.close()
 
-# get cell info
-def get_cell_info(cellMutInfo):
-    cellsInfo = cellMutInfo.split(";")[1]
-    if cellMutInfo != "":
-        cells = [cell.split("-")[0] for cell in cellsInfo.split(":")]
-    else:
-        cells = []
-    return cells
-
 # generate gCellSNP matrix
 def generate_gCellSNP_matrix(outpath, vcfpath):
-    cellSNP = {}
-    # Read vcf file
-    with open(vcfpath, "r") as f:
-        for line in f:
-            line = line.strip().split("\t")
-            line_len = len(line)
-            if line[0] == "chr":
-                continue
-            loctmp = line[0] + "_" + line[1]
-            celltmp = []
-            for i in range(14, line_len):
-                cellMutInfo = line[i]
-                cells = get_cell_info(cellMutInfo)
-                celltmp.extend(cells)
-            cellSNP[loctmp] = celltmp
-    # Generate gCellSNP matrix
-    cellSNP_matrix = pd.DataFrame(0, index=cellSNP.keys(), columns=list(set([item for sublist in cellSNP.values() for item in sublist])))
-    for loc, cells in cellSNP.items():
-        cellSNP_matrix.loc[loc, cells] = 1
-    cellSNP_matrix.to_csv(outpath)
-    
+    df = pd.read_csv(vcfpath, sep='\t', header=None, names=['Location', 'Cell', 'Status'])
+    matrix = df.pivot_table(index='Location', columns='Cell', values='Status', aggfunc=lambda x: 'Mut' if 'Mut' in x.values else 'WT').fillna('NoCall')
+    matrix = matrix.reindex(sorted(matrix.columns), axis=1)
+    matrix.to_csv(outpath, sep=',', index=True)
+
 # Main function
 def main():
     parser = initialize_parser()
@@ -155,7 +131,8 @@ def main():
                 with open(merge_file, "a") as merge_f:
                     merge_f.write(line)
         os.remove(split_file)
-
+    finalResult = outdir + "/gCellSNPMatrix.step1.csv"
+    generate_gCellSNP_matrix(finalResult, merge_file)
 
 
 if __name__ == "__main__":
