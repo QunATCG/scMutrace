@@ -125,6 +125,7 @@ def main():
     COREUSE = args.nprocs
     make_dir_check(outdir)
     mutinfoPath = outdir + "/mutinfo.txt"
+    print(">>> Merge all mutations info")
     merge_mut_info(jobconfig, mutinfoPath)
     totalMut = get_Vcf_rownum(mutinfoPath)
     split_file_by_lines(mutinfoPath, "split_mutInfo_", int(totalMut/COREUSE), outdir)
