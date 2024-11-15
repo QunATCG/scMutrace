@@ -20,7 +20,7 @@ def initialize_parser():
     parser.add_argument('--altdpsize', type=int, default=5, help='min alternative depth', required = False)
     parser.add_argument('--cellsize', type=int, default=10, help='min cell number', required = False)
     parser.add_argument('--altcellsize', type=int, default=5, help='min mut cell number', required = False)
-    parser.add_argument('--min_bq', type=int, default=10, help='cutoff base quality', required = False)
+    parser.add_argument('--min_bq', type=int, default=0, help='cutoff base quality', required = False)
     parser.add_argument('--min_mq', type=int, default=255, help='cutoff mapping quality', required = False)
     parser.add_argument('--cbtag', type=str, default='CB', help='cell barcode tag', required = False)
     parser.add_argument('--lowBaseCutoff', type=int, default=20, help='cutoff low base quality', required = False)

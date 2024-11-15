@@ -30,7 +30,7 @@ helpFunction(){
     echo -e "\t -N \t[minaltcellnumber] min alteration cell number"
     echo -e "\t -B \t[lowBaseCutoff] cutoff of low base quality (default 20)"
     echo -e "\t -C \t[cbtag] cell barcode tag (default CB)"
-    echo -e "\t -q \t[min_bq] min base quality (default 10)"
+    echo -e "\t -q \t[min_bq] min base quality (default 0)"
     echo -e "\t -Q \t[min_mq] min mapping quality (default 255)"
     echo -e "\t -p \t[nprocs] number of processors to use (default 1)"
     echo -e "\t -h \t[help] display this help message"
@@ -84,7 +84,7 @@ minaltdpsize=2
 mincellnumber=3
 minaltcellnumber=2
 lowBaseCutoff=20
-min_bq=10
+min_bq=0
 min_mq=255
 cbtag="CB"
 nprocs=1
