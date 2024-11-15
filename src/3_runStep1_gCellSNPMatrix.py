@@ -12,7 +12,7 @@ def initialize_parser():
     parser.add_argument('--outdir', type=str, default='', help='out file directory', required = True)
     parser.add_argument('--jobconfig', type=str, default='', help='config file path, tab separate file, with the format [ID\tVCFPATH\tBAMPATH]', required = True)
     parser.add_argument('--reference', type=str, default='', help='reference path', required = True)
-    parser.add_argument('--min_bq', type=int, default=10, help='cutoff base quality', required = False)
+    parser.add_argument('--min_bq', type=int, default=0, help='cutoff base quality', required = False)
     parser.add_argument('--min_mq', type=int, default=255, help='cutoff mapping quality', required = False)
     parser.add_argument('--cbtag', type=str, default='CB', help='cell barcode tag', required = False)
     parser.add_argument('--nprocs', type=int, default=1, help='number of cores', required = False)
@@ -105,10 +105,30 @@ def exclude_control_mut(gCSMPath, jobconfigPath, outpathDir):
                 foutFile.write(line)
     foutFile.close()
 
+# generate snp * sample mutation info
+def generate_snp_sample_mutInfo(gCSMPath, outpath):
+    tmpCheck = []
+    with open(gCSMPath, "r") as gCSM, open(outpath, "w") as out:
+        for line in gCSM:
+            lineSets = line.strip().split("\t")
+            pos = lineSets[0]
+            idtmp = lineSets[1].split("_")[0]
+            statustmp = lineSets[2]
+            if pos + "_" + idtmp + "_" + statustmp not in tmpCheck:
+                tmpCheck.append(pos + "_" + idtmp + "_" + statustmp)
+                out.write(pos + "\t" + idtmp + "\t" + statustmp + "\n")
+
 # generate gCellSNP matrix
 def generate_gCellSNP_matrix(outpath, vcfpath):
     df = pd.read_csv(vcfpath, sep='\t', header=None, names=['Location', 'Cell', 'Status'])
     matrix = df.pivot_table(index='Location', columns='Cell', values='Status', aggfunc=lambda x: 'Mut' if 'Mut' in x.values else 'WT').fillna('NoCall')
+    matrix = matrix.reindex(sorted(matrix.columns), axis=1)
+    matrix.to_csv(outpath, sep=',', index=True)
+
+# generate gSNPSample matrix
+def generate_gSNPSample_matrix(outpath, vcfpath):
+    df = pd.read_csv(vcfpath, sep='\t', header=None, names=['Location', 'ID', 'Status'])
+    matrix = df.pivot_table(index='Location', columns='ID', values='Status', aggfunc=lambda x: 'Mut' if 'Mut' in x.values else 'WT').fillna('NoCall')
     matrix = matrix.reindex(sorted(matrix.columns), axis=1)
     matrix.to_csv(outpath, sep=',', index=True)
 
@@ -163,6 +183,11 @@ def main():
     print(">>> Generate gCellSNP matrix")
     finalResult = outdir + "/gCellSNPMatrix.step3.csv"
     generate_gCellSNP_matrix(finalResult, outdir + "/gCellSNPMatrix.step2.txt")
+    print(">>> Generate gSNPSample matrix")
+    outpath = outdir + "/gSNPSampleMatrix.step2.txt"
+    generate_snp_sample_mutInfo(outdir + "/gCellSNPMatrix.step2.txt", outpath)
+    finalResult = outdir + "/gSNPSampleMatrix.step3.csv"
+    generate_gSNPSample_matrix(finalResult, outpath)
 
 
 if __name__ == "__main__":
