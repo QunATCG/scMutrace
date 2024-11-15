@@ -68,7 +68,7 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir ,referencePath, min_
                     jobLineSets = jobLine.strip().split("\t")
                     idtmp = jobLineSets[0]
                     bamTmp = jobLineSets[2]
-                    target_extractsnp_fromBAM(bamTmp, referencePath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, True, True, True, 1, 1, 1, 10, cbtag, 2, idtmp)
+                    target_extractsnp_fromBAM(bamTmp, referencePath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, True, True, True, 1, 0, 1, 10, cbtag, 2, idtmp)
                     targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_{idtmp}_random.vcf")
                     with open(targetVcfPath, "r") as targetVcf:
                         for vcfLine in targetVcf:
@@ -179,7 +179,6 @@ def main():
     # exclude control mutations
     print(">>> Exclude control mutations")
     exclude_control_mut(merge_file, jobconfig, outdir)
-    os.remove(merge_file)
     print(">>> Generate gCellSNP matrix")
     finalResult = outdir + "/gCellSNPMatrix.step3.csv"
     generate_gCellSNP_matrix(finalResult, outdir + "/gCellSNPMatrix.step2.txt")
