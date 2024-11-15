@@ -60,7 +60,10 @@ def split_file_by_lines(inputfile, tag, lines_per_file, pathdir):
         None
     """
     cmd = ["split", "-l", str(lines_per_file), inputfile, os.path.join(pathdir, "splitVcf_" + tag)]
-    subprocess.run(cmd, check=True)
+    try:
+        subprocess.run(cmd, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"An error occurred while splitting the file: {e}")
 
 # split muti file
 def split_multi_files(CORES, pathdir):
