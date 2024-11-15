@@ -68,7 +68,7 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir ,referencePath, min_
                     jobLineSets = jobLine.strip().split("\t")
                     idtmp = jobLineSets[0]
                     bamTmp = jobLineSets[2]
-                    target_extractsnp_fromBAM(bamTmp, referencePath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, True, True, True, 1, 1, 1, 5, cbtag, 2, idtmp)
+                    target_extractsnp_fromBAM(bamTmp, referencePath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, True, True, True, 1, 1, 1, 10, cbtag, 2, idtmp)
                     targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_{idtmp}_random.vcf")
                     with open(targetVcfPath, "r") as targetVcf:
                         for vcfLine in targetVcf:
