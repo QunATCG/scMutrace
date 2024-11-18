@@ -85,4 +85,4 @@ echo ""
 echo ""
 
 # generate Cell-SNP Matrix
-python3 ${scMutrace_src_dir}/3_runStep1_gCellSNPMatrix.py --outdir ${outputdir} --jobconfig ${contigfile} --reference ${ref} --min_bq ${min_bq} --min_mq ${min_mq} --cbtag ${cbtag} --nprocs ${nprocs}
+python3 ${scMutrace_src_dir}/src/3_runStep1_gCellSNPMatrix.py --outdir ${outputdir} --jobconfig ${contigfile} --reference ${ref} --min_bq ${min_bq} --min_mq ${min_mq} --cbtag ${cbtag} --nprocs ${nprocs}
