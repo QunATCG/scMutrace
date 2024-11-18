@@ -463,7 +463,7 @@ def cal_pError_fromBaseQuality(baseQuality):
     pError = 10 ** (-int(baseQuality) / 10)
     return pError
 
-def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_alt, min_cell, max_nm, cbtag):
+def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_alt, min_cell, max_nm, cbtag, ratioUser):
     """
     Count mutation information from BAM file and write to VCF file.
 
@@ -535,7 +535,7 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
             # Check ALT number
             if alt_check == True and COUNTNUMALT < int(min_alt):
                 continue
-            if DP >= 1000 and COUNTNUMALT <= 0.005 * DP:
+            if DP >= 1000 and COUNTNUMALT <= ratioUser * DP:
                 continue
             # list of reads (pysam.PileupRead) aligned to this column
             # Representation of a read aligned to a particular position in the reference sequence.
@@ -615,7 +615,7 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
             DP_ALT_REAL = count_base_fromDic(BASE_COUNTS_DIC, [REF_BASE, "N"])
             if alt_check == True and int(DP_ALT_REAL) < int(min_alt):
                 continue
-            if DP_TOTAL >= 1000 and DP_ALT_REAL <= 0.005 * DP_TOTAL:
+            if DP_TOTAL >= 1000 and DP_ALT_REAL <= ratioUser * DP_TOTAL:
                 continue
             # CELL NUMBER
             # CELL MUTINFO Total

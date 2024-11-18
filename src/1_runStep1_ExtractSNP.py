@@ -25,6 +25,7 @@ def initialize_parser():
     parser.add_argument('--id', help='Prefix used to name output file', required=False)
     parser.add_argument('--maxcheck', action='store_true', help='A boolean flag for best performance checking, it will use full cpus')
     parser.add_argument('--nprocs', default=1, help='Number of processes [Default: 1]', required=False, type=int)
+    parser.add_argument('--ratio', default='0.005', help='cutoff to filter noisy mutations', required=False)
     parser.add_argument('--outdir', default='.', help='Out folder', required=False)
     return parser
 
@@ -76,6 +77,7 @@ def main():
     maxcheck = args.maxcheck
     nmCheckStates = nmcheck
     COREUSE = args.nprocs
+    ratioUser = args.ratio
     outDirPath = args.outdir
     outDirPathVCFTmp = os.path.join(outDirPath, "tmpVCF")
     
@@ -119,7 +121,7 @@ def main():
             p = mp.get_context("fork").Pool(COREUSE)
             print("Your cores is " + str(COREUSE))
             for config_i in K:
-                p.apply_async(count_mut_information, args=(bam_Path, ref_Path, outDirPathVCFTmp, config_i, minbq, minmq, True, True, True, nmCheckStates, min_cov, min_alt, min_cell, max_nm, cbtag,), error_callback=err_call_back)
+                p.apply_async(count_mut_information, args=(bam_Path, ref_Path, outDirPathVCFTmp, config_i, minbq, minmq, True, True, True, nmCheckStates, min_cov, min_alt, min_cell, max_nm, cbtag, ratioUser), error_callback=err_call_back)
             print('Waiting for all subprocesses done...')
             p.close()
             p.join()
@@ -128,7 +130,7 @@ def main():
             print("Your cores is 1")
             for config_i in K:
                 print(config_i)
-                count_mut_information(BamPath=bam_Path, referencePath=ref_Path, outVcfPath=outDirPathVCFTmp, config_posList=config_i, min_bq=minbq, min_mq=minmq, dp_check=True, alt_check=True, cell_check=True, nm_check=nmCheckStates, min_cov=min_cov, min_alt=min_alt, min_cell=min_cell, max_nm=max_nm, cbtag=cbtag)
+                count_mut_information(BamPath=bam_Path, referencePath=ref_Path, outVcfPath=outDirPathVCFTmp, config_posList=config_i, min_bq=minbq, min_mq=minmq, dp_check=True, alt_check=True, cell_check=True, nm_check=nmCheckStates, min_cov=min_cov, min_alt=min_alt, min_cell=min_cell, max_nm=max_nm, cbtag=cbtag, ratioUser=ratioUser)
         
         print("Merging... " + bam_Path + " of Chromosome: " + str(config_info.split("_")[0]))
         merge_VCF_filesShell(VcfPOSOUT, outDirPathVCFTmp, nameSplitBamTag, str(config_info.split("_")[0]))

@@ -22,6 +22,7 @@ helpFunction(){
     echo -e "\t -g \t[contig] contig information, tab separated format for each line: Chr\tstart\tend"
     echo -e "\t -s \t[id] sample id"
     echo -e "\t -p \t[nprocs] number of processes"
+    echo -e "\t -R \t[ratio] ratio of cell number to total cell number"
     echo -e "\t -q \t[minbq] min base quality"
     echo -e "\t -Q \t[minmq] min mapping quality"
     echo -e "\t -n \t[mincellnumber] min cell number"
@@ -48,9 +49,10 @@ minaltcellnumber=2
 maxmismatch=4
 minsequencingdepth=3
 cellbarcodetag="CB"
+ratioUser=0.005
 
 # get parameters
-while getopts "b:f:C:g:s:p:q:Q:n:N:m:d:O:h" opt
+while getopts "b:f:C:g:s:p:R:q:Q:n:N:m:d:O:h" opt
 do
    case "$opt" in
         b ) bam="$OPTARG" ;;
@@ -59,6 +61,7 @@ do
         g ) contig="$OPTARG" ;;
         s ) id="$OPTARG" ;;
         p ) nprocs="$OPTARG" ;;
+        R ) ratioUser="$OPTARG" ;;
         q ) minbq="$OPTARG" ;;
         Q ) minmq="$OPTARG" ;;
         n ) mincellnumber="$OPTARG" ;;
@@ -98,6 +101,7 @@ echo "CELLBARCODETAG: ${cellbarcodetag}"
 echo "CONTIG: ${contig}"
 echo "SAMPLEID: ${id}"
 echo "nprocs: ${nprocs}"
+echo "ratioUser: ${ratioUser}"
 echo "minbq: ${minbq}"
 echo "minmq: ${minmq}"
 echo "mincellnumber: ${mincellnumber}"
@@ -114,5 +118,5 @@ do
     tmpConfig=${chrtmp}_${starttmp}_${endtmp}
     echo "Extracting SNPs for ${tmpConfig}"
     python -u ${scMutrace_src_dir}/src/1_runStep1_ExtractSNP.py --bam ${bam} --ref ${ref} --cbtag ${cellbarcodetag} --contig ${tmpConfig} --nprocs ${nprocs} --nmcheck --outdir ${outdir} --id ${id} --minmq ${minmq} --minbq ${minbq} --mincell ${mincellnumber} \
-        --minalt ${minaltcellnumber} --maxnm ${maxmismatch} --mindp ${minsequencingdepth}
+        --minalt ${minaltcellnumber} --maxnm ${maxmismatch} --mindp ${minsequencingdepth} --ratio ${ratioUser}
 done < ${contig}
