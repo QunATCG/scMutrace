@@ -13,7 +13,7 @@ helpFunction(){
     echo "generate Cell-SNP Matrix"
     echo ""
     echo "Usage:"
-    echo "$0 -g configfile[str] -O outputdir[str] -f reference[str] -q minBQ[int] -Q minMQ[int] -C cellbarcode[str] -p nprocs[int]"
+    echo "$0 -g configfile[str] -O outputdir[str] -f reference[str] -q minBQ[int] -Q minMQ[int] -C cellbarcodetag[str] -p nprocs[int]"
     echo ""
     echo "Options:"
     echo -e "\t -g \t[config file path ] tab separate file, with the format [ID\tVCFPATH\tBAMPATH\tTAG]"
