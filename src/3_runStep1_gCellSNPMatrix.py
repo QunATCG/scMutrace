@@ -79,6 +79,7 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir ,referencePath, min_
                                 cellsMutInfo = [check_ifMut_oneCell(i, refBase) for i in vcfLineSets[10].split(";")]
                                 for cell, cellMutInfo in zip(cellsList, cellsMutInfo):
                                     foutFile.writelines(chr + "_" + str(pos) + "\t" + idtmp + "_" + cell + "\t" + str(cellMutInfo) + "\n")
+                                    foutFile.flush()
                     # remove target vcf file
                     os.remove(targetVcfPath)
     foutFile.close()
