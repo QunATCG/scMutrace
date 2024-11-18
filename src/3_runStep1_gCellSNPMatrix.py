@@ -10,7 +10,7 @@ import multiprocessing as mp
 def initialize_parser():
     parser = argparse.ArgumentParser(description='generate gCellSNP matrix')
     parser.add_argument('--outdir', type=str, default='', help='out file directory', required = True)
-    parser.add_argument('--jobconfig', type=str, default='', help='config file path, tab separate file, with the format [ID\tVCFPATH\tBAMPATH]', required = True)
+    parser.add_argument('--jobconfig', type=str, default='', help='config file path, tab separate file, with the format [ID\tVCFPATH\tBAMPATH\tTAG]', required = True)
     parser.add_argument('--reference', type=str, default='', help='reference path', required = True)
     parser.add_argument('--min_bq', type=int, default=0, help='cutoff base quality', required = False)
     parser.add_argument('--min_mq', type=int, default=255, help='cutoff mapping quality', required = False)
