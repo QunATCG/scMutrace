@@ -115,7 +115,7 @@ if [ ${barcodecheck} == "true" ]; then
     samtools view -@ ${nprocs} -h ${outdir}/ExcludeBG_${id}.sort.bam | perl -pe 's/CB:Z:([A-Z]*)-1/CB:Z:$1/' | samtools view -@ ${nprocs} -b -o ${outdir}/ExcludeBG_${id}.sort.reCB.bam
     samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.reCB.bam
     echo "picard rmdup.."${id}
-    java -jar ${scMutrace_src_dir}/software/picard.jar MarkDuplicates --BARCODE_TAG CB --REMOVE_DUPLICATES --INPUT ${outdir}/ExcludeBG_${id}.sort.reCB.bam --METRICS_FILE ${outdir}/ExcludeBG_${id}.picard_dup_metrics.txt --OUTPUT ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
+    java -jar ${scMutrace_src_dir}/software/picard.jar MarkDuplicates --BARCODE_TAG ${cellbarcodetag} --REMOVE_DUPLICATES --INPUT ${outdir}/ExcludeBG_${id}.sort.reCB.bam --METRICS_FILE ${outdir}/ExcludeBG_${id}.picard_dup_metrics.txt --OUTPUT ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
     echo "samtools index rmdup.."${id}
     samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
     rm ${outdir}/ExcludeBG_${id}.sort.reCB.bam ${outdir}/ExcludeBG_${id}.sort.reCB.bam.bai
@@ -124,7 +124,7 @@ elif [ ${barcodecheck} == "false" ]; then
     samtools view -@ ${nprocs} -h ${bam} | perl -pe 's/CB:Z:([A-Z]*)-1/CB:Z:$1/' | samtools view -@ ${nprocs} -b -o ${outdir}/ExcludeBG_${id}.sort.reCB.bam
     samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.reCB.bam
     echo "picard rmdup.."${id}
-    java -jar ${scMutrace_src_dir}/software/picard.jar MarkDuplicates --BARCODE_TAG CB --REMOVE_DUPLICATES --INPUT ${outdir}/ExcludeBG_${id}.sort.reCB.bam --METRICS_FILE ${outdir}/ExcludeBG_${id}.picard_dup_metrics.txt --OUTPUT ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
+    java -jar ${scMutrace_src_dir}/software/picard.jar MarkDuplicates --BARCODE_TAG ${cellbarcodetag} --REMOVE_DUPLICATES --INPUT ${outdir}/ExcludeBG_${id}.sort.reCB.bam --METRICS_FILE ${outdir}/ExcludeBG_${id}.picard_dup_metrics.txt --OUTPUT ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
     echo "samtools index rmdup.."${id}
     samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
     rm ${outdir}/ExcludeBG_${id}.sort.reCB.bam ${outdir}/ExcludeBG_${id}.sort.reCB.bam.bai
