@@ -42,7 +42,7 @@ def merge_mut_info(jobconfigPath, mutinfoPath):
 def check_ifMut_oneCell(cellInfo, refBase):
     basicBase = ["A", "T", "C", "G", "D", "I"]
     countDic = {base: 0 for base in basicBase}
-    check_base = list(set(basicBase) - {refBase})
+    check_base = list(set(basicBase) - {refBase, "D", "I"})
     cellInfoList = list(map(int, cellInfo.split("|")))
     for base, count in zip(basicBase, cellInfoList):
         countDic[base] += count
