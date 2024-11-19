@@ -91,9 +91,9 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir ,referencePath, min_
                     os.remove(targetVcfPath)
     foutFile.close()
 
-def modify_mutinfo(input, output):
+def modify_mutinfo(inputpath, outputpath):
     mutDic = {}
-    with open(input, "r") as test:
+    with open(inputpath, "r") as test:
         for line in test:
             lineSets = line.strip().split("\t")
             posList = lineSets[0].split("_")
@@ -105,10 +105,11 @@ def modify_mutinfo(input, output):
                     mutDic[loc] = [mut]
                 elif mut not in mutDic[loc]:
                     mutDic[loc].append(mut)
+    output = open(outputpath, "w")
     for loc, mutList in mutDic.items():
         tags = [loc + "_" + mut for mut in mutList]
         for tag in tags:
-            with open(input, "r") as test:
+            with open(inputpath, "r") as test:
                 for line in test:
                     lineSets = line.strip().split("\t")
                     posList = lineSets[0].split("_")
