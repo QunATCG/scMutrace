@@ -47,10 +47,11 @@ def check_ifMut_oneCell(cellInfo, refBase):
     for base, count in zip(basicBase, cellInfoList):
         countDic[base] += count
     numCheck = sum(countDic[base] for base in check_base)
+    mutype = "_".join([base for base in check_base if countDic[base] >= 1])
+    tag = "WT"
     if numCheck >= 1:
-        return "Mut"
-    else:
-        return "WT"
+        tag = "Mut"
+    return tag, mutype
 
 # get cell info of all mutations
 def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir ,referencePath, min_bq, min_mq, cbtag):
@@ -78,11 +79,50 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir ,referencePath, min_
                                 cellsList = vcfLineSets[9].split(";")
                                 cellsMutInfo = [check_ifMut_oneCell(i, refBase) for i in vcfLineSets[10].split(";")]
                                 for cell, cellMutInfo in zip(cellsList, cellsMutInfo):
-                                    foutFile.writelines(chr + "_" + str(pos) + "\t" + idtmp + "_" + cell + "\t" + str(cellMutInfo) + "\n")
-                                    foutFile.flush()
+                                    mutypes = cellMutInfo[1].split("_")
+                                    for m in mutypes:
+                                        if str(cellMutInfo[0]) == "Mut":
+                                            foutFile.writelines(chr + "_" + str(pos) + "_" + refBase + "_" + str(m) + "\t" + idtmp + "_" + cell + "\t" + str(cellMutInfo[0]) + "\n")
+                                            foutFile.flush()
+                                        if str(cellMutInfo[0]) == "WT":
+                                            foutFile.writelines(chr + "_" + str(pos) + "_" + refBase + "_" + refBase + "\t" + idtmp + "_" + cell + "\t" + str(cellMutInfo[0]) + "\n")
+                                            foutFile.flush()
                     # remove target vcf file
                     os.remove(targetVcfPath)
     foutFile.close()
+
+def modify_mutinfo(input, output):
+    mutDic = {}
+    with open(input, "r") as test:
+        for line in test:
+            lineSets = line.strip().split("\t")
+            posList = lineSets[0].split("_")
+            loc = posList[0] + "_" + posList[1]
+            refBase = posList[2]
+            mut = posList[3]
+            if mut != refBase:
+                if loc not in mutDic:
+                    mutDic[loc] = [mut]
+                elif mut not in mutDic[loc]:
+                    mutDic[loc].append(mut)
+    for loc, mutList in mutDic.items():
+        tags = [loc + "_" + mut for mut in mutList]
+        for tag in tags:
+            with open(input, "r") as test:
+                for line in test:
+                    lineSets = line.strip().split("\t")
+                    posList = lineSets[0].split("_")
+                    loctmp = posList[0] + "_" + posList[1]
+                    refBase = posList[2]
+                    muttmp = posList[3]
+                    tagCheck = loc + "_" + muttmp
+                    locOut = loc + "_" + refBase + "_" + tag.split("_")[2]
+                    if loctmp == loc and tagCheck == tag:
+                        sql = locOut + "\t" + lineSets[1] + "\t" + lineSets[2]
+                        output.write(sql + "\n")
+                    if loctmp == loc and tagCheck != tag:
+                        sql = locOut + "\t" + lineSets[1] + "\t" + "WT"
+                        output.write(sql + "\n")
 
 # exclude control mutations
 def exclude_control_mut(gCSMPath, jobconfigPath, outpathDir):
@@ -177,19 +217,23 @@ def main():
                 with open(merge_file, "a") as merge_f:
                     merge_f.write(line)
         os.remove(split_file)
+    # modify mut info
+    print(">>> Modify mut info")
+    modifyedFile = outdir + "/gCellSNPMatrix.step1.txt"
+    modify_mutinfo(merge_file, modifyedFile)
     # exclude control mutations
     print(">>> Exclude control mutations")
-    exclude_control_mut(merge_file, jobconfig, outdir)
+    exclude_control_mut(modifyedFile, jobconfig, outdir)
     print(">>> Generate gCellSNP matrix")
     finalResult1 = outdir + "/gCellSNPMatrix.step3.1_excludeControlSites.csv"
     finalResult2 = outdir + "/gCellSNPMatrix.step3.2_includeControlSites.csv"
     generate_gCellSNP_matrix(finalResult1, outdir + "/gCellSNPMatrix.step2.txt")
-    generate_gCellSNP_matrix(finalResult2, outdir + "/gCellSNPMatrix.step0.txt")
+    generate_gCellSNP_matrix(finalResult2, outdir + "/gCellSNPMatrix.step1.txt")
     print(">>> Generate gSNPSample matrix")
     outpath1 = outdir + "/gSNPSampleMatrix.step2.1.txt"
     outpath2 = outdir + "/gSNPSampleMatrix.step2.2.txt"
     generate_snp_sample_mutInfo(outdir + "/gCellSNPMatrix.step2.txt", outpath1)
-    generate_snp_sample_mutInfo(outdir + "/gCellSNPMatrix.step0.txt", outpath2)
+    generate_snp_sample_mutInfo(outdir + "/gCellSNPMatrix.step1.txt", outpath2)
     finalResult3 = outdir + "/gSNPSampleMatrix.step3.1_excludeControlSites.csv"
     finalResult4 = outdir + "/gSNPSampleMatrix.step3.2_includeControlSites.csv"
     generate_gSNPSample_matrix(finalResult3, outpath1)
