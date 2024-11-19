@@ -181,14 +181,19 @@ def main():
     print(">>> Exclude control mutations")
     exclude_control_mut(merge_file, jobconfig, outdir)
     print(">>> Generate gCellSNP matrix")
-    finalResult = outdir + "/gCellSNPMatrix.step3.csv"
-    generate_gCellSNP_matrix(finalResult, outdir + "/gCellSNPMatrix.step2.txt")
+    finalResult1 = outdir + "/gCellSNPMatrix.step3.1_excludeControlSites.csv"
+    finalResult2 = outdir + "/gCellSNPMatrix.step3.2_includeControlSites.csv"
+    generate_gCellSNP_matrix(finalResult1, outdir + "/gCellSNPMatrix.step2.txt")
+    generate_gCellSNP_matrix(finalResult2, outdir + "/gCellSNPMatrix.step0.txt")
     print(">>> Generate gSNPSample matrix")
-    outpath = outdir + "/gSNPSampleMatrix.step2.txt"
-    generate_snp_sample_mutInfo(outdir + "/gCellSNPMatrix.step2.txt", outpath)
-    finalResult = outdir + "/gSNPSampleMatrix.step3.csv"
-    generate_gSNPSample_matrix(finalResult, outpath)
-
+    outpath1 = outdir + "/gSNPSampleMatrix.step2.1.txt"
+    outpath2 = outdir + "/gSNPSampleMatrix.step2.2.txt"
+    generate_snp_sample_mutInfo(outdir + "/gCellSNPMatrix.step2.txt", outpath1)
+    generate_snp_sample_mutInfo(outdir + "/gCellSNPMatrix.step0.txt", outpath2)
+    finalResult3 = outdir + "/gSNPSampleMatrix.step3.1_excludeControlSites.csv"
+    finalResult4 = outdir + "/gSNPSampleMatrix.step3.2_includeControlSites.csv"
+    generate_gSNPSample_matrix(finalResult3, outpath1)
+    generate_gSNPSample_matrix(finalResult4, outpath2)
 
 if __name__ == "__main__":
     start = timeit.default_timer()
