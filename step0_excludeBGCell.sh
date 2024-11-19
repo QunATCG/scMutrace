@@ -126,14 +126,14 @@ if [ ${barcodecheck} == "true" ]; then
         samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
         rm ${outdir}/ExcludeBG_${id}.sort.reCB.bam ${outdir}/ExcludeBG_${id}.sort.reCB.bam.bai
         echo "Done!"${id}
-    done
+    fi
     if [ ${umitag} == "XX" ]; then
         echo "picard rmdup.."${id}
         java -jar ${scMutrace_src_dir}/software/picard.jar MarkDuplicates --REMOVE_DUPLICATES --INPUT ${outdir}/ExcludeBG_${id}.sort.bam --METRICS_FILE ${outdir}/ExcludeBG_${id}.picard_dup_metrics.txt --OUTPUT ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
         echo "samtools index rmdup.."${id}
         samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
         echo "Done!"${id}
-    done
+    fi
 elif [ ${barcodecheck} == "false" ]; then
     if [ ${umitag} != "XX" ]; then
         samtools view -@ ${nprocs} -h ${bam} | perl -pe 's/CB:Z:([A-Z]*)-1/CB:Z:$1/' | samtools view -@ ${nprocs} -b -o ${outdir}/ExcludeBG_${id}.sort.reCB.bam
@@ -144,12 +144,12 @@ elif [ ${barcodecheck} == "false" ]; then
         samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
         rm ${outdir}/ExcludeBG_${id}.sort.reCB.bam ${outdir}/ExcludeBG_${id}.sort.reCB.bam.bai
         echo "Done!"${id}
-    done
+    fi
     if [ ${umitag} == "XX" ]; then
         echo "picard rmdup.."${id}
         java -jar ${scMutrace_src_dir}/software/picard.jar MarkDuplicates --REMOVE_DUPLICATES --INPUT ${outdir}/ExcludeBG_${id}.sort.bam --METRICS_FILE ${outdir}/ExcludeBG_${id}.picard_dup_metrics.txt --OUTPUT ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
         echo "samtools index rmdup.."${id}
         samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
         echo "Done!"${id}
-    done
+    fi
 fi
