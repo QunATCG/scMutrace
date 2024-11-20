@@ -39,7 +39,7 @@ helpFunction() {
     echo -e "\t -N \t[minaltcellnumber:int] Minimum altered cell number (default: 2)."
     echo -e "\t -m \t[maxmismatch:int] Maximum mismatch number (default: 4)."
     echo -e "\t -d \t[minsequencingdepth:int] Minimum sequencing depth (default: 3)."
-    echo -e "\t -D \t[minaltdepth:int] Minimum alternative base depth (default: 2)."
+    echo -e "\t -D \t[minaltsequencingdepth:int] Minimum alternative base depth (default: 2)."
     echo -e "\t -k \t[iteration:int] Number of iterations (default: 1000)."
     echo -e "\t -e \t[backp:float] Background mutant cells threshold to filter SNPs (0.03-0.06, default: 0.05)."
     echo -e "\t -E \t[errorp:float] Background error threshold to filter SNPs (0.001-0.006, default: 0.006)."
@@ -93,7 +93,7 @@ mincellnumber=3
 minaltcellnumber=2
 maxmismatch=4
 minsequencingdepth=3
-minaltdepth=2
+minaltsequencingdepth=2
 iteration=1000
 backp=0.05
 errorp=0.006
@@ -135,7 +135,7 @@ do
         N ) minaltcellnumber="$OPTARG" ;;
         m ) maxmismatch="$OPTARG" ;;
         d ) minsequencingdepth="$OPTARG" ;;
-        D ) minaltdepth="$OPTARG" ;;
+        D ) minaltsequencingdepth="$OPTARG" ;;
         k ) iteration="$OPTARG" ;;
         e ) backp="$OPTARG" ;;
         E ) errorp="$OPTARG" ;;
@@ -194,7 +194,7 @@ echo "mincellnumber: ${mincellnumber}"
 echo "minaltcellnumber: ${minaltcellnumber}"
 echo "maxmismatch: ${maxmismatch}"
 echo "minsequencingdepth: ${minsequencingdepth}"
-echo "minaltdepth: ${minaltdepth}"
+echo "minaltsequencingdepth: ${minaltsequencingdepth}"
 echo "iteration: ${iteration}"
 echo "backp: ${backp}"
 echo "errorp: ${errorp}"
@@ -245,11 +245,17 @@ echo "Barcode file header and format are correct."
 # step0_excludeBGCell.sh
 echo "making the output directory.."${id}
 echo "running step0_excludeBGCell.sh"
-${scMutrace_src_dir}/step0_excludeBGCell.sh -b ${bam} -f ${ref} -u ${umi} -x ${barcodecheck} -c ${barcode} -C ${cellbarcodetag} -t ${ncut} -s ${id} -p ${nprocs} -O ${outdir}
+${scMutrace_src_dir}/step0_excludeBGCell.sh -b ${bam} -f ${ref} \
+    -u ${umi} -x ${barcodecheck} -c ${barcode} -C ${cellbarcodetag} \
+    -t ${ncut} -s ${id} -p ${nprocs} -O ${outdir}
 
 # step1_extractSNP.sh
 echo "running step1_extractSNP.sh"
-${scMutrace_src_dir}/step1_extractSNP.sh -b ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam -f ${ref} -C ${cellbarcodetag} -g ${contig} -s ${id} -p ${nprocs} -q ${minbq} -Q ${minmq} -n ${mincellnumber} -N ${minaltcellnumber} -m ${maxmismatch} -d ${minsequencingdepth} -O ${outdir}
+${scMutrace_src_dir}/step1_extractSNP.sh -b ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam -f ${ref} -C ${cellbarcodetag} \
+    -g ${contig} -s ${id} -p ${nprocs} -R ${ratioUser} -q ${minbq} -Q ${minmq} \
+    -n ${mincellnumber} -N ${minaltcellnumber} \
+    -m ${maxmismatch} -d ${minsequencingdepth} -D ${minaltsequencingdepth} \
+    -O ${outdir}
 
 # step2_filterSNPModel.sh
 echo "running step2_filterSNPModel.sh"
@@ -261,4 +267,9 @@ ${scMutrace_src_dir}/step3_filterPopulation.sh -O ${outdir} -V ${outdir}/filterV
 
 # step4_filterNoisy.sh
 echo "running step4_filterNoisy.sh"
-${scMutrace_src_dir}/step4_filterNoisy.sh -v ${outdir}/${id}_scmutrace.vcf -b ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam -f ${ref} -p ${nprocs} -s ${id} -c ${barcode} -C ${cellbarcodetag} -l ${binsize} -L ${clustersize} -d ${minsequencingdepth} -D ${minaltdepth} -n ${mincellnumber} -N ${minaltcellnumber} -B ${lowBaseCutoff} -O ${outdir}/
+${scMutrace_src_dir}/step4_filterNoisy.sh -b ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam \
+    -f ${ref} -v ${outdir}/${id}_scmutrace.vcf -O ${outdir}/ \
+    -s ${id} -c ${barcode} -l ${binsize} -L ${clustersize} \
+    -d ${minsequencingdepth} -D ${minaltsequencingdepth} \
+    -n ${mincellnumber} -N ${minaltcellnumber} -B ${lowBaseCutoff} \
+    -C ${cellbarcodetag} -q 0 -Q ${minmq} -p ${nprocs}
