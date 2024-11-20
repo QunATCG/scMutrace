@@ -30,6 +30,7 @@ helpFunction() {
     echo -e "\t -i \t[includeitems:str] Database files to be included (tab-separated format: path id)."
     echo "Optional Arguments:"
     echo -e "\t -x \t[barcodecheck:str] if barcode check, split bam based on cell barcodes (false or true, default: true.)."
+    echo -e "\t -u \t[umi:str] umi to be used to remove duplicated reads (default: CB, if XX, no umi)."
     echo -e "\t -t \t[ncut:int] Number of read bases to be trimed cut (default: 10)."
     echo -e "\t -p \t[nprocs:int] Number of processes to use (default: 1)."
     echo -e "\t -q \t[minbq:int] Minimum base quality (default: 20)."
@@ -45,6 +46,7 @@ helpFunction() {
     echo -e "\t -l \t[binsize:int] Base number between two SNPs (default: 20)."
     echo -e "\t -L \t[clustersize:int] Number of SNPs in one cluster (default: 3)."
     echo -e "\t -B \t[lowBaseCutoff:int] Cutoff for low base quality (default: 20)."
+    echo -e "\t -R \t[ratio] cutoff to filter low freq mutations."
     echo -e "\t -h \t[help] Display this help message."
     exit 1
 }
@@ -102,6 +104,8 @@ removeitem="NotAvailable"
 includeitem="NotAvailable"
 cellbarcodetag="CB"
 barcodecheck="true"
+ratioUser=0.005
+umi="CB"
 
 # Check if no arguments are passed
 if [ $# -eq 0 ]; then
@@ -110,7 +114,7 @@ if [ $# -eq 0 ]; then
 fi
 
 # get parameters
-while getopts "b:f:x:c:C:s:O:g:r:i:t:p:q:Q:n:N:m:d:D:k:e:E:l:L:B:h" opt
+while getopts "b:f:x:c:C:s:O:g:r:i:t:p:q:Q:R:n:N:m:d:D:k:e:E:l:L:B:u:h" opt
 do
     case "$opt" in
         b ) bam="$OPTARG" ;;
@@ -138,6 +142,8 @@ do
         l ) binsize="$OPTARG" ;;
         L ) clustersize="$OPTARG" ;;
         B ) lowBaseCutoff="$OPTARG" ;;
+        u ) umi="$OPTARG" ;;
+        R ) ratioUser="$OPTARG" ;;
         h ) helpFunction ;;
         ? ) helpFunction ;;
     esac
@@ -195,6 +201,8 @@ echo "errorp: ${errorp}"
 echo "binsize: ${binsize}"
 echo "clustersize: ${clustersize}"
 echo "lowBaseCutoff: ${lowBaseCutoff}"
+echo "UMI: ${umi}"
+echo "ratioUser: ${ratioUser}"
 echo ""
 echo ""
 
@@ -237,7 +245,7 @@ echo "Barcode file header and format are correct."
 # step0_excludeBGCell.sh
 echo "making the output directory.."${id}
 echo "running step0_excludeBGCell.sh"
-${scMutrace_src_dir}/step0_excludeBGCell.sh -b ${bam} -f ${ref} -x ${barcodecheck} -c ${barcode} -C ${cellbarcodetag} -t ${ncut} -s ${id} -p ${nprocs} -O ${outdir}
+${scMutrace_src_dir}/step0_excludeBGCell.sh -b ${bam} -f ${ref} -u ${umi} -x ${barcodecheck} -c ${barcode} -C ${cellbarcodetag} -t ${ncut} -s ${id} -p ${nprocs} -O ${outdir}
 
 # step1_extractSNP.sh
 echo "running step1_extractSNP.sh"
