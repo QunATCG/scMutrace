@@ -463,7 +463,7 @@ def cal_pError_fromBaseQuality(baseQuality):
     pError = 10 ** (-int(baseQuality) / 10)
     return pError
 
-def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_alt, min_cell, max_nm, cbtag, ratioUser):
+def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_altcov, min_cell, min_altcell, max_nm, cbtag, ratioUser):
     """
     Count mutation information from BAM file and write to VCF file.
 
@@ -479,8 +479,9 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
     cell_check (bool): Flag to check cell count.
     nm_check (bool): Flag to check number of mismatches.
     min_cov (int): Minimum coverage.
-    min_alt (int): Minimum alternative allele count.
+    min_altcov (int): Minimum alternative allele count.
     min_cell (int): Minimum cell count.
+    min_altcell (int): Minimum cell count with alternative allele.
     max_nm (int): Maximum number of mismatches.
 
     Returns:
@@ -533,7 +534,7 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
             BASE_PILEUP_LIST = bam_pileup.get_query_sequences(mark_matches=True, add_indels=True)
             NEW_BASE_PILEUP_LIST, COUNTNUMALT = count_base_typeNum(BASE_PILEUP_LIST, REF_BASE, False)
             # Check ALT number
-            if alt_check == True and COUNTNUMALT < int(min_alt):
+            if alt_check == True and COUNTNUMALT < int(min_altcov):
                 continue
             if DP >= 1000 and COUNTNUMALT <= ratioUser * DP:
                 continue
@@ -613,7 +614,7 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
                 if int(DP_TOTAL) < int(min_cov):
                     continue
             DP_ALT_REAL = count_base_fromDic(BASE_COUNTS_DIC, [REF_BASE, "N"])
-            if alt_check == True and int(DP_ALT_REAL) < int(min_alt):
+            if alt_check == True and int(DP_ALT_REAL) < int(min_altcov):
                 continue
             if DP_TOTAL >= 1000 and DP_ALT_REAL <= ratioUser * DP_TOTAL:
                 continue
@@ -621,7 +622,7 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
             # CELL MUTINFO Total
             COUNTINFOCELL, COUNTINFOALT, COUNTOTALCELL, COUNTOTALALT, COUNTOTALCELLALT = get_mut_total(CELL_COUNTS_DIC, REF_BASE)
             #CELL_NUM = len(set(CELLS))
-            if cell_check == True and COUNTOTALCELL < int(min_cell):
+            if cell_check == True and COUNTOTALCELL < int(min_cell) and COUNTOTALALT < int(min_altcell):
                 continue
             CELLUNIQ, CELLMUTCOUNTINFO = get_mut_bycell(CELL_COUNTS_DIC)
             CELLUNIQ_F, CELLMUTCOUNTINFO_F = get_mut_bycell(CELL_COUNTS_F_DIC)

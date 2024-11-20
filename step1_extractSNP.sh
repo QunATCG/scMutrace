@@ -29,6 +29,7 @@ helpFunction(){
     echo -e "\t -N \t[minaltcellnumber] min alteration cell number"
     echo -e "\t -m \t[maxmismatch] number max mismatch number"
     echo -e "\t -d \t[minsequencingdepth] min sequecing depth"
+    echo -e "\t -D \t[minaltsequencingdepth] min alteration sequencing depth"
     echo -e "\t -O \t[outdir] output directory"
     echo -e "\t -h \t[help] display this help message"
     echo -e "\t Author: QunLi (liqun95@163.com)"
@@ -48,11 +49,12 @@ mincellnumber=3
 minaltcellnumber=2
 maxmismatch=4
 minsequencingdepth=3
+minaltsequencingdepth=2
 cellbarcodetag="CB"
 ratioUser=0.005
 
 # get parameters
-while getopts "b:f:C:g:s:p:R:q:Q:n:N:m:d:O:h" opt
+while getopts "b:f:C:g:s:p:R:q:Q:n:N:m:d:D:O:h" opt
 do
    case "$opt" in
         b ) bam="$OPTARG" ;;
@@ -65,9 +67,9 @@ do
         q ) minbq="$OPTARG" ;;
         Q ) minmq="$OPTARG" ;;
         n ) mincellnumber="$OPTARG" ;;
-        N ) minaltcellnumber="$OPTARG" ;;
         m ) maxmismatch="$OPTARG" ;;
         d ) minsequencingdepth="$OPTARG" ;;
+        D ) minaltsequencingdepth="$OPTARG" ;;
         O ) outdir="$OPTARG" ;;
         h ) helpFunction ;;
         ? ) helpFunction ;; # Print helpFunction in case of invalid option
@@ -108,6 +110,7 @@ echo "mincellnumber: ${mincellnumber}"
 echo "minaltcellnumber: ${minaltcellnumber}"
 echo "maxmismatch: ${maxmismatch}"
 echo "minsequencingdepth: ${minsequencingdepth}"
+echo "minaltsequencingdepth: ${minaltsequencingdepth}"
 echo "OUTPUT: ${outdir}"
 echo ""
 echo ""
@@ -118,5 +121,5 @@ do
     tmpConfig=${chrtmp}_${starttmp}_${endtmp}
     echo "Extracting SNPs for ${tmpConfig}"
     python -u ${scMutrace_src_dir}/src/1_runStep1_ExtractSNP.py --bam ${bam} --ref ${ref} --cbtag ${cellbarcodetag} --contig ${tmpConfig} --nprocs ${nprocs} --nmcheck --outdir ${outdir} --id ${id} --minmq ${minmq} --minbq ${minbq} --mincell ${mincellnumber} \
-        --minalt ${minaltcellnumber} --maxnm ${maxmismatch} --mindp ${minsequencingdepth} --ratio ${ratioUser}
+        --minaltcell ${minaltcellnumber} --maxnm ${maxmismatch} --mindp ${minsequencingdepth} --minaltdp ${minaltsequencingdepth} --ratio ${ratioUser}
 done < ${contig}

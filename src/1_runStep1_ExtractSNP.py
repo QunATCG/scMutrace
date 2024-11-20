@@ -18,8 +18,9 @@ def initialize_parser():
     parser.add_argument('--minmq', type=int, default=255, help='min mapping quality [Default: 255]', required=False)
     parser.add_argument('--minbq', type=int, default=20, help='min base quality [[Default: 20]]', required=False)
     parser.add_argument('--mindp', type=int, default=3, help='min sequencing depth [Default: 3]', required=False)
+    parser.add_argument('--minaltdp', type=int, default=2, help='min alteration read number [Default: 2]', required=False)
     parser.add_argument('--mincell', type=int, default=3, help='min cell number [Default: 3]', required=False)
-    parser.add_argument('--minaltdp', type=int, default=3, help='min alteration read number [Default: 3]', required=False)
+    parser.add_argument('--minaltcell', type=int, default=2, help='Minimum cell count with alternative allele. [Default: 2]', required=False)
     parser.add_argument('--nmcheck', action='store_true', help='A boolean flag for number of mismatches checking')
     parser.add_argument('--maxnm', type=int, default=3, help='max mismatch number [Default: 3]', required=False)
     parser.add_argument('--id', help='Prefix used to name output file', required=False)
@@ -70,8 +71,9 @@ def main():
     minmq = args.minmq
     minbq = args.minbq
     min_cov = args.mindp
-    min_alt = args.minaltdp
+    min_altcov = args.minaltdp
     min_cell = args.mincell
+    min_altcell = args.minaltcell
     max_nm = args.maxnm
     nmcheck = args.nmcheck
     maxcheck = args.maxcheck
@@ -121,7 +123,7 @@ def main():
             p = mp.get_context("fork").Pool(COREUSE)
             print("Your cores is " + str(COREUSE))
             for config_i in K:
-                p.apply_async(count_mut_information, args=(bam_Path, ref_Path, outDirPathVCFTmp, config_i, minbq, minmq, True, True, True, nmCheckStates, min_cov, min_alt, min_cell, max_nm, cbtag, ratioUser), error_callback=err_call_back)
+                p.apply_async(count_mut_information, args=(bam_Path, ref_Path, outDirPathVCFTmp, config_i, minbq, minmq, True, True, True, nmCheckStates, min_cov, min_altcov, min_cell, min_altcell, max_nm, cbtag, ratioUser), error_callback=err_call_back)
             print('Waiting for all subprocesses done...')
             p.close()
             p.join()
@@ -130,7 +132,7 @@ def main():
             print("Your cores is 1")
             for config_i in K:
                 print(config_i)
-                count_mut_information(BamPath=bam_Path, referencePath=ref_Path, outVcfPath=outDirPathVCFTmp, config_posList=config_i, min_bq=minbq, min_mq=minmq, dp_check=True, alt_check=True, cell_check=True, nm_check=nmCheckStates, min_cov=min_cov, min_alt=min_alt, min_cell=min_cell, max_nm=max_nm, cbtag=cbtag, ratioUser=ratioUser)
+                count_mut_information(BamPath=bam_Path, referencePath=ref_Path, outVcfPath=outDirPathVCFTmp, config_posList=config_i, min_bq=minbq, min_mq=minmq, dp_check=True, alt_check=True, cell_check=True, nm_check=nmCheckStates, min_cov=min_cov, min_altcov=min_altcov, min_cell=min_cell, min_altcell=min_altcell, max_nm=max_nm, cbtag=cbtag, ratioUser=ratioUser)
         
         print("Merging... " + bam_Path + " of Chromosome: " + str(config_info.split("_")[0]))
         merge_VCF_filesShell(VcfPOSOUT, outDirPathVCFTmp, nameSplitBamTag, str(config_info.split("_")[0]))
