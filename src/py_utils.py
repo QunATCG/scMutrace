@@ -722,7 +722,7 @@ def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList
             # Check ALT number
             if alt_check == True and COUNTNUMALT < int(min_alt):
                 continue
-            if DP >= 1000 and COUNTNUMALT <= 0.005 * DP:
+            if DP >= 1000 and COUNTNUMALT < int(min_alt):
                 continue
             # list of reads (pysam.PileupRead) aligned to this column
             # Representation of a read aligned to a particular position in the reference sequence.
