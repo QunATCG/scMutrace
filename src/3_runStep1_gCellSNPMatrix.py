@@ -137,6 +137,7 @@ def modify_mutinfo(inputpath, outputpath, mutinfoPath):
                     if loctmp == loc and tagCheck != tag:
                         sql = locOut + "\t" + lineSets[1] + "\t" + "WT"
                         output.write(sql + "\n")
+    output.close()
 
 # exclude control mutations
 def exclude_control_mut(gCSMPath, jobconfigPath, outpathDir):
