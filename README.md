@@ -79,34 +79,35 @@ Usage:
 
 Options:
 Required Arguments:
-	 -b 	[bam:str] Path to the BAM file to exclude background cells.
-	 -f 	[ref:str] Path to the reference file.
-	 -c 	[barcode:str] Cell barcode file path (tab-separated with header: Barcode CellType). If CellType is not provided, all cells will be defined as 'CellType1'.
-	 -s 	[id:str] Sample ID.
-	 -O 	[outdir:str] Output directory.
-	 -g 	[contig:str] Contig information in tab-separated format: Chr	start	end.
+     -b     [bam:str] Path to the BAM file to exclude background cells.
+     -f     [ref:str] Path to the reference file.
+     -c     [barcode:str] Cell barcode file path (tab-separated with header: Barcode CellType). If CellType is not provided, all cells will be defined as 'CellType1'.
+     -s     [id:str] Sample ID.
+     -O     [outdir:str] Output directory.
+     -g     [contig:str] Contig information in tab-separated format: Chr	start	end.
 Advanced Arguments:
-	 -r 	[removeitems:str] Database files to be excluded (tab-separated format: path id).
-	 -i 	[includeitems:str] Database files to be included (tab-separated format: path id).
+     -r     [removeitems:str] Database files to be excluded (tab-separated format: path id).
+     -i     [includeitems:str] Database files to be included (tab-separated format: path id).
 Optional Arguments:
      -x     [barcodecheck:str] if barcode check, split bam based on cell barcodes (false or true, default: true.).]
+     -u     [umi:str] umi to be used to remove duplicated reads (default: CB, if XX, no umi).
      -C     [barcodetag:str] cell barcode tag in bam file (default: CB)
-	 -t 	[ncut:int] Number of read bases to be trimed cut (default: 10).
-	 -p 	[nprocs:int] Number of processes to use (default: 1).
-	 -q 	[minbq:int] Minimum base quality (default: 20).
-	 -Q 	[minmq:int] Minimum mapping quality (default: 255). Check your mapping software quality score range (e.g STAR, BWA, HISAT2).
-	 -n 	[mincellnumber:int] Minimum cell number (default: 3).
-	 -N 	[minaltcellnumber:int] Minimum altered cell number (default: 2).
-	 -m 	[maxmismatch:int] Maximum mismatch number (default: 4).
-	 -d 	[minsequencingdepth:int] Minimum sequencing depth (default: 3).
-	 -D 	[minaltdepth:int] Minimum alternative base depth (default: 2).
-	 -k 	[iteration:int] Number of iterations (default: 1000).
-	 -e 	[backp:float] Background mutant cells threshold to filter SNPs (0.03-0.06, default: 0.05).
-	 -E 	[errorp:float] Background error threshold to filter SNPs (0.001-0.006, default: 0.006).
-	 -l 	[binsize:int] Base number between two SNPs (default: 20).
-	 -L 	[clustersize:int] Number of SNPs in one cluster (default: 3).
-	 -B 	[lowBaseCutoff:int] Cutoff for low base quality (default: 20).
-	 -h 	[help] Display this help message.
+     -t     [ncut:int] Number of read bases to be trimed cut (default: 10).
+     -p     [nprocs:int] Number of processes to use (default: 1).
+     -q     [minbq:int] Minimum base quality (default: 20).
+     -Q     [minmq:int] Minimum mapping quality (default: 255). Check your mapping software quality score range (e.g STAR, BWA, HISAT2).
+     -n     [mincellnumber:int] Minimum cell number (default: 3).
+     -N     [minaltcellnumber:int] Minimum altered cell number (default: 2).
+     -m     [maxmismatch:int] Maximum mismatch number (default: 4).
+     -d     [minsequencingdepth:int] Minimum sequencing depth (default: 3).
+     -D     [minaltdepth:int] Minimum alternative base depth (default: 2).
+     -k     [iteration:int] Number of iterations (default: 1000).
+     -e     [backp:float] Background mutant cells threshold to filter SNPs (0.03-0.06, default: 0.05).
+     -E     [errorp:float] Background error threshold to filter SNPs (0.001-0.006, default: 0.006).
+     -l     [binsize:int] Base number between two SNPs (default: 20).
+     -L     [clustersize:int] Number of SNPs in one cluster (default: 3).
+     -B     [lowBaseCutoff:int] Cutoff for low base quality (default: 20).
+     -h     [help] Display this help message.
 ```
 If you don't have a cell barcode file, all cells will be included. You can use `-x false` to skip the cell barcode filtering process. Alternatively, you can obtain all cell barcodes using the following command, with `ENCFF491HQL.bam` as an example:
 
@@ -160,13 +161,13 @@ You can check and search parameters using the following command:
     -S
     -t  [ncut] number of reads bases will be trimmed (default: 10)
     -T
-    -u
+    -u  [umi:str] umi to be used to remove duplicated reads (default: CB, if XX, no umi).
     -U
     -v  [vcf path] vcf file full path
     -V  [vcf directory] vcf file directory to filter SNPs
     -W
     -w
-    -x
+    -x  [barcodecheck:str] if barcode check, split bam based on cell barcodes (false or true, default: true.).]
     -X
     -y
     -Y
