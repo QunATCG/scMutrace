@@ -1,4 +1,5 @@
 import os
+import re
 import timeit
 import argparse
 import pandas as pd
@@ -25,6 +26,7 @@ def err_call_back(err):
 # merge multiple mut info and remove duplicates
 def merge_mut_info(jobconfigPath, mutinfoPath):
     tmpCheck = []
+    pattern = r'([ATCGDI])\[(\d+)\]'
     with open(jobconfigPath, "r") as jobconfig, open(mutinfoPath, "w") as mutinfo:
         for line in jobconfig:
             lineSets = line.strip().split("\t")
@@ -36,7 +38,9 @@ def merge_mut_info(jobconfigPath, mutinfoPath):
                     if vcfLineSets[0] + "_" + vcfLineSets[1] not in tmpCheck:
                         tmpCheck.append(vcfLineSets[0] + "_" + vcfLineSets[1])
                         sql = str(vcfLineSets[0]) + "\t" + str(vcfLineSets[1]) + "\t" + str(vcfLineSets[2])
-                        mutinfo.write(sql + "\n")
+                        mutBases = [sql + "\t" + match[0] for match in re.findall(pattern, vcfLineSets[3])]
+                        for mutBase in mutBases:
+                            mutinfo.write(mutBase + "\n")
 
 # check if a mutation is in a cell
 def check_ifMut_oneCell(cellInfo, refBase):
@@ -91,8 +95,15 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir ,referencePath, min_
                     os.remove(targetVcfPath)
     foutFile.close()
 
-def modify_mutinfo(inputpath, outputpath):
+def modify_mutinfo(inputpath, outputpath, mutinfoPath):
     mutDic = {}
+    mutinfo = []
+    with open(mutinfoPath, "r") as mutinfoFile:
+        for line in mutinfoFile:
+            lineSets = line.strip().split("\t")
+            mutinfoCheck = lineSets[0] + "_" + lineSets[1] + "_" + lineSets[2] + "_" + lineSets[3]
+            if mutinfoCheck not in mutinfo:
+                mutinfo.append(mutinfoCheck)
     with open(inputpath, "r") as test:
         for line in test:
             lineSets = line.strip().split("\t")
@@ -118,6 +129,8 @@ def modify_mutinfo(inputpath, outputpath):
                     muttmp = posList[3]
                     tagCheck = loc + "_" + muttmp
                     locOut = loc + "_" + refBase + "_" + tag.split("_")[2]
+                    if locOut not in mutinfo:
+                        continue
                     if loctmp == loc and tagCheck == tag:
                         sql = locOut + "\t" + lineSets[1] + "\t" + lineSets[2]
                         output.write(sql + "\n")
@@ -221,7 +234,7 @@ def main():
     # modify mut info
     print(">>> Modify mut info")
     modifyedFile = outdir + "/gCellSNPMatrix.step1.txt"
-    modify_mutinfo(merge_file, modifyedFile)
+    modify_mutinfo(merge_file, modifyedFile, mutinfoPath)
     # exclude control mutations
     print(">>> Exclude control mutations")
     exclude_control_mut(modifyedFile, jobconfig, outdir)
