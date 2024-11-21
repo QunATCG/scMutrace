@@ -98,12 +98,14 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir ,referencePath, min_
 def modify_mutinfo(inputpath, outputpath, mutinfoPath):
     mutDic = {}
     mutinfo = []
+    print(">>> Modify mut info_0")
     with open(mutinfoPath, "r") as mutinfoFile:
         for line in mutinfoFile:
             lineSets = line.strip().split("\t")
             mutinfoCheck = lineSets[0] + "_" + lineSets[1] + "_" + lineSets[2] + "_" + lineSets[3]
             if mutinfoCheck not in mutinfo:
                 mutinfo.append(mutinfoCheck)
+    print(">>> Modify mut info_1")
     with open(inputpath, "r") as test:
         for line in test:
             lineSets = line.strip().split("\t")
@@ -116,28 +118,28 @@ def modify_mutinfo(inputpath, outputpath, mutinfoPath):
                     mutDic[loc] = [mut]
                 elif mut not in mutDic[loc]:
                     mutDic[loc].append(mut)
-    output = open(outputpath, "w")
-    for loc, mutList in mutDic.items():
-        tags = [loc + "_" + mut for mut in mutList]
-        for tag in tags:
-            with open(inputpath, "r") as test:
-                for line in test:
-                    lineSets = line.strip().split("\t")
-                    posList = lineSets[0].split("_")
-                    loctmp = posList[0] + "_" + posList[1]
-                    refBase = posList[2]
-                    muttmp = posList[3]
-                    tagCheck = loc + "_" + muttmp
-                    locOut = loc + "_" + refBase + "_" + tag.split("_")[2]
-                    if locOut not in mutinfo:
-                        continue
-                    if loctmp == loc and tagCheck == tag:
-                        sql = locOut + "\t" + lineSets[1] + "\t" + lineSets[2]
-                        output.write(sql + "\n")
-                    if loctmp == loc and tagCheck != tag:
-                        sql = locOut + "\t" + lineSets[1] + "\t" + "WT"
-                        output.write(sql + "\n")
-    output.close()
+    print(">>> Modify mut info_2")
+    with open(outputpath, "w") as output:
+        for loc, mutList in mutDic.items():
+            tags = [loc + "_" + mut for mut in mutList]
+            for tag in tags:
+                with open(inputpath, "r") as test:
+                    for line in test:
+                        lineSets = line.strip().split("\t")
+                        posList = lineSets[0].split("_")
+                        loctmp = posList[0] + "_" + posList[1]
+                        refBase = posList[2]
+                        muttmp = posList[3]
+                        tagCheck = loc + "_" + muttmp
+                        locOut = loc + "_" + refBase + "_" + tag.split("_")[2]
+                        if locOut not in mutinfo:
+                            continue
+                        if loctmp == loc and tagCheck == tag:
+                            sql = locOut + "\t" + lineSets[1] + "\t" + lineSets[2]
+                            output.write(sql + "\n")
+                        if loctmp == loc and tagCheck != tag:
+                            sql = locOut + "\t" + lineSets[1] + "\t" + "WT"
+                            output.write(sql + "\n")
 
 # exclude control mutations
 def exclude_control_mut(gCSMPath, jobconfigPath, outpathDir):
