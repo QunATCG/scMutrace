@@ -40,7 +40,8 @@ def merge_mut_info(jobconfigPath, mutinfoPath):
                         sql = str(vcfLineSets[0]) + "\t" + str(vcfLineSets[1]) + "\t" + str(vcfLineSets[2])
                         mutBases = [sql + "\t" + match[0] for match in re.findall(pattern, vcfLineSets[3])]
                         for mutBase in mutBases:
-                            mutinfo.write(mutBase + "\n")
+                            mutinfo.writelines(mutBase + "\n")
+                            mutinfo.flush()
 
 # check if a mutation is in a cell
 def check_ifMut_oneCell(cellInfo, refBase):
@@ -136,10 +137,12 @@ def modify_mutinfo(inputpath, outputpath, mutinfoPath):
                             continue
                         if loctmp == loc and tagCheck == tag:
                             sql = locOut + "\t" + lineSets[1] + "\t" + lineSets[2]
-                            output.write(sql + "\n")
+                            output.writelines(sql + "\n")
+                            output.flush()
                         if loctmp == loc and tagCheck != tag:
                             sql = locOut + "\t" + lineSets[1] + "\t" + "WT"
-                            output.write(sql + "\n")
+                            output.writelines(sql + "\n")
+                            output.flush()
 
 # exclude control mutations
 def exclude_control_mut(gCSMPath, jobconfigPath, outpathDir):
@@ -160,7 +163,8 @@ def exclude_control_mut(gCSMPath, jobconfigPath, outpathDir):
         for line in gCSM:
             lineSets = line.strip().split("\t")
             if lineSets[0] not in SNPsControl:
-                foutFile.write(line)
+                foutFile.writelines(line)
+                foutFile.flush()
     foutFile.close()
 
 # generate snp * sample mutation info
@@ -174,7 +178,8 @@ def generate_snp_sample_mutInfo(gCSMPath, outpath):
             statustmp = lineSets[2]
             if pos + "_" + idtmp + "_" + statustmp not in tmpCheck:
                 tmpCheck.append(pos + "_" + idtmp + "_" + statustmp)
-                out.write(pos + "\t" + idtmp + "\t" + statustmp + "\n")
+                out.writelines(pos + "\t" + idtmp + "\t" + statustmp + "\n")
+                out.flush()
 
 # generate gCellSNP matrix
 def generate_gCellSNP_matrix(outpath, vcfpath):
