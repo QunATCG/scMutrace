@@ -234,10 +234,11 @@ def main():
     merge_file = outdir + "/gCellSNPMatrix.step0.txt"
     split_gCellSM_fileList = [outdir + "/" + f for f in os.listdir(outdir) if "split_mutInfo_" in f]
     for split_file in split_gCellSM_fileList:
-        with open(split_file, "r") as f:
+        with open(split_file, "r", encoding='utf-8', errors='ignore') as f:
             for line in f:
-                with open(merge_file, "a") as merge_f:
-                    merge_f.write(line)
+                with open(merge_file, "a", encoding='utf-8', errors='ignore') as merge_f:
+                    merge_f.writelines(line)
+                    merge_f.flush()
         os.remove(split_file)
     # modify mut info
     print(">>> Modify mut info")
