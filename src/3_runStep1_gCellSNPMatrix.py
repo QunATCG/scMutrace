@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 from py_utils import *
 import multiprocessing as mp
+from collections import defaultdict
 
 # Function to generate gCellSNP matrix
 def initialize_parser():
@@ -22,127 +23,176 @@ def initialize_parser():
 def err_call_back(err):
     print(f'apply_async error:{str(err)}')
 
-
-# merge multiple mut info and remove duplicates
 def merge_mut_info(jobconfigPath, mutinfoPath):
-    tmpCheck = []
+    # Use a set for O(1) average time complexity for lookups
+    seen_mutations = set()
     pattern = r'([ATCGDI])\[(\d+)\]'
-    with open(jobconfigPath, "r") as jobconfig, open(mutinfoPath, "w") as mutinfo:
-        for line in jobconfig:
-            lineSets = line.strip().split("\t")
-            with open(lineSets[1], "r") as vcfTmp:
-                for vcfLine in vcfTmp:
-                    vcfLineSets = vcfLine.strip().split("\t")
-                    if vcfLineSets[0] == "chr":
-                        continue
-                    if vcfLineSets[0] + "_" + vcfLineSets[1] not in tmpCheck:
-                        tmpCheck.append(vcfLineSets[0] + "_" + vcfLineSets[1])
-                        sql = str(vcfLineSets[0]) + "\t" + str(vcfLineSets[1]) + "\t" + str(vcfLineSets[2])
-                        mutBases = [sql + "\t" + match[0] for match in re.findall(pattern, vcfLineSets[3])]
-                        for mutBase in mutBases:
-                            mutinfo.writelines(mutBase + "\n")
-                            mutinfo.flush()
+    try:
+        with open(jobconfigPath, "r") as jobconfig, open(mutinfoPath, "w") as mutinfo:
+            for line in jobconfig:
+                lineSets = line.strip().split("\t")
+                vcf_path = lineSets[1]
+                try:
+                    with open(vcf_path, "r") as vcfTmp:
+                        for vcfLine in vcfTmp:
+                            vcfLineSets = vcfLine.strip().split("\t")
+                            # Skip header
+                            if vcfLineSets[0] == "chr":
+                                continue
+                            mutation_key = f"{vcfLineSets[0]}_{vcfLineSets[1]}"
+                            if mutation_key not in seen_mutations:
+                                seen_mutations.add(mutation_key)
+                                sql = f"{vcfLineSets[0]}\t{vcfLineSets[1]}\t{vcfLineSets[2]}"
+                                mutBases = [f"{sql}\t{match[0]}" for match in re.findall(pattern, vcfLineSets[3])]
+                                for mutBase in mutBases:
+                                    mutinfo.write(mutBase + "\n")
+                except IOError as e:
+                    print(f"Unable to open VCF file: {vcf_path}, error: {e}")
+    except IOError as e:
+        print(f"Error opening job config file: {jobconfigPath}, error: {e}")
 
 # check if a mutation is in a cell
 def check_ifMut_oneCell(cellInfo, refBase):
     basicBase = ["A", "T", "C", "G", "D", "I"]
+    # Validate refBase
+    if refBase not in basicBase:
+        raise ValueError(f"Invalid reference base: {refBase}. Should be one of {basicBase}")
+    # Initialize counts for each base
     countDic = {base: 0 for base in basicBase}
-    check_base = list(set(basicBase) - {refBase, "D", "I"})
+    # Create a list of checked bases
+    check_base = list(set(basicBase) - {refBase})
+    # Parse cell info into counts
     cellInfoList = list(map(int, cellInfo.split("|")))
+    # Accumulate counts into the dictionary
     for base, count in zip(basicBase, cellInfoList):
         countDic[base] += count
+    # Count the number of relevant mutations
     numCheck = sum(countDic[base] for base in check_base)
-    mutype = "_".join([base for base in check_base if countDic[base] >= 1])
-    tag = "WT"
-    if numCheck >= 1:
-        tag = "Mut"
+    # Determine mutation types
+    mutype_list = [base for base in check_base if countDic[base] >= 1]
+    mutype = "_".join(mutype_list)
+    # Determine tag based on counts
+    tag = "Mut" if numCheck >= 1 else "WT"
     return tag, mutype
 
 # get cell info of all mutations
-def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir ,referencePath, min_bq, min_mq, cbtag):
-    foutFile = open(mutinfoPath + "gCellSNPMatrix.step0.txt", "w")
-    outdirTmp = outpathDir + "/tmp/"
+def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir, referencePath, min_bq, min_mq, cbtag):
+    try:
+        foutFile = open(mutinfoPath + "gCellSNPMatrix.step0.txt", "w")
+    except IOError as e:
+        print(f"Error opening output file: {e}")
+        return
+    outdirTmp = os.path.join(outpathDir, "tmp")
     make_dir_check(outdirTmp)
-    with open(mutinfoPath, "r") as mutinfo:
-        for line in mutinfo:
-            lineSets = line.strip().split("\t")
-            chr = str(lineSets[0])
-            pos = int(lineSets[1])
-            refBase = str(lineSets[2])
-            with open(jobconfigPath, "r") as jobconfig:
-                for jobLine in jobconfig:
-                    jobLineSets = jobLine.strip().split("\t")
-                    idtmp = jobLineSets[0]
-                    bamTmp = jobLineSets[2]
-                    target_extractsnp_fromBAM(bamTmp, referencePath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, True, True, True, 1, 0, 1, 10, cbtag, 2, idtmp)
-                    targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_{idtmp}_random.vcf")
-                    with open(targetVcfPath, "r") as targetVcf:
-                        for vcfLine in targetVcf:
-                            vcfLineSets = vcfLine.strip().split("\t")
-                            posTmp = int(vcfLineSets[1])
-                            if posTmp == pos:
-                                cellsList = vcfLineSets[9].split(";")
-                                cellsMutInfo = [check_ifMut_oneCell(i, refBase) for i in vcfLineSets[10].split(";")]
-                                for cell, cellMutInfo in zip(cellsList, cellsMutInfo):
-                                    mutypes = cellMutInfo[1].split("_")
-                                    for m in mutypes:
-                                        if str(cellMutInfo[0]) == "Mut":
-                                            foutFile.writelines(chr + "_" + str(pos) + "_" + refBase + "_" + str(m) + "\t" + idtmp + "_" + cell + "\t" + str(cellMutInfo[0]) + "\n")
-                                            foutFile.flush()
-                                        if str(cellMutInfo[0]) == "WT":
-                                            foutFile.writelines(chr + "_" + str(pos) + "_" + refBase + "_" + refBase + "\t" + idtmp + "_" + cell + "\t" + str(cellMutInfo[0]) + "\n")
-                                            foutFile.flush()
-                    # remove target vcf file
-                    os.remove(targetVcfPath)
-    foutFile.close()
+    try:
+        with open(mutinfoPath, "r") as mutinfo:
+            for line in mutinfo:
+                lineSets = line.strip().split("\t")
+                if len(lineSets) < 3:
+                    print(f"Skipping invalid line in mutation info: {line}")
+                    continue
+                chr = str(lineSets[0])
+                pos = int(lineSets[1])
+                refBase = str(lineSets[2])
+                with open(jobconfigPath, "r") as jobconfig:
+                    for jobLine in jobconfig:
+                        jobLineSets = jobLine.strip().split("\t")
+                        # Validate jobLineSets
+                        if len(jobLineSets) < 3:
+                            print(f"Skipping invalid job line: {jobLine}")
+                            continue
+                        idtmp = jobLineSets[0]
+                        bamTmp = jobLineSets[2]
+                        target_extractsnp_fromBAM(bamTmp, referencePath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, True, True, True, 1, 0, 1, 10, cbtag, 2, idtmp)
+                        targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_{idtmp}_random.vcf")
+                        try:
+                            with open(targetVcfPath, "r") as targetVcf:
+                                for vcfLine in targetVcf:
+                                    vcfLineSets = vcfLine.strip().split("\t")
+                                    posTmp = int(vcfLineSets[1])
+                                    if posTmp == pos:
+                                        cellsList = vcfLineSets[9].split(";")
+                                        cellsMutInfo = [check_ifMut_oneCell(i, refBase) for i in vcfLineSets[10].split(";")]
+                                        for cell, cellMutInfo in zip(cellsList, cellsMutInfo):
+                                            mutypes = cellMutInfo[1].split("_")
+                                            for m in mutypes:
+                                                if str(cellMutInfo[0]) == "Mut":
+                                                    foutFile.writelines(chr + "_" + str(pos) + "_" + refBase + "_" + str(m) + "\t" + idtmp + "_" + cell + "\t" + str(cellMutInfo[0]) + "\n")
+                                                if str(cellMutInfo[0]) == "WT":
+                                                    foutFile.writelines(chr + "_" + str(pos) + "_" + refBase + "_" + refBase + "\t" + idtmp + "_" + cell + "\t" + str(cellMutInfo[0]) + "\n")
+                        except IOError as e:
+                            print(f"Error reading VCF file {targetVcfPath}: {e}")
+                        finally:
+                            # Cleanup the VCF file
+                            if os.path.exists(targetVcfPath):
+                                os.remove(targetVcfPath)
+    except IOError as e:
+        print(f"Error reading mutation info file: {e}")
+    finally:
+        foutFile.close()
 
-def modify_mutinfo(inputpath, outputpath, mutinfoPath):
-    mutDic = {}
-    mutinfo = []
-    print(">>> Modify mut info_0")
+# focus on the mutation info
+def filter_mut_info(inputpath, outputpath, mutinfoPath):
+    mutinfo = set()
     with open(mutinfoPath, "r") as mutinfoFile:
         for line in mutinfoFile:
-            lineSets = line.strip().split("\t")
-            mutinfoCheck = lineSets[0] + "_" + lineSets[1] + "_" + lineSets[2] + "_" + lineSets[3]
-            if mutinfoCheck not in mutinfo:
-                mutinfo.append(mutinfoCheck)
-    print(">>> Modify mut info_1")
-    with open(inputpath, "r") as test:
-        for line in test:
-            lineSets = line.strip().split("\t")
-            posList = lineSets[0].split("_")
-            loc = posList[0] + "_" + posList[1]
-            refBase = posList[2]
-            mut = posList[3]
-            if mut != refBase:
-                if loc not in mutDic:
-                    mutDic[loc] = [mut]
-                elif mut not in mutDic[loc]:
-                    mutDic[loc].append(mut)
-    print(">>> Modify mut info_2")
-    with open(outputpath, "w") as output:
-        for loc, mutList in mutDic.items():
-            tags = [loc + "_" + mut for mut in mutList]
-            for tag in tags:
-                with open(inputpath, "r") as test:
-                    for line in test:
-                        lineSets = line.strip().split("\t")
-                        posList = lineSets[0].split("_")
-                        loctmp = posList[0] + "_" + posList[1]
-                        refBase = posList[2]
-                        muttmp = posList[3]
-                        tagCheck = loc + "_" + muttmp
-                        locOut = loc + "_" + refBase + "_" + tag.split("_")[2]
-                        if locOut not in mutinfo:
-                            continue
-                        if loctmp == loc and tagCheck == tag:
-                            sql = locOut + "\t" + lineSets[1] + "\t" + lineSets[2]
-                            output.writelines(sql + "\n")
-                            output.flush()
-                        if loctmp == loc and tagCheck != tag:
-                            sql = locOut + "\t" + lineSets[1] + "\t" + "WT"
-                            output.writelines(sql + "\n")
-                            output.flush()
+            chrom, pos, ref_base, mut_base = line.strip().split("\t")
+            tag_mut = f"{chrom}_{pos}_{ref_base}_{mut_base}"
+            tag_ref = f"{chrom}_{pos}_{ref_base}_{ref_base}"
+            mutinfo.add(tag_mut)
+            mutinfo.add(tag_ref)
+    with open(inputpath, "r") as inputFile, open(outputpath, "w") as outputFile:
+        for line in inputFile:
+            fields = line.strip().split("\t")
+            chrom, pos, ref_base, mut_base = fields[0].split("_")
+            tag = f"{chrom}_{pos}_{ref_base}_{mut_base}"
+            if tag in mutinfo:
+                outputFile.write(line)
+
+def modify_mutinfo(inputpath, outputpath):
+    mutDic = defaultdict(list)
+    print(">>> Processing input file")
+    try:
+        with open(inputpath, "r") as inputFile:
+            for line in inputFile:
+                fields = line.strip().split("\t")
+                if len(fields) < 2:
+                    continue
+                try:
+                    chrom, pos, ref_base, mut_base = fields[0].split("_")
+                except ValueError:
+                    print(f"Skipping line due to format issue: {line.strip()}")
+                    continue
+                loc = f"{chrom}_{pos}"
+                if mut_base != ref_base:
+                    if mut_base not in mutDic[loc]:
+                        mutDic[loc].append(mut_base)
+    except FileNotFoundError:
+        print(f"Input file not found: {inputpath}")
+        return
+    print(">>> Generating output")
+    try:
+        with open(outputpath, "w") as outputFile:
+            with open(inputpath, "r") as inputFile:
+                for line in inputFile:
+                    fields = line.strip().split("\t")
+                    if len(fields) < 2:
+                        continue
+                    try:
+                        chrom, pos, ref_base, mut_base = fields[0].split("_")
+                    except ValueError:
+                        print(f"Skipping line due to format issue: {line.strip()}")
+                        continue
+                    loc = f"{chrom}_{pos}"
+                    for mut in mutDic[loc]:
+                        output_tag = f"{loc}_{ref_base}_{mut}"
+                        if mut_base == mut:
+                            status = "Mut"
+                        else:
+                            status = "WT"
+                    outputFile.write(f"{output_tag}\t{fields[1]}\t{status}\n")
+    except Exception as e:
+        print(f"An error occurred while writing to the output file: {e}")
 
 # exclude control mutations
 def exclude_control_mut(gCSMPath, jobconfigPath, outpathDir):
@@ -153,12 +203,12 @@ def exclude_control_mut(gCSMPath, jobconfigPath, outpathDir):
             jobLineSets = jobLine.strip().split("\t")
             if jobLineSets[3].strip() == "Control":
                 ControlIDs.append(jobLineSets[0])
-    SNPsControl = []
+    SNPsControl = set()
     with open(gCSMPath, "r") as gCSM:
         for line in gCSM:
             lineSets = line.strip().split("\t")
             if lineSets[1].split("_")[0] in ControlIDs and lineSets[2] == "Mut":
-                SNPsControl.append(lineSets[0])
+                SNPsControl.add(lineSets[0])
     with open(gCSMPath, "r") as gCSM:
         for line in gCSM:
             lineSets = line.strip().split("\t")
@@ -169,17 +219,17 @@ def exclude_control_mut(gCSMPath, jobconfigPath, outpathDir):
 
 # generate snp * sample mutation info
 def generate_snp_sample_mutInfo(gCSMPath, outpath):
-    tmpCheck = []
+    seen_entries = set()
     with open(gCSMPath, "r") as gCSM, open(outpath, "w") as out:
         for line in gCSM:
             lineSets = line.strip().split("\t")
             pos = lineSets[0]
             idtmp = lineSets[1].split("_")[0]
             statustmp = lineSets[2]
-            if pos + "_" + idtmp + "_" + statustmp not in tmpCheck:
-                tmpCheck.append(pos + "_" + idtmp + "_" + statustmp)
-                out.writelines(pos + "\t" + idtmp + "\t" + statustmp + "\n")
-                out.flush()
+            entry = f"{pos}_{idtmp}_{statustmp}"
+            if entry not in seen_entries:
+                seen_entries.add(entry)
+                out.write(f"{pos}\t{idtmp}\t{statustmp}\n")
 
 # generate gCellSNP matrix
 def generate_gCellSNP_matrix(outpath, vcfpath):
@@ -232,18 +282,17 @@ def main():
     for split_file in split_fileList:
         os.remove(split_file)
     merge_file = outdir + "/gCellSNPMatrix.step0.txt"
-    split_gCellSM_fileList = [outdir + "/" + f for f in os.listdir(outdir) if "split_mutInfo_" in f]
+    split_gCellSM_fileList = [outdir + "/" + f for f in os.listdir(outdir) if "splitVcf_split_mutInfo" in f]
+    os.system(f"cat {' '.join(split_gCellSM_fileList)} >> {merge_file}")
     for split_file in split_gCellSM_fileList:
-        with open(split_file, "r", encoding='utf-8', errors='ignore') as f:
-            for line in f:
-                with open(merge_file, "a", encoding='utf-8', errors='ignore') as merge_f:
-                    merge_f.writelines(line)
-                    merge_f.flush()
         os.remove(split_file)
+    # filter mut info
+    print(">>> Filter mut info")
+    filter_mut_info(merge_file, outdir + "/gCellSNPMatrix.step0_0.txt", mutinfoPath)
     # modify mut info
     print(">>> Modify mut info")
     modifyedFile = outdir + "/gCellSNPMatrix.step1.txt"
-    modify_mutinfo(merge_file, modifyedFile, mutinfoPath)
+    modify_mutinfo(outdir + "/gCellSNPMatrix.step0_0.txt", modifyedFile)
     # exclude control mutations
     print(">>> Exclude control mutations")
     exclude_control_mut(modifyedFile, jobconfig, outdir)
