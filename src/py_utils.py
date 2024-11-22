@@ -20,6 +20,11 @@ from scipy.stats import betabinom
 from scipy.optimize import minimize
 from itertools import takewhile, repeat
 from statsmodels.stats.proportion import proportions_ztest
+
+####################
+# define Basic Bases for all functions
+BASIC_BASE = ["A", "T", "C", "G", "N"]
+
 ####################
 # make dir
 def make_dir_check(dirPath):
@@ -242,7 +247,7 @@ def count_alt_num(pileupList, refBase):
     CountList_Total = {"Mis": 0, "Insert": 0, "Del": 0, "Skip": 0, "DR": 0, "Other": 0}
     CountList_Forward = {"Mis": 0, "Insert": 0, "Del": 0, "Skip": 0}
     CountList_REVERSE = {"Mis": 0, "Insert": 0, "Del": 0, "Skip": 0}
-    BASIC_BASE = ["A", "T", "C", "G", "N"]
+    #BASIC_BASE = ["A", "T", "C", "G", "N"]
     for pileupItem in pileupList:
         len_pileupItem = len(pileupItem)
         if len_pileupItem == 1:
@@ -311,7 +316,7 @@ def count_base_typeNum(pileupList, refBase, SkipCheck):
             - NEW_PILE_LIST (list): A list of categorized bases and characters.
             - ALT_NUM (int): The count of alternative bases excluding the reference base and certain other categories.
     """
-    BASIC_BASE = ["A", "T", "C", "G", "N"]
+    #BASIC_BASE = ["A", "T", "C", "G", "N"]
     NEW_PILE_LIST = []
     NEW_BASE_DIC = {"A": 0, "T": 0, "C": 0, "G": 0, "N": 0, "D": 0, "I": 0, "FS": 0, "RS": 0, "O": 0, "NA": 0}
     for pileupItem in pileupList:
@@ -356,8 +361,8 @@ def count_base_typeNum(pileupList, refBase, SkipCheck):
 
 # return cell mutations info
 def get_mut_bycellExcludeRef(CELL_COUNTS_DIC, refBase):
-    basic_base = ["A", "T", "C", "G", "D", "I"]
-    check_base = list(set(basic_base).difference(set([refBase])))
+    #basic_base = ["A", "T", "C", "G", "D", "I"]
+    check_base = list(set(BASIC_BASE).difference(set([refBase])))
     totalCells = list(CELL_COUNTS_DIC[check_base[0]])
     check_base_len = int(len(check_base))
     for i in range(1, check_base_len):
@@ -425,11 +430,11 @@ def get_mut_total(CELL_COUNTS_DIC, refBase):
             - countAltNum (int): Total number of alternative bases.
             - countAltCellNum (int): Total number of cells with alternative bases.
     """
-    basic_base = ["A", "T", "C", "G", "D", "I"]
-    CELL_COUNTS_DIC_NEW_0 = {x: len(set(CELL_COUNTS_DIC[x])) for x in basic_base}
-    CELL_COUNTS_DIC_NEW_1 = {x: len(CELL_COUNTS_DIC[x]) for x in basic_base}
-    countCellNumSTR = ':'.join([str(CELL_COUNTS_DIC_NEW_0[x]) for x in basic_base])
-    countAltNumSTR = ':'.join([str(CELL_COUNTS_DIC_NEW_1[x]) for x in basic_base])
+    #basic_base = ["A", "T", "C", "G", "D", "I"]
+    CELL_COUNTS_DIC_NEW_0 = {x: len(set(CELL_COUNTS_DIC[x])) for x in BASIC_BASE}
+    CELL_COUNTS_DIC_NEW_1 = {x: len(CELL_COUNTS_DIC[x]) for x in BASIC_BASE}
+    countCellNumSTR = ':'.join([str(CELL_COUNTS_DIC_NEW_0[x]) for x in BASIC_BASE])
+    countAltNumSTR = ':'.join([str(CELL_COUNTS_DIC_NEW_1[x]) for x in BASIC_BASE])
     countCellNum = sum(CELL_COUNTS_DIC_NEW_0.values())
     countAltNum = count_base_fromDic(CELL_COUNTS_DIC_NEW_1, [refBase])
     countAltCellNum = count_base_fromDic(CELL_COUNTS_DIC_NEW_0, [refBase])
@@ -970,7 +975,7 @@ def shuffle_reads_features(refBase, baseQualityInfoOnesite):
             - tmpDicP (dict): Dictionary of base quality probabilities.
             - readcountsWeight (list): Weights for read counts.
     """
-    basicBase = ["A", "T", "C", "G", "D", "I"]
+    #basicBase = ["A", "T", "C", "G", "D", "I"]
     cellNum = []
     tmpDic = {"A": [], "T": [], "C": [], "G": [], "D": [], "I": []}
     tmpDicP = {"A": [], "T": [], "C": [], "G": [], "D": [], "I": []}
@@ -981,15 +986,15 @@ def shuffle_reads_features(refBase, baseQualityInfoOnesite):
         for index_base, j in enumerate(baseQuaOneCell):
             if j:
                 readcount += len(j.split(":"))
-                tmpDic[basicBase[index_base]].extend(j.split(":"))
-                tmpDicP[basicBase[index_base]].extend(int(m) for m in j.split(":"))
+                tmpDic[BASIC_BASE[index_base]].extend(j.split(":"))
+                tmpDicP[BASIC_BASE[index_base]].extend(int(m) for m in j.split(":"))
         cellNum.append(readcount)
     baseWeight = [len(value) for value in tmpDic.values()]
     baseNumTotal = sum(baseWeight)
     # Check baseWeight, when there is no refBase, should consider the refBase exists
-    if baseWeight[basicBase.index(refBase)] == 0:
+    if baseWeight[BASIC_BASE.index(refBase)] == 0:
         refBaseWeight = cal_pError_fromBaseQuality(min(tmpDic["A"] + tmpDic["T"] + tmpDic["C"] + tmpDic["G"] + tmpDic["D"] + tmpDic["I"]))
-        baseWeight[basicBase.index(refBase)] = refBaseWeight * baseNumTotal
+        baseWeight[BASIC_BASE.index(refBase)] = refBaseWeight * baseNumTotal
         tmpDicP[refBase] = [1]
     readcountsNum = list(set(cellNum))
     readcountsWeight = [cellNum.count(i) for i in readcountsNum]
@@ -1010,19 +1015,19 @@ def shuffle_reads_baseonFeatures(readcountsNum, baseWeight, tmpDic, tmpDicP, rea
     Returns:
         str: Integrated base quality information for the shuffled reads.
     """
-    basicBase = ["A", "T", "C", "G", "D", "I"]
+    #basicBase = ["A", "T", "C", "G", "D", "I"]
     readsNumSelect = random.choices(readcountsNum, weights=readcountsWeight, k=1)
-    baseSelect = random.choices(basicBase, weights=baseWeight, k=readsNumSelect[0])
-    baseQua = {base: [] for base in basicBase}  
-    for base in basicBase:
+    baseSelect = random.choices(BASIC_BASE, weights=baseWeight, k=readsNumSelect[0])
+    baseQua = {base: [] for base in BASIC_BASE}  
+    for base in BASIC_BASE:
         if tmpDic[base]:
             baseQua[base] = random.choices(tmpDic[base], weights=tmpDicP[base], k=baseSelect.count(base))
-    integrate_baseQuality = "|".join([":".join(baseQua[base]) for base in basicBase])
+    integrate_baseQuality = "|".join([":".join(baseQua[base]) for base in BASIC_BASE])
     return integrate_baseQuality
 
 def shuffle_reads_resample(refBase,baseQualityInfoOnesite):
     # Example input: 32||||20|;27:32||||20|;32:37|||||;22:41:32:32:37:27|||||;41|||||;|||27|20|
-    basicBase = ["A", "T", "C", "G", "D", "I"]
+    #basicBase = ["A", "T", "C", "G", "D", "I"]
     cellNum = []
     tmpDic = {"A": [], "T": [], "C":[], "G": [], "D": [], "I":[]}
     tmpDicP = {"A": [], "T": [], "C":[], "G": [], "D": [], "I":[]}
@@ -1033,20 +1038,20 @@ def shuffle_reads_resample(refBase,baseQualityInfoOnesite):
         for index_base, j in enumerate(baseQuaOneCell):
             if j != "":
                 readcount += len(j.split(":"))
-                tmpDic[basicBase[index_base]] += [m for m in j.split(":")]
-                tmpDicP[basicBase[index_base]] += [define_accuracy_calling(int(m)) for m in j.split(":")]
+                tmpDic[BASIC_BASE[index_base]] += [m for m in j.split(":")]
+                tmpDicP[BASIC_BASE[index_base]] += [define_accuracy_calling(int(m)) for m in j.split(":")]
         cellNum.append(readcount)
     baseWeight = [len(value) for value in tmpDic.values()]
     baseNumTotal = sum(baseWeight)
     # check baseWeight, when there is no refbase, should consider the refbase exist
-    if baseWeight[basicBase.index(refBase)] == 0:
+    if baseWeight[BASIC_BASE.index(refBase)] == 0:
         refBaseWeight = cal_pError_fromBaseQuality(min(tmpDic["A"] + tmpDic["T"] + tmpDic["C"] + tmpDic["G"] + tmpDic["D"] + tmpDic["I"]))
-        baseWeight[basicBase.index(refBase)] = refBaseWeight * baseNumTotal
+        baseWeight[BASIC_BASE.index(refBase)] = refBaseWeight * baseNumTotal
         tmpDicP[refBase] = [1]
     readcountsNum = list(set(cellNum))
     readcountsWeight = [cellNum.count(i) for i in readcountsNum]
     readsNumSelect = random.choices(readcountsNum, weights = readcountsWeight, k = 1)
-    baseSelect = random.choices(basicBase, weights = baseWeight, k = readsNumSelect[0])
+    baseSelect = random.choices(BASIC_BASE, weights = baseWeight, k = readsNumSelect[0])
     baseQuaA = []
     baseQuaT = []
     baseQuaC = []
@@ -1071,34 +1076,34 @@ def shuffle_reads_resample(refBase,baseQualityInfoOnesite):
 def split_oneCellReadCount_num(refBase, oneCellReadCountBase):
     # 0|3|0|0|0|0
     # A|T|C|G|D|I
-    basicBase = ["A", "T", "C", "G", "D", "I"]
+    #basicBase = ["A", "T", "C", "G", "D", "I"]
     baseCountinfoList = oneCellReadCountBase.split("|")
     baseCountinfoList_len = int(len(baseCountinfoList))
     #base = []
-    base = [basicBase[i] for i in range(0, baseCountinfoList_len) if baseCountinfoList[i] != 0]
-    refNum = baseCountinfoList[basicBase.index(refBase)]
+    base = [BASIC_BASE[i] for i in range(0, baseCountinfoList_len) if baseCountinfoList[i] != 0]
+    refNum = baseCountinfoList[BASIC_BASE.index(refBase)]
     altBase = list(set(base).difference(set([refBase])))
-    altBaseNum = sum([int(baseCountinfoList[basicBase.index(i)]) for i in altBase])
+    altBaseNum = sum([int(baseCountinfoList[BASIC_BASE.index(i)]) for i in altBase])
     return refNum, altBaseNum
 
 def split_baseQua_num(refBase, oneCellBaseQua):
     # Example: 32:32||||20|
-    basicBase = ["A", "T", "C", "G", "D", "I"]
+    #basicBase = ["A", "T", "C", "G", "D", "I"]
     baseQuainfoList = oneCellBaseQua.split("|")
     base = []
-    base = [basicBase[i] for i in range(0, 6) if baseQuainfoList[i] != ""]
+    base = [BASIC_BASE[i] for i in range(0, 6) if baseQuainfoList[i] != ""]
     #for i in range(0, 6):
     #    if baseQuainfoList[i] != "":
     #        base.append(basicBase[i])
-    refNum = len(baseQuainfoList[basicBase.index(refBase)].split(":"))
+    refNum = len(baseQuainfoList[BASIC_BASE.index(refBase)].split(":"))
     altBase = list(set(base).difference(set([refBase])))
-    altBaseNum = sum([int(len(baseQuainfoList[basicBase.index(i)].split(":"))) for i in altBase])
+    altBaseNum = sum([int(len(baseQuainfoList[BASIC_BASE.index(i)].split(":"))) for i in altBase])
     return refNum, altBaseNum
 
 def count_CellNum_fromQuainfo(refBase, quainfoOneSite):
-    basicBase = ["A", "T", "C", "G", "D", "I"]
-    altBase = list(set(basicBase).difference(set([refBase])))
-    altIndex = [basicBase.index(i) for i in altBase]
+    #basicBase = ["A", "T", "C", "G", "D", "I"]
+    altBase = list(set(BASIC_BASE).difference(set([refBase])))
+    altIndex = [BASIC_BASE.index(i) for i in altBase]
     cellsQua = quainfoOneSite.split(";")
     altNum = 0
     for cellQua in cellsQua:
@@ -1119,9 +1124,9 @@ def count_CellNum_fromQuainfo(refBase, quainfoOneSite):
 
 def split_mutnotmutCell_num(refBase, oneSiteBaseQua):
     # Example: 32||||20|;27:32||||20|;32:37|||||
-    basicBase = ["A", "T", "C", "G", "D", "I"]
-    altBase = list(set(basicBase).difference(set([refBase])))
-    altBaseIndex = [basicBase.index(i) for i in altBase]
+    #basicBase = ["A", "T", "C", "G", "D", "I"]
+    altBase = list(set(BASIC_BASE).difference(set([refBase])))
+    altBaseIndex = [BASIC_BASE.index(i) for i in altBase]
     cellBaseList = oneSiteBaseQua.split(";")
     totalCellNum = len(cellBaseList)
     tmpCount = 0
@@ -1139,14 +1144,14 @@ def split_mutnotmutCell_num(refBase, oneSiteBaseQua):
 
 def integrate_baseQuality_onesite(oneSiteBaseQua):
     # Example: 32||||20|;27:32||||20|;32:37|||||
-    basicBase = ["A", "T", "C", "G", "D", "I"]
+    #basicBase = ["A", "T", "C", "G", "D", "I"]
     baseQuaDic = {"A": [], "T": [], "C": [], "G": [], "D": [], "I": []}
     cellsBaseQuaList = oneSiteBaseQua.split(";")
     for cell in cellsBaseQuaList:
         cellBaseList = cell.split("|")
         for index_base, cellBase in enumerate(cellBaseList):
             if cellBase != "":
-                indexBase = basicBase[index_base]
+                indexBase = BASIC_BASE[index_base]
                 baseQuaDic[indexBase].append(cellBase)
     integrate_baseQuality = "|".join([":".join(baseQuaDic["A"]), ":".join(baseQuaDic["T"]), ":".join(baseQuaDic["C"]), ":".join(baseQuaDic["G"]), ":".join(baseQuaDic["D"]), ":".join(baseQuaDic["I"])])
     return integrate_baseQuality
@@ -1164,13 +1169,13 @@ def calculate_probility_oneCellBinomial(refBase, baseQualityInfoOneCell):
     # g(1): ra
     # g(2): rr
     basicBaseDic = {"A": [], "T": [], "C": [], "G": [], "D": [], "I": []}
-    basicBase = ["A", "T", "C", "G", "D", "I"]
-    altBase = list(set(basicBase).difference(set([refBase])))
+    #basicBase = ["A", "T", "C", "G", "D", "I"]
+    altBase = list(set(BASIC_BASE).difference(set([refBase])))
     baseQuainfoList = baseQualityInfoOneCell.split("|")
     baseQuainfoList_len = int(len(baseQuainfoList))
     for i in range(0, baseQuainfoList_len):
         if baseQuainfoList[i] != "":
-            basicBaseDic[basicBase[i]] += [cal_pError_fromBaseQuality(i) for i in list(baseQuainfoList[i].split(":"))]
+            basicBaseDic[BASIC_BASE[i]] += [cal_pError_fromBaseQuality(i) for i in list(baseQuainfoList[i].split(":"))]
     refReadsQua = basicBaseDic[refBase]
     refReadsNum = len(refReadsQua)
     altReadsQua = []
@@ -1383,10 +1388,10 @@ def calculate_probility_oneRead(observedBase, observedBaseQuality, genotype, per
     Returns:
         float: The probability of observing the base given the genotype and error probability.
     """
-    basicBase = ["A", "T", "C", "G", "D", "I"]
+    #basicBase = ["A", "T", "C", "G", "D", "I"]
     probabilityGT_oneread = sum(
         calculate_probility_oneBase(k=base, obeservedBase=observedBase, obeservedBaseQuality=observedBaseQuality, genotype=genotype, perror=perror)
-        for base in basicBase
+        for base in BASIC_BASE
     )
     return probabilityGT_oneread
 
@@ -1455,7 +1460,7 @@ def calculate_posterior_genotypeOneCell(baseQualityInfo, model3ProbabilityDic, q
 def calculate_posterior_genotypeOneSite(baseQualityInfo, model3ProbabilityDic, quainfos, errorP):
     # 19	288738	T
     #site basequality information: ||41:32:41|||;||37:41:41|||;||37|||;||41|||;||41:37:41|||;||22:22|||;||37:37:37:41:37|||;||41:41:37|||;||41:27|||;||37:41:32|||;||41:41:41:41|||
-    basicBase = ["A", "T", "C", "G", "D", "I"]
+    #basicBase = ["A", "T", "C", "G", "D", "I"]
     tmpDic = {"A": [], "T": [], "C":[], "G": [], "D": [], "I":[]}
     num = len(baseQualityInfo.split(";"))
     tmpMinBaseQua = []
@@ -1463,7 +1468,7 @@ def calculate_posterior_genotypeOneSite(baseQualityInfo, model3ProbabilityDic, q
         baseQuaOneCell = baseQualityInfo.split(";")[i].split("|")
         for index_base, j in enumerate(baseQuaOneCell):
             if j != "":
-                tmpDic[basicBase[index_base]].append(j)
+                tmpDic[BASIC_BASE[index_base]].append(j)
                 tmpMinBaseQua += [int(k) for k in j.split(":")]
     integrate_baseQuality = "|".join([":".join(tmpDic["A"]), ":".join(tmpDic["T"]), ":".join(tmpDic["C"]), ":".join(tmpDic["G"]), ":".join(tmpDic["D"]), ":".join(tmpDic["I"])])
     p_site = calculate_posterior_genotypeOneCell(integrate_baseQuality,model3ProbabilityDic, quainfos, errorP)
