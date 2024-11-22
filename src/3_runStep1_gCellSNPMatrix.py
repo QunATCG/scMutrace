@@ -117,9 +117,11 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir, referencePath, min_
                                             mutypes = cellMutInfo[1].split("_")
                                             for m in mutypes:
                                                 if str(cellMutInfo[0]) == "Mut":
-                                                    foutFile.writelines(chr + "_" + str(pos) + "_" + refBase + "_" + str(m) + "\t" + idtmp + "_" + cell + "\t" + str(cellMutInfo[0]) + "\n")
+                                                    foutFile.writelines(f"{chr}_{pos}_{refBase}_{m}\t{idtmp}_{cell}\t{cellMutInfo[0]}\n")
+                                                    foutFile.flush()
                                                 if str(cellMutInfo[0]) == "WT":
-                                                    foutFile.writelines(chr + "_" + str(pos) + "_" + refBase + "_" + refBase + "\t" + idtmp + "_" + cell + "\t" + str(cellMutInfo[0]) + "\n")
+                                                    foutFile.writelines(f"{chr}_{pos}_{refBase}_{refBase}\t{idtmp}_{cell}\t{cellMutInfo[0]}\n")
+                                                    foutFile.flush()
                         except IOError as e:
                             print(f"Error reading VCF file {targetVcfPath}: {e}")
                         finally:
