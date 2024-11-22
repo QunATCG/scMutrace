@@ -20,6 +20,9 @@ def initialize_parser():
     parser.add_argument('--nprocs', type=int, default=1, help='number of cores', required = False)
     return (parser)
 
+# define basic base
+BASIC_BASE = ["A", "T", "C", "G", "D", "I"]
+
 def err_call_back(err):
     print(f'apply_async error:{str(err)}')
 
@@ -53,18 +56,18 @@ def merge_mut_info(jobconfigPath, mutinfoPath):
 
 # check if a mutation is in a cell
 def check_ifMut_oneCell(cellInfo, refBase):
-    basicBase = ["A", "T", "C", "G", "D", "I"]
+    #basicBase = ["A", "T", "C", "G", "D", "I"]
     # Validate refBase
-    if refBase not in basicBase:
-        raise ValueError(f"Invalid reference base: {refBase}. Should be one of {basicBase}")
+    if refBase not in BASIC_BASE:
+        raise ValueError(f"Invalid reference base: {refBase}. Should be one of {BASIC_BASE}")
     # Initialize counts for each base
-    countDic = {base: 0 for base in basicBase}
+    countDic = {base: 0 for base in BASIC_BASE}
     # Create a list of checked bases
-    check_base = list(set(basicBase) - {refBase})
+    check_base = list(set(BASIC_BASE) - {refBase})
     # Parse cell info into counts
     cellInfoList = list(map(int, cellInfo.split("|")))
     # Accumulate counts into the dictionary
-    for base, count in zip(basicBase, cellInfoList):
+    for base, count in zip(BASIC_BASE, cellInfoList):
         countDic[base] += count
     # Count the number of relevant mutations
     numCheck = sum(countDic[base] for base in check_base)
