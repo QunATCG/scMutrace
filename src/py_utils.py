@@ -23,7 +23,8 @@ from statsmodels.stats.proportion import proportions_ztest
 
 ####################
 # define Basic Bases for all functions
-BASIC_BASE = ["A", "T", "C", "G", "N"]
+BASIC_BASE = ["A", "T", "C", "G", "D", "I"]
+BASIC_BASE_CAN = ["A", "T", "C", "G", "N"]
 
 ####################
 # make dir
@@ -247,16 +248,16 @@ def count_alt_num(pileupList, refBase):
     CountList_Total = {"Mis": 0, "Insert": 0, "Del": 0, "Skip": 0, "DR": 0, "Other": 0}
     CountList_Forward = {"Mis": 0, "Insert": 0, "Del": 0, "Skip": 0}
     CountList_REVERSE = {"Mis": 0, "Insert": 0, "Del": 0, "Skip": 0}
-    #BASIC_BASE = ["A", "T", "C", "G", "N"]
+    #BASIC_BASE_CAN = ["A", "T", "C", "G", "N"]
     for pileupItem in pileupList:
         len_pileupItem = len(pileupItem)
         if len_pileupItem == 1:
             if pileupItem.upper() != refBase.upper():
                 # check Forward Mis
-                if pileupItem.isupper() and pileupItem.upper() in BASIC_BASE:
+                if pileupItem.isupper() and pileupItem.upper() in BASIC_BASE_CAN:
                     CountList_Forward["Mis"] += 1
                 # check REVERSE Mis
-                elif pileupItem.islower() and pileupItem.upper() in BASIC_BASE:
+                elif pileupItem.islower() and pileupItem.upper() in BASIC_BASE_CAN:
                     CountList_REVERSE['Mis'] += 1
                 # check Forward Skip
                 elif pileupItem == ">":
@@ -316,11 +317,11 @@ def count_base_typeNum(pileupList, refBase, SkipCheck):
             - NEW_PILE_LIST (list): A list of categorized bases and characters.
             - ALT_NUM (int): The count of alternative bases excluding the reference base and certain other categories.
     """
-    #BASIC_BASE = ["A", "T", "C", "G", "N"]
+    #BASIC_BASE_CAN = ["A", "T", "C", "G", "N"]
     NEW_PILE_LIST = []
     NEW_BASE_DIC = {"A": 0, "T": 0, "C": 0, "G": 0, "N": 0, "D": 0, "I": 0, "FS": 0, "RS": 0, "O": 0, "NA": 0}
     for pileupItem in pileupList:
-        if pileupItem.upper() in BASIC_BASE:
+        if pileupItem.upper() in BASIC_BASE_CAN:
             NEW_BASE_DIC[pileupItem.upper()] += 1
             NEW_PILE_LIST.append(pileupItem.upper())
         else:
