@@ -17,9 +17,9 @@ def initialize_parser():
     parser.add_argument('--binsize', type=int, default=20, help='base number between two snps (MultiAlleles)', required = False)
     parser.add_argument('--clustersize', type=int, default=2, help='number of MultiAlleles snps', required = False)
     parser.add_argument('--dpsize', type=int, default=10, help='min depth', required = False)
-    parser.add_argument('--altdpsize', type=int, default=5, help='min alternative depth', required = False)
+    parser.add_argument('--altdpsize', type=int, default=0, help='min alternative depth', required = False)
     parser.add_argument('--cellsize', type=int, default=10, help='min cell number', required = False)
-    parser.add_argument('--altcellsize', type=int, default=5, help='min mut cell number', required = False)
+    parser.add_argument('--altcellsize', type=int, default=0, help='min mut cell number', required = False)
     parser.add_argument('--min_bq', type=int, default=0, help='cutoff base quality', required = False)
     parser.add_argument('--min_mq', type=int, default=255, help='cutoff mapping quality', required = False)
     parser.add_argument('--cbtag', type=str, default='CB', help='cell barcode tag', required = False)
@@ -361,7 +361,7 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
             #else:
             #    tag_basecall = "PASS_basecall"
             # small range filter
-            target_extractsnp_fromBAM(bamPath, refPath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, False, False, False, 2, 2, 2, 5, cbtag, 50, id)
+            target_extractsnp_fromBAM(bamPath, refPath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, False, False, False, 1, 0, 1, 10, cbtag, 50, id)
             targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_{id}_random.vcf")
             altGTCheck = [j.split("[")[0] for j in altGT.split(",")]
             mutCount, sameMutCount = check_noisy_bg(targetVcfPath, pos, altGTCheck)
