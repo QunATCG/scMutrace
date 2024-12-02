@@ -79,7 +79,7 @@ def main():
     maxcheck = args.maxcheck
     nmCheckStates = nmcheck
     COREUSE = args.nprocs
-    ratioUser = args.ratio
+    ratioUser = float(args.ratio)
     outDirPath = args.outdir
     outDirPathVCFTmp = os.path.join(outDirPath, "tmpVCF")
     
