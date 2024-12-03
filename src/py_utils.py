@@ -542,7 +542,8 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
             # Check ALT number
             if alt_check == True and COUNTNUMALT < int(min_altcov):
                 continue
-            if DP >= 1000 and COUNTNUMALT <= (ratioUser * DP):
+            # Check DP
+            if DP >= 1000 and COUNTNUMALT <= (float(ratioUser) * DP):
                 continue
             # list of reads (pysam.PileupRead) aligned to this column
             # Representation of a read aligned to a particular position in the reference sequence.
@@ -622,7 +623,7 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
             DP_ALT_REAL = count_base_fromDic(BASE_COUNTS_DIC, [REF_BASE, "N"])
             if alt_check == True and int(DP_ALT_REAL) < int(min_altcov):
                 continue
-            if DP_TOTAL >= 1000 and DP_ALT_REAL <= (ratioUser * DP_TOTAL):
+            if DP_TOTAL >= 1000 and DP_ALT_REAL <= (float(ratioUser) * DP_TOTAL):
                 continue
             # CELL NUMBER
             # CELL MUTINFO Total
