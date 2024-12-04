@@ -16,7 +16,7 @@ helpFunction(){
     echo "$0 -V VCFDIR[str] -s SAMPLEID[str] -p nprocs[int] -k iteration[int] -e backp[float] -E errorp[float] -O OUTPUT[str]"
     echo ""
     echo "Options:"
-    echo -e "\t -V \t[vcf] vicf file directory to filter SNPs"
+    echo -e "\t -V \t[vcf] vcf file directory to filter SNPs"
     echo -e "\t -s \t[id] sample ID"
     echo -e "\t -p \t[nprocs] number of processes"
     echo -e "\t -k \t[iteration] number of iterations"

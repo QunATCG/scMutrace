@@ -1526,9 +1526,9 @@ def good_of_fitTest(refBase, baseQualityInfoOnesite, alphaAltCountEst, betaRefCo
             samples_random_baseQuaInfo.append(sample_random_baseQuaInfo_tmp)
         # setting iternum
         if mean_cell_reads >= 100:
-            if notmutCellNum + mutCellNum < 50:
+            if notmutCellNum + mutCellNum > 1000:
                 iternum = iternumK
-                sampleCellNum = 1
+                sampleCellNum = 3
             else:
                 iternum = iternumK
                 sampleCellNum = 1
@@ -1536,6 +1536,9 @@ def good_of_fitTest(refBase, baseQualityInfoOnesite, alphaAltCountEst, betaRefCo
             if notmutCellNum + mutCellNum < 50:
                 iternum = iternumK
                 sampleCellNum = 3
+            elif notmutCellNum + mutCellNum > 1000:
+                iternum = iternumK
+                sampleCellNum = 20
             else:
                 iternum = iternumK
                 sampleCellNum = 5
@@ -1574,11 +1577,14 @@ def good_of_fitTest(refBase, baseQualityInfoOnesite, alphaAltCountEst, betaRefCo
         statpval_m2 = (1, 1)
         statpval_m3 = (1, 1)
         if m1check:
-            statpval_m1 = proportions_ztest([iternum - samples_random_Genotype_m1["rr"], int(backP * iternum)], [iternum,iternum], alternative="larger")
+            if samples_random_Genotype_m1["rr"] < iternum:
+                statpval_m1 = proportions_ztest([iternum - samples_random_Genotype_m1["rr"], int(backP * iternum)], [iternum,iternum], alternative="larger")
         if m2check:
-            statpval_m2 = proportions_ztest([samples_random_Genotype_m2["mut"], int(backP * iternum)], [iternum, iternum], alternative="larger")
+            if samples_random_Genotype_m2["mut"] < iternum:
+                statpval_m2 = proportions_ztest([samples_random_Genotype_m2["mut"], int(backP * iternum)], [iternum, iternum], alternative="larger")
         if m3check:
-            statpval_m3 = proportions_ztest([iternum - samples_random_Genotype_m3[refBase*2], int(backP * iternum)], [iternum,iternum], alternative="larger")
+            if samples_random_Genotype_m3[refBase*2] < iternum:
+                statpval_m3 = proportions_ztest([iternum - samples_random_Genotype_m3[refBase*2], int(backP * iternum)], [iternum,iternum], alternative="larger")
         if m3check:
             iternum_alt_m3 = iternum - samples_random_Genotype_m3[refBase*2]
         if not m3check:
