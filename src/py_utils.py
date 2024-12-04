@@ -129,14 +129,15 @@ def batch_config_window(configItem, groupNum = None):
     """
     res = []
     chr = configItem.split("_")[0]
+    startPos = int(configItem.split("_")[1])
     end = int(configItem.split("_")[2])
     # Set default groupNum if not provided
     if groupNum is None:
         groupNum = 5
     # Determine window size based on groupNum
-    winSize = int(end / groupNum)
+    winSize = int((end - startPos) / groupNum)
     # Create list of window start points, ensuring the last point matches 'end'
-    configWindowList = list(range(1, end, winSize)) + [end]
+    configWindowList = list(range(startPos, end, winSize)) + [end]
     # Generate windows based on configWindowList
     for i in range(1, len(configWindowList)):
         restmp = [chr, configWindowList[i-1], configWindowList[i]]
