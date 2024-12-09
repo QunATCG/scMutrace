@@ -229,7 +229,7 @@ def generate_snp_sample_mutInfo(gCSMPath, outpath):
         for line in gCSM:
             lineSets = line.strip().split("\t")
             pos = lineSets[0]
-            idtmp = lineSets[1].split("_")[0]
+            idtmp = "_".join(lineSets[1].split("_")[0:-1])
             statustmp = lineSets[2]
             entry = f"{pos}_{idtmp}_{statustmp}"
             if entry not in seen_entries:
