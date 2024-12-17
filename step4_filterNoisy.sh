@@ -78,8 +78,8 @@ fi
 
 # default parameters
 binsize=10
-clustersize=3
-minsequencingdepth=5
+clustersize=2
+minsequencingdepth=3
 minaltdpsize=2
 mincellnumber=3
 minaltcellnumber=2
