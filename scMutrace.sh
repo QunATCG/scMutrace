@@ -263,7 +263,7 @@ ${scMutrace_src_dir}/step2_filterSNPModel.sh -V ${outdir}/VCFPOS/ -s ${id} -p ${
 
 # step3_filterPopulation.sh
 echo "running step3_filterPopulation.sh"
-${scMutrace_src_dir}/step3_filterPopulation.sh -O ${outdir} -V ${outdir}/filterVCF/ -s ${id} -r ${removeitem} -i ${includeitem} -p ${nprocs}
+${scMutrace_src_dir}/step3_filterPopulation.sh -O ${outdir} -V ${outdir}/filterVCF/ -s ${id} -r ${removeitem} -i ${includeitem} -p 1
 
 # step4_filterNoisy.sh
 echo "running step4_filterNoisy.sh"
