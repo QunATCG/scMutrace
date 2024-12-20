@@ -1521,6 +1521,7 @@ def good_of_fitTest(refBase, baseQualityInfoOnesite, alphaAltCountEst, betaRefCo
         # generate random samples
         samples_random_baseQuaInfo = []
         readcountsNum, baseWeight, tmpDic, tmpDicP, readcountsWeight = shuffle_reads_features(refBase,baseQualityInfoOnesite)
+        #print("#####", readcountsNum, baseWeight, tmpDic, tmpDicP, readcountsWeight)
         for i in range(0, resampleNum):
             sample_random_baseQuaInfo_tmp = shuffle_reads_baseonFeatures(readcountsNum, baseWeight, tmpDic, tmpDicP, readcountsWeight)
             samples_random_baseQuaInfo.append(sample_random_baseQuaInfo_tmp)
@@ -1551,6 +1552,7 @@ def good_of_fitTest(refBase, baseQualityInfoOnesite, alphaAltCountEst, betaRefCo
                 countCheck = count_cell_reads(new_integrate_baseQua)
                 if countCheck >= 5000:
                     continue
+                #print("#####", sampleCellNum, countCheck, totalAltK, totalRefK, new_integrate_baseQua)
                 #counti += 1
                 if m1check:
                     # Model 1
