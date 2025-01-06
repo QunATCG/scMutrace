@@ -3,7 +3,7 @@ import os
 import pysam
 import timeit
 import argparse
-from basic_utils import make_dir_check
+from py_utils import make_dir_check
 import multiprocessing as mp
 
 '''
