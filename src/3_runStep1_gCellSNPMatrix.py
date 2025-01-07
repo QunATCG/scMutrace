@@ -133,6 +133,9 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir, referencePath, min_
                                 for vcfLine in targetVcf:
                                     vcfLineSets = vcfLine.strip().split("\t")
                                     posTmp = int(vcfLineSets[1])
+                                    # considering sequencing errors, 0.001 is the cutoff
+                                    if int(vcfLineSets[5])/int(vcfLineSets[3]) < 0.001:
+                                        continue
                                     if posTmp == pos:
                                         cellsList = vcfLineSets[9].split(";")
                                         cellsMutInfo = [check_ifMut_oneCell(i, refBase) for i in vcfLineSets[10].split(";")]
