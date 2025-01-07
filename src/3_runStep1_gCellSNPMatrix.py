@@ -54,6 +54,17 @@ def merge_mut_info(jobconfigPath, mutinfoPath):
     except IOError as e:
         print(f"Error opening job config file: {jobconfigPath}, error: {e}")
 
+# mini check noisy bg
+def minicheck_noisy_bg(targetVcfPath):
+    data = open(targetVcfPath, "r")
+    mutCount = 0
+    for lineeach in data:
+        line = lineeach.strip().split("\t")
+        if int(line[5]) > 0:
+            mutCount = mutCount + 1
+    data.close()
+    return mutCount
+
 # check if a mutation is in a cell
 def check_ifMut_oneCell(cellInfo, refBase):
     #basicBase = ["A", "T", "C", "G", "D", "I"]
@@ -82,6 +93,7 @@ def check_ifMut_oneCell(cellInfo, refBase):
 def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir, referencePath, min_bq, min_mq, cbtag):
     try:
         foutFile = open(mutinfoPath + "gCellSNPMatrix.step0.txt", "w")
+        foutFile_miniNoisy = open(mutinfoPath + "gCellSNPMatrix.step0_noisy.txt", "w")
     except IOError as e:
         print(f"Error opening output file: {e}")
         return
@@ -106,8 +118,15 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir, referencePath, min_
                             continue
                         idtmp = jobLineSets[0]
                         bamTmp = jobLineSets[2]
-                        target_extractsnp_fromBAM(bamTmp, referencePath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, True, True, True, 1, 0, 1, 10, cbtag, 2, idtmp)
+                        target_extractsnp_fromBAM(bamTmp, referencePath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, True, True, True, 1, 0, 1, 10, cbtag, 5, idtmp)
                         targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_{idtmp}_random.vcf")
+                        mutCount = minicheck_noisy_bg(targetVcfPath)
+                        if mutCount >= 3:
+                            bgTag = "Noisy"
+                        else:
+                            bgTag = "Clean"
+                        foutFile_miniNoisy.writelines(f"{chr}_{pos}_{refBase}\t{idtmp}\t{bgTag}\n")
+                        foutFile_miniNoisy.flush()
                         try:
                             with open(targetVcfPath, "r") as targetVcf:
                                 for vcfLine in targetVcf:
