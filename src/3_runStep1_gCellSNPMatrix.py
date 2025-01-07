@@ -1,5 +1,6 @@
 import os
 import re
+import fnmatch
 import timeit
 import argparse
 import pandas as pd
@@ -306,9 +307,14 @@ def main():
     for split_file in split_fileList:
         os.remove(split_file)
     merge_file = outdir + "/gCellSNPMatrix.step0.txt"
-    split_gCellSM_fileList = [outdir + "/" + f for f in os.listdir(outdir) if "splitVcf_split_mutInfo" in f]
+    merge_file_noisy = outdir + "/gCellSNPMatrix.step0_noisy.txt"
+    split_gCellSM_fileList = [outdir + "/" + f for f in os.listdir(outdir) if fnmatch.fnmatch(f, "splitVcf_split_mutInfo_*gCellSNPMatrix.step0.txt")]
+    split_gCellSM_fileList_noisy = [outdir + "/" + f for f in os.listdir(outdir) if fnmatch.fnmatch(f, "splitVcf_split_mutInfo_*gCellSNPMatrix.step0_noisy.txt")]
     os.system(f"cat {' '.join(split_gCellSM_fileList)} >> {merge_file}")
+    os.system(f"cat {' '.join(split_gCellSM_fileList_noisy)} >> {merge_file_noisy}")
     for split_file in split_gCellSM_fileList:
+        os.remove(split_file)
+    for split_file in split_gCellSM_fileList_noisy:
         os.remove(split_file)
     # filter mut info
     print(">>> Filter mut info")
