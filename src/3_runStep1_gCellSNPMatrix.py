@@ -119,7 +119,7 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir, referencePath, min_
                             continue
                         idtmp = jobLineSets[0]
                         bamTmp = jobLineSets[2]
-                        target_extractsnp_fromBAM(bamTmp, referencePath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, True, True, True, 1, 0, 1, 10, cbtag, 5, idtmp)
+                        target_extractsnp_fromBAM(bamTmp, referencePath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, True, True, True, 1, 0, 1, 5, cbtag, 5, idtmp)
                         targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_{idtmp}_random.vcf")
                         mutCount = minicheck_noisy_bg(targetVcfPath)
                         if mutCount >= 2:
