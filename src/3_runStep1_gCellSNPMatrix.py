@@ -94,7 +94,7 @@ def check_ifMut_oneCell(cellInfo, refBase):
 def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir, referencePath, min_bq, min_mq, cbtag):
     try:
         foutFile = open(mutinfoPath + "gCellSNPMatrix.step0.txt", "w")
-        foutFile_miniNoisy = open(mutinfoPath + "gCellSNPMatrix.step0_noisy.txt", "w")
+        #foutFile_miniNoisy = open(mutinfoPath + "gCellSNPMatrix.step0_noisy.txt", "w")
     except IOError as e:
         print(f"Error opening output file: {e}")
         return
@@ -120,14 +120,16 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir, referencePath, min_
                         idtmp = jobLineSets[0]
                         bamTmp = jobLineSets[2]
                         target_extractsnp_fromBAM(bamTmp, referencePath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, True, True, True, 1, 0, 1, 5, cbtag, 5, idtmp)
+                        #target_extractsnp_fromBAM(bamTmp, referencePath, outdirTmp, [chr, pos, pos], 0, min_mq, True, True, True, True, 1, 0, 1, 5, cbtag, 5, idtmp + "_noisy")
                         targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_{idtmp}_random.vcf")
-                        mutCount = minicheck_noisy_bg(targetVcfPath)
-                        if mutCount >= 2:
-                            bgTag = "Noisy"
-                        else:
-                            bgTag = "Clean"
-                        foutFile_miniNoisy.writelines(f"{chr}_{pos}_{refBase}\t{idtmp}\t{bgTag}\n")
-                        foutFile_miniNoisy.flush()
+                        #targetVcfPath_noisy = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_{idtmp}_noisy_random.vcf")
+                        #mutCount = minicheck_noisy_bg(targetVcfPath_noisy)
+                        #f mutCount >= 2:
+                        #    bgTag = "Noisy"
+                        #else:
+                        #    bgTag = "Clean"
+                        #foutFile_miniNoisy.writelines(f"{chr}_{pos}_{refBase}\t{idtmp}\t{bgTag}\n")
+                        #foutFile_miniNoisy.flush()
                         try:
                             with open(targetVcfPath, "r") as targetVcf:
                                 for vcfLine in targetVcf:
@@ -154,6 +156,8 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir, referencePath, min_
                             # Cleanup the VCF file
                             if os.path.exists(targetVcfPath):
                                 os.remove(targetVcfPath)
+                            #if os.path.exists(targetVcfPath_noisy):
+                            #    os.remove(targetVcfPath_noisy)
     except IOError as e:
         print(f"Error reading mutation info file: {e}")
     finally:
