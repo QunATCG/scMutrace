@@ -1614,11 +1614,11 @@ def assign_site_genotype(refBase, baseQualityInfoOnesite, alphaAltCountEst, beta
         model_check["p1"] = result[0]
         model_check["p2"] = result[3]
         model_check["p3"] = result[4]
-        if result[5] > backP * resampleNum:
+        if result[5] > 0.02 * iternumK:
             model_check["c1"] += 1
-        if result[6] > backP * resampleNum:
+        if result[6] > 0.02 * iternumK:
             model_check["c2"] += 1
-        if result[7] > backP * resampleNum:
+        if result[7] > 0.02 * iternumK:
             model_check["c3"] += 1
         model_check["ic1"] = result[5]
         model_check["ic2"] = result[6]
