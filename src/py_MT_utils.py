@@ -122,8 +122,8 @@ def filter_mito_VCF(vcfPathIn, vcfPathOut):
         vcfOut.write(f"{chr}\t{pos}\t{ref}\t{total_reads}\t{total_alt_reads}\t{mutFreq_total}\t{mutFreq_forward}\t{mutFreq_reverse}\t{total_cells}\t{mutCellnum_total}\t{mutCellnum_forward}\t{mutCellnum_reverse}\t{totalCellNum_total}\t{totalCellNum_forward}\t{totalCellNum_reverse}\t{mutfrqlist_total_str}\t{cellFreq_total}\t{cellFreq_forward}\t{cellFreq_reverse}\t{p_value_strandFT}\n")
 
 def main():
-    vcfPathIn = "/Users/liqun/scMutraceProject/Data/GSE142742/data/VCF/VCF_CD34_800_Day08_MT.vcf"
-    vcfPathOut = "/Users/liqun/scMutraceProject/Data/GSE142742/data/VCF/VCF_CD34_800_Day08_MT.vcf.out"
+    vcfPathIn = "/Users/liqun/scMutraceProject/Data/GSE142742/data/VCF/VCF_CD34_800_Day20_MT.vcf"
+    vcfPathOut = "/Users/liqun/scMutraceProject/Data/GSE142742/data/VCF/VCF_CD34_800_Day20_MT.vcf.out"
     filter_mito_VCF(vcfPathIn, vcfPathOut)
 
 if __name__ == "__main__":
