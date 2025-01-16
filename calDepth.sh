@@ -65,8 +65,8 @@ fi
 
 # Filter positions based on depth thresholds
 awk -v threshold="$depth_threshold_gt5" '$3 >= threshold' "$depth_file" > "$depth_gt5_file"
-awk -v threshold="$depth_threshold_gt8" '$3 >= threshold' "$depth_file" > "$depth_gt8_file"
-awk -v threshold="$depth_threshold_gt10" '$3 >= threshold' "$depth_file" > "$depth_gt10_file"
+awk -v threshold="$depth_threshold_gt8" '$3 >= threshold' "$depth_gt5_file" > "$depth_gt8_file"
+awk -v threshold="$depth_threshold_gt10" '$3 >= threshold' "$depth_gt8_file" > "$depth_gt10_file"
 
 # Convert filtered positions to BED format
 awk -v OFS='\t' '{print $1, $2, $2}' "$depth_gt5_file" > "$depth_gt5_bed_file"
