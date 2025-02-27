@@ -13,7 +13,7 @@ helpFunction(){
     echo "get cell number and sequencing depth for each position"
     echo ""
     echo "Usage:"
-    echo "$0 -b BAMFILE[str] -f REF[str] -g CONTIG[str] -s SAMPLEID[str] -p nprocs[int] -q minbq[int] -Q minmq[int] -n mincellnumber[int] -N minaltcellnumber[int] -m maxmismatch[int] -d minsequencingdepth[int] -D minaltsequencingdepth[int] -O OUTPUT[str]"
+    echo "$0 -b BAMFILE[str] -f REF[str] -g CONTIG[str] -s SAMPLEID[str] -p nprocs[int] -q minbq[int] -Q minmq[int] -m maxmismatch[int] -d minsequencingdepth[int] -O OUTPUT[str]"
     echo ""
     echo "Options:"
     echo -e "\t -b \t[bam] bam file path to extract SNPs"
@@ -95,5 +95,5 @@ while read chrtmp starttmp endtmp
 do
     tmpConfig=${chrtmp}_${starttmp}_${endtmp}
     echo "extract cell number and depth of ${tmpConfig}"
-    python -u ${scMutrace_src_dir}/src/getPosCellNumDepth.py --bam ${bam} --ref ${ref} --cbtag ${cellbarcodetag} --contig ${tmpConfig} --minmq ${minmq} --minbq ${minbq} --mindp ${mindp} --nmcheck --maxnm ${maxmismatch} --id ${id} --maxcheck --nprocs ${nprocs} --outdir ${outdir}
+    python -u ${scMutrace_src_dir}/src/getPosCellNumDepth.py --bam ${bam} --ref ${ref} --cbtag ${cellbarcodetag} --contig ${tmpConfig} --minmq ${minmq} --minbq ${minbq} --mindp ${minsequencingdepth} --nmcheck --maxnm ${maxmismatch} --id ${id} --maxcheck --nprocs ${nprocs} --outdir ${outdir}
 done < $contig
