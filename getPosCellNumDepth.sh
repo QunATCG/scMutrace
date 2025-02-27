@@ -66,9 +66,17 @@ do
    esac
 done
 
-# check parameters
-if [ -z "$bam" ] || [ -z "$ref" ] || [ -z "$contig" ] || [ -z "$id" ] || [ -z "$outdir" ]; then
-    echo "ERROR: Missing required parameters"
+# Check if required parameters are empty
+if [ -z "$bam" ] || [ -z "$ref" ] || [ -z "$id" ] || [ -z "$outdir" ] || [ -z "$contig" ]; then
+    echo -e "\033[32m###################################################\033[0m"
+    echo -e "\033[32m                  Log info                         \033[0m"
+    echo -e "\033[32m###################################################\033[0m"
+    echo "Some or all of the required parameters are empty:"
+    [ -z "$bam" ] && echo "  BAMFILE is missing"
+    [ -z "$ref" ] && echo "  REF is missing"
+    [ -z "$id" ] && echo "  SAMPLEID is missing"
+    [ -z "$contig" ] && echo "  CONTIG is missing"
+    [ -z "$outdir" ] && echo "  OUTPUT directory is missing"
     helpFunction
 fi
 
