@@ -4,7 +4,6 @@ import re
 import pysam
 import timeit
 import argparse
-from py_utils import *
 import multiprocessing as mp
 import subprocess
 
@@ -26,8 +25,67 @@ def initialize_parser():
     parser.add_argument('--outdir', default='.', help='Out folder', required=False)
     return parser
 
+BASIC_BASE = ["A", "T", "C", "G", "D", "I"]
+BASIC_BASE_CAN = ["A", "T", "C", "G", "N"]
+
 def err_call_back(err):
     print(f'apply_async error: {str(err)}')
+
+# make dir
+def make_dir_check(dirPath):
+    """
+    Ensures that a directory exists at the specified path. If the directory does not exist, it is created.
+
+    Args:
+        dirPath (str): The path of the directory to check or create.
+
+    Returns:
+        None
+
+    Side Effects:
+        - Creates the directory at the specified path if it does not exist.
+        - Prints a message indicating whether the directory was created or already existed.
+    """
+    dirPath = dirPath.strip()
+    dirPath = dirPath.rstrip("\\")
+    isExist = os.path.exists(dirPath)
+    if not isExist:
+        os.makedirs(dirPath, exist_ok=True)
+    else:
+        print(f"{dirPath} already exists")
+    print(f"Directory created: {dirPath}")
+
+def batch_config_window(configItem, groupNum = None):
+    """
+    Splits a configuration item into a list of windows based on the specified group number.
+    Args:
+        configItem (str): A string in the format "chr_start_end" where 'chr' is the chromosome,
+                            'start' is the starting position, and 'end' is the ending position.
+        groupNum (int, optional): The number of groups to split the window into. If not provided,
+                                    defaults to 5.
+    Returns:
+        list: A list of lists, where each sublist contains the chromosome, start, and end positions
+                of each window.
+    Example:
+        >>> batch_config_window("chr1_0_1000", 5)
+        [['chr1', 1, 200], ['chr1', 200, 400], ['chr1', 400, 600], ['chr1', 600, 800], ['chr1', 800, 1000]]
+    """
+    res = []
+    chr = configItem.split("_")[0]
+    startPos = int(configItem.split("_")[1])
+    end = int(configItem.split("_")[2])
+    # Set default groupNum if not provided
+    if groupNum is None:
+        groupNum = 5
+    # Determine window size based on groupNum
+    winSize = int((end - startPos) / groupNum)
+    # Create list of window start points, ensuring the last point matches 'end'
+    configWindowList = list(range(startPos, end, winSize)) + [end]
+    # Generate windows based on configWindowList
+    for i in range(1, len(configWindowList)):
+        restmp = [chr, configWindowList[i-1], configWindowList[i]]
+        res.append(restmp)
+    return res
 
 def merge_VCF_filesShell(outPath, VCFtmpPath, IDSample, chrTag):
     """
@@ -56,7 +114,7 @@ def merge_VCF_filesShell(outPath, VCFtmpPath, IDSample, chrTag):
         print(f"Return code: {e.returncode}")
         print(f"Output: {e.output}")
 
-def get_mut_total_getPosCNDepth(CELL_COUNTS_DIC, refBase):
+def get_mut_total_getPosCNDepth(CELL_COUNTS_DIC):
     """
     Calculate the total number of mutations and cell counts for each base type.
     Args:
@@ -74,6 +132,88 @@ def get_mut_total_getPosCNDepth(CELL_COUNTS_DIC, refBase):
     CELL_COUNTS_DIC_NEW_0 = {x: len(set(CELL_COUNTS_DIC[x])) for x in BASIC_BASE}
     countCellNum = sum(CELL_COUNTS_DIC_NEW_0.values())
     return countCellNum
+
+# count base number exclude other base
+def count_base_fromDic_getPosCNDepth(baseDic, excludeBaseList):
+    """
+    Counts the number of bases in a dictionary, excluding specified bases.
+    Args:
+        baseDic (dict): Dictionary containing base counts.
+        excludeBaseList (list): List of bases to exclude from the count.
+    Returns:
+        int: The count of bases excluding the specified bases.
+    """
+    check_bases = list(set(baseDic.keys()).difference(set(excludeBaseList)))
+    ALT_NUM = sum(baseDic[base] for base in check_bases)
+    return ALT_NUM
+
+# check re_exp
+def check_string_re_getPosCNDepth(re_exp, string):
+    """
+    Checks if a given string matches a specified regular expression pattern.
+
+    Args:
+        re_exp (str): The regular expression pattern to match.
+        string (str): The string to be checked against the pattern.
+
+    Returns:
+        bool: True if the string matches the pattern, False otherwise.
+    """
+    return re.search(re_exp, string) is not None
+
+def count_base_typeNum_getPosCNDepth(pileupList, SkipCheck):
+    """
+    Counts the occurrences of different base types in a given pileup list and categorizes them.
+    Args:
+        pileupList (list): A list of bases and other characters representing the pileup.
+        refBase (str): The reference base to compare against.
+        SkipCheck (bool): A flag to determine whether to skip certain checks.
+    Returns:
+        tuple: A tuple containing:
+            - NEW_PILE_LIST (list): A list of categorized bases and characters.
+            - ALT_NUM (int): The count of alternative bases excluding the reference base and certain other categories.
+    """
+    #BASIC_BASE_CAN = ["A", "T", "C", "G", "N"]
+    NEW_PILE_LIST = []
+    NEW_BASE_DIC = {"A": 0, "T": 0, "C": 0, "G": 0, "N": 0, "D": 0, "I": 0, "FS": 0, "RS": 0, "O": 0, "NA": 0}
+    for pileupItem in pileupList:
+        if pileupItem.upper() in BASIC_BASE_CAN:
+            NEW_BASE_DIC[pileupItem.upper()] += 1
+            NEW_PILE_LIST.append(pileupItem.upper())
+        else:
+            if SkipCheck:
+                if pileupItem.upper() == ">":
+                    NEW_BASE_DIC["FS"] += 1
+                    NEW_PILE_LIST.append("FS")
+                elif pileupItem.upper() == "<":
+                    NEW_BASE_DIC["RS"] += 1
+                    NEW_PILE_LIST.append("RS")
+                elif check_string_re_getPosCNDepth(r'\+[0-9]+[ACGTNacgtn]+', pileupItem):
+                    NEW_BASE_DIC["I"] += 1
+                    NEW_PILE_LIST.append("I")
+                elif check_string_re_getPosCNDepth(r'\-[0-9]+[ACGTNacgtn]+', pileupItem):
+                    NEW_BASE_DIC["D"] += 1
+                    NEW_PILE_LIST.append("D")
+                elif pileupItem.upper() == "*":
+                    NEW_BASE_DIC["O"] += 1
+                    NEW_PILE_LIST.append("O")
+                else:
+                    NEW_BASE_DIC["NA"] += 1
+                    NEW_PILE_LIST.append("NA")
+            else:
+                if check_string_re_getPosCNDepth(r'\+[0-9]+[ACGTNacgtn]+', pileupItem):
+                    NEW_BASE_DIC["I"] += 1
+                    NEW_PILE_LIST.append("I")
+                elif check_string_re_getPosCNDepth(r'\-[0-9]+[ACGTNacgtn]+', pileupItem):
+                    NEW_BASE_DIC["D"] += 1
+                    NEW_PILE_LIST.append("D")
+                elif pileupItem.upper() == "*":
+                    NEW_BASE_DIC["O"] += 1
+                    NEW_PILE_LIST.append("O")
+                else:
+                    NEW_BASE_DIC["NA"] += 1
+                    NEW_PILE_LIST.append("NA")
+    return NEW_PILE_LIST
 
 def count_mut_information_getPosCNDepth(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, nm_check, min_cov, max_nm, cbtag):
     """
@@ -143,7 +283,7 @@ def count_mut_information_getPosCNDepth(BamPath, referencePath, outVcfPath, conf
             # query base quality scores at pileup column position; return list
             # query bases/sequences at pileup column position; return list
             BASE_PILEUP_LIST = bam_pileup.get_query_sequences(mark_matches=True, add_indels=True)
-            NEW_BASE_PILEUP_LIST, COUNTNUMALT = count_base_typeNum(BASE_PILEUP_LIST, REF_BASE, False)
+            NEW_BASE_PILEUP_LIST = count_base_typeNum_getPosCNDepth(BASE_PILEUP_LIST, False)
             # list of reads (pysam.PileupRead) aligned to this column
             # Representation of a read aligned to a particular position in the reference sequence.
             # -------------------------------------------------
@@ -198,7 +338,7 @@ def count_mut_information_getPosCNDepth(BamPath, referencePath, outVcfPath, conf
                     #CELLS.append(CELLBARCODE)
                     # ALTERNATIVE BASE
             # get real DP of cells with barcodes
-            DP_TOTAL = count_base_fromDic(BASE_COUNTS_DIC, ["N"])
+            DP_TOTAL = count_base_fromDic_getPosCNDepth(BASE_COUNTS_DIC, ["N"])
             if dp_check:
                 if int(DP_TOTAL) <= int(min_cov):
                     continue
