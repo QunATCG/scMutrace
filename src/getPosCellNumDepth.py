@@ -73,8 +73,7 @@ def get_mut_total_getPosCNDepth(CELL_COUNTS_DIC, refBase):
     #basic_base = ["A", "T", "C", "G", "D", "I"]
     CELL_COUNTS_DIC_NEW_0 = {x: len(set(CELL_COUNTS_DIC[x])) for x in BASIC_BASE}
     countCellNum = sum(CELL_COUNTS_DIC_NEW_0.values())
-    countAltCellNum = count_base_fromDic(CELL_COUNTS_DIC_NEW_0, [refBase])
-    return countCellNum, countAltCellNum
+    return countCellNum
 
 def count_mut_information_getPosCNDepth(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, nm_check, min_cov, max_nm, cbtag):
     """
@@ -204,8 +203,8 @@ def count_mut_information_getPosCNDepth(BamPath, referencePath, outVcfPath, conf
                 if int(DP_TOTAL) <= int(min_cov):
                     continue
             # CELL NUMBER
-            COUNTOTALCELL, COUNTOTALCELLALT = get_mut_total_getPosCNDepth(CELL_COUNTS_DIC, REF_BASE)
-            SQL_0 = f"{chr}\t{POS_PILEUP + 1}\t{REF_BASE}\t{DP_TOTAL}\t{COUNTOTALCELL}\t{COUNTOTALCELLALT}"
+            COUNTOTALCELL = get_mut_total_getPosCNDepth(CELL_COUNTS_DIC, REF_BASE)
+            SQL_0 = f"{chr}\t{POS_PILEUP + 1}\t{REF_BASE}\t{DP_TOTAL}\t{COUNTOTALCELL}"
             outVcfFile.writelines(SQL_0 + "\n")
             outVcfFile.flush()
     refFasta.close()
