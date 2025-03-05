@@ -214,6 +214,13 @@ def count_base_typeNum_getPosCNDepth(pileupList, SkipCheck):
                     NEW_PILE_LIST.append("NA")
     return NEW_PILE_LIST
 
+def count_bases(baseDic):
+    result = []
+    for key, value in baseDic.items():
+        result.append(key + ":" + str(value))
+    sql = ";".join(result)
+    return sql
+
 def count_mut_information_getPosCNDepth(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, nm_check, min_cov, max_nm):
     """
     Count mutation information from BAM file and write to VCF file.
@@ -330,10 +337,11 @@ def count_mut_information_getPosCNDepth(BamPath, referencePath, outVcfPath, conf
             # get real DP of cells with barcodes
             DP_TOTAL = count_base_fromDic_getPosCNDepth(BASE_COUNTS_DIC, ["N"])
             DP_ALT_REAL = count_base_fromDic_getPosCNDepth(BASE_COUNTS_DIC, [REF_BASE, "N"])
+            baseInfo = count_bases(BASE_COUNTS_DIC)
             if dp_check:
                 if int(DP_TOTAL) <= int(min_cov):
                     continue
-            SQL_0 = f"{chr}\t{POS_PILEUP + 1}\t{REF_BASE}\t{DP_TOTAL}\t{DP_ALT_REAL}"
+            SQL_0 = f"{chr}\t{POS_PILEUP + 1}\t{REF_BASE}\t{DP_TOTAL}\t{DP_ALT_REAL}\t{baseInfo}"
             outVcfFile.writelines(SQL_0 + "\n")
             outVcfFile.flush()
     refFasta.close()
