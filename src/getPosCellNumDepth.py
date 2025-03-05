@@ -314,17 +314,17 @@ def count_mut_information_getPosCNDepth(BamPath, referencePath, outVcfPath, conf
                         continue
                     # num_mismatch
                     if nm_check:
-                        tagCheck_NM = READ_ALIGNMENT.has_tag("NM")
+                        tagCheck_NM = READ_ALIGNMENT.has_tag("XM")
                         if tagCheck_NM:
-                            NM_count = READ_ALIGNMENT.opt("NM")
+                            NM_count = READ_ALIGNMENT.opt("XM")
                             if NM_count > max_nm:
                                 continue
                         else:
-                            tagCheck_NM = READ_ALIGNMENT.has_tag("nM")
+                            tagCheck_NM = READ_ALIGNMENT.has_tag("xM")
                             if tagCheck_NM == False:
                                 print("No NM/nM tag in your bam, please set nm_check as False")
                             if tagCheck_NM:
-                                NM_count = READ_ALIGNMENT.opt("nM")
+                                NM_count = READ_ALIGNMENT.opt("xM")
                                 if NM_count > max_nm:
                                     continue
                     # BASE
