@@ -178,7 +178,7 @@ You can check and search parameters using the following command:
 ## Models
 
 ## FAQs
-- Reference chromosome `test.fa` and BAM `test.bam` file chromosome should be same format (chr or without chr).
+- Reference `test.fa`, BAM `test.bam` and Contig `test.contig` chromosome should be the same prefix format (chr or without chr).
 ```shell
 # check BAM file chromosome format
 samtools view -H test.bam | head -10
