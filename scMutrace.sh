@@ -249,6 +249,12 @@ ${scMutrace_src_dir}/step0_excludeBGCell.sh -b ${bam} -f ${ref} \
     -u ${umi} -x ${barcodecheck} -c ${barcode} -C ${cellbarcodetag} \
     -g ${contig} -t ${ncut} -s ${id} -p ${nprocs} -O ${outdir}
 
+# if step0_excludeBGCell.sh failed, exit
+if [ $? -ne 0 ]; then
+    echo "Failed to run step0_excludeBGCell.sh. Exiting..."
+    exit 1
+fi
+
 # step1_extractSNP.sh
 echo "running step1_extractSNP.sh"
 ${scMutrace_src_dir}/step1_extractSNP.sh -b ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam -f ${ref} -C ${cellbarcodetag} \
@@ -257,13 +263,31 @@ ${scMutrace_src_dir}/step1_extractSNP.sh -b ${outdir}/ExcludeBG_${id}.sort.rmdup
     -m ${maxmismatch} -d ${minsequencingdepth} -D ${minaltsequencingdepth} \
     -O ${outdir}
 
+# if step1_extractSNP.sh failed, exit
+if [ $? -ne 0 ]; then
+    echo "Failed to run step1_extractSNP.sh. Exiting..."
+    exit 1
+fi
+
 # step2_filterSNPModel.sh
 echo "running step2_filterSNPModel.sh"
 ${scMutrace_src_dir}/step2_filterSNPModel.sh -V ${outdir}/VCFPOS/ -s ${id} -p ${nprocs} -k ${iteration} -e ${backp} -E ${errorp} -O ${outdir}
 
+# if step2_filterSNPModel.sh failed, exit
+if [ $? -ne 0 ]; then
+    echo "Failed to run step2_filterSNPModel.sh. Exiting..."
+    exit 1
+fi
+
 # step3_filterPopulation.sh
 echo "running step3_filterPopulation.sh"
 ${scMutrace_src_dir}/step3_filterPopulation.sh -O ${outdir} -V ${outdir}/filterVCF/ -s ${id} -r ${removeitem} -i ${includeitem} -p 1
+
+# if step3_filterPopulation.sh failed, exit
+if [ $? -ne 0 ]; then
+    echo "Failed to run step3_filterPopulation.sh. Exiting..."
+    exit 1
+fi
 
 # step4_filterNoisy.sh
 echo "running step4_filterNoisy.sh"
@@ -273,3 +297,9 @@ ${scMutrace_src_dir}/step4_filterNoisy.sh -b ${outdir}/ExcludeBG_${id}.sort.rmdu
     -d ${minsequencingdepth} -D ${minaltsequencingdepth} \
     -n ${mincellnumber} -N ${minaltcellnumber} -B ${lowBaseCutoff} \
     -C ${cellbarcodetag} -q 0 -Q ${minmq} -p ${nprocs}
+
+# if step4_filterNoisy.sh failed, exit
+if [ $? -ne 0 ]; then
+    echo "Failed to run step4_filterNoisy.sh. Exiting..."
+    exit 1
+fi

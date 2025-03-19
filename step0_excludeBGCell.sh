@@ -113,6 +113,10 @@ if [ ${barcodecheck} == "true" ]; then
     echo "Exclude background cells and trim reads.."${id}
     python -u ${scMutrace_src_dir}/src/0_runStep0_SplitBamOption3.py --bam ${bam} --ref ${ref} --barcode ${barcode} --splitCheck --ncut ${ncut} \
         --contigFile ${contigFile} --id ${id} --barcodetag ${cellbarcodetag} --nprocs ${nprocs} --outdir ${outdir}
+    if [ $? -ne 0 ]; then
+        echo "Failed to exclude background cells and trim reads."
+        exit 1
+    fi
     echo "samtools merge bam files.."${id}
     samtools merge -@ ${nprocs} -o ${outdir}/ExcludeBG_${id}.bam ${outdir}/${id}_*tmp.SMT.bam
     echo "samtools sort..${id}"
