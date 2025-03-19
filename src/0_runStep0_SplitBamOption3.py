@@ -103,9 +103,10 @@ def split_bam_basedList(bam_Path, barcodeSubList, ChrList, configValue, subam_pa
                     cut_r = ncut
                 base_quality = read.query_qualities
                 index_cut_bq = list(range(0, cut_l)) + list(range(-1, -cut_r - 1, -1))
-                for index_q in index_cut_bq:
-                    base_quality[index_q] = 0
-                read.query_qualities = base_quality
+                if base_quality is not None:
+                    for index_q in index_cut_bq:
+                        base_quality[index_q] = 0
+                    read.query_qualities = base_quality
                 Outfile.write(read)
     Outfile.close()
     print("Indexing bam --- " + outBamPath)
