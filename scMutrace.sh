@@ -247,7 +247,7 @@ echo "making the output directory.."${id}
 echo "running step0_excludeBGCell.sh"
 ${scMutrace_src_dir}/step0_excludeBGCell.sh -b ${bam} -f ${ref} \
     -u ${umi} -x ${barcodecheck} -c ${barcode} -C ${cellbarcodetag} \
-    -t ${ncut} -s ${id} -p ${nprocs} -O ${outdir}
+    -g ${contig} -t ${ncut} -s ${id} -p ${nprocs} -O ${outdir}
 
 # step1_extractSNP.sh
 echo "running step1_extractSNP.sh"

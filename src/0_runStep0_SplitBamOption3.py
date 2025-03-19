@@ -42,6 +42,7 @@ def initialize_parser():
     parser.add_argument('--ref', type=str, help='Path to reference genome version. *fai must be available in the same directory as the reference genome file', required = True)
     parser.add_argument('--barcode', type=str, help='Barcode path', required = True)
     parser.add_argument('--barcodetag', type=str, help='Barcode tag', required = True)
+    parser.add_argument('--contigFile', type=str, help='Contig information in tab-separated format: Chr\tstart\tend', required = True)
     parser.add_argument('--splitCheck', action='store_true', help='A boolean flag')
     parser.add_argument('--id', help='Prefix used to name output file.', required = True)
     parser.add_argument('--ncut', default = 10, help='Number of cut reads bases [Default: 10]',required=False,type = int)
@@ -53,13 +54,17 @@ def err_call_back(err):
     print(f'apply_async error:{str(err)}')
 
 # get config data from fasta
-def generate_config_range(refasta):
-    basicChr = list(str(i) for i in range(1, 40)) + ["chr" + str(i) for i in range(1, 40)] + ['X', 'Y', 'chrX', 'chrY', 'M', 'chrM', 'm', 'chrm', 'MT', 'chrMT', 'mt', 'chrmt','x', 'y', 'chrx', 'chry']
+def generate_config_range(refasta, contigSelfInPath):
+    #basicChr = list(str(i) for i in range(1, 40)) + ["chr" + str(i) for i in range(1, 40)] + ['X', 'Y', 'chrX', 'chrY', 'M', 'chrM', 'm', 'chrm', 'MT', 'chrMT', 'mt', 'chrmt','x', 'y', 'chrx', 'chry']
+    chrListSelfDefined = []
+    with open(contigSelfInPath, "r") as f:
+        for line in f:
+            chrListSelfDefined.append(line.split("\t")[0].strip())
     refChrTotal = refasta.references
     configDic = {}
     chrList = []
     for refChr in refChrTotal:
-        if refChr in basicChr:
+        if refChr in chrListSelfDefined:
             sqlConfig = f"{refChr}_1_{refasta.get_reference_length(refChr)}"
             chrList.append(refChr)
             configDic[refChr] = sqlConfig
@@ -115,6 +120,7 @@ def main():
     ref_Path = args.ref
     barcodePath = args.barcode
     barcodetag = args.barcodetag
+    contigSelfInPath = args.contigFile
     split_check = args.splitCheck
     nameSplitBamTag = args.id
     seqTag = "SMT"
@@ -134,7 +140,7 @@ def main():
             barcodeListCell.append(barcodeTmp)
     barcodeListFile.close()
     # generate_config_range
-    configDic, chrList = generate_config_range(pysam.FastaFile(ref_Path))
+    configDic, chrList = generate_config_range(pysam.FastaFile(ref_Path), contigSelfInPath)
     # extract bam by cellbarcode
     print(split_check)
     if split_check:

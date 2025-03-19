@@ -21,6 +21,7 @@ helpFunction(){
     echo -e "\t -x \t[barcode check] if barcode check, split bam based on cell barcodes (default: true, true/false)"
     echo -e "\t -c \t[barcode] cell barcode to be included"
     echo -e "\t -C \t[cellbarcodetag] cell barcode tag in bam file (default: CB)"
+    echo -e "\t -g \t[contigFile] Contig information in tab-separated format: Chr\tstart\tend"
     echo -e "\t -u \t[umi] umi to be used to remove duplicated reads (default: CB, if XX, no umi)"
     echo -e "\t -t \t[ncut] number of reads bases will be cut (default: 10)"
     echo -e "\t -s \t[id] sample id"
@@ -46,7 +47,7 @@ if [ $# -eq 0 ]; then
 fi
 
 # get parameters
-while getopts "b:f:x:c:C:u:t:s:p:O:h" opt
+while getopts "b:f:x:c:C:g:u:t:s:p:O:h" opt
 do
    case "$opt" in
         b ) bam="$OPTARG" ;;
@@ -54,6 +55,7 @@ do
         x ) barcodecheck="$OPTARG" ;;
         c ) barcode="$OPTARG" ;;
         C ) cellbarcodetag="$OPTARG" ;;
+        g ) contigFile="$OPTARG" ;;
         u ) umitag="$OPTARG" ;;
         t ) ncut="$OPTARG" ;;
         s ) id="$OPTARG" ;;
@@ -70,7 +72,7 @@ if [ "${barcodecheck}" != "true" ] && [ "${barcodecheck}" != "false" ]; then
 fi
 
 # Check if required parameters are empty
-if [ -z "$bam" ] || [ -z "$ref" ] || [ -z "$barcode" ] || [ -z "$id" ] || [ -z "$outdir" ]; then
+if [ -z "$bam" ] || [ -z "$ref" ] || [ -z "$barcode" ] || [ -z "$contigFile" ] || [ -z "$id" ] || [ -z "$outdir" ]; then
     echo -e "\033[32m###################################################\033[0m"
     echo -e "\033[32m                  Log info                         \033[0m"
     echo -e "\033[32m###################################################\033[0m"
@@ -78,6 +80,7 @@ if [ -z "$bam" ] || [ -z "$ref" ] || [ -z "$barcode" ] || [ -z "$id" ] || [ -z "
     [ -z "$bam" ] && echo "  BAMFILE is missing"
     [ -z "$ref" ] && echo "  REF is missing"
     [ -z "$barcode" ] && echo "  CELLBARCODE is missing"
+    [ -z "$contigFile" ] && echo "  ContigFile is missing"
     [ -z "$id" ] && echo "  SAMPLEID is missing"
     [ -z "$outdir" ] && echo "  OUTPUT directory is missing"
     helpFunction  # Display the help info and exit
@@ -94,6 +97,7 @@ echo "REF: ${ref}"
 echo "barcode check: ${barcodecheck}"
 echo "CELLBARCODE: ${barcode}"
 echo "CELLBARCODETAG: ${cellbarcodetag}"
+echo "ContigFile: ${contigFile}"
 echo "UMITAG: ${umitag}"
 echo "ncut: ${ncut}"
 echo "SAMPLEID: ${id}"
@@ -108,7 +112,7 @@ if [ ${barcodecheck} == "true" ]; then
     mkdir -p ${outdir}
     echo "Exclude background cells and trim reads.."${id}
     python -u ${scMutrace_src_dir}/src/0_runStep0_SplitBamOption3.py --bam ${bam} --ref ${ref} --barcode ${barcode} --splitCheck --ncut ${ncut} \
-        --id ${id} --barcodetag ${cellbarcodetag} --nprocs ${nprocs} --outdir ${outdir}
+        --contigFile ${contigFile} --id ${id} --barcodetag ${cellbarcodetag} --nprocs ${nprocs} --outdir ${outdir}
     echo "samtools merge bam files.."${id}
     samtools merge -@ ${nprocs} -o ${outdir}/ExcludeBG_${id}.bam ${outdir}/${id}_*tmp.SMT.bam
     echo "samtools sort..${id}"
