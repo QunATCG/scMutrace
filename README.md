@@ -70,6 +70,8 @@ You can obtain help information using the following command
 
 `./scMutrace.sh -h`
 
+Also, you can check input files format here: https://github.com/QunATCG/scMutrace/tree/main/Example/
+
 ```shell
 Description:
 scMutrace is a single-cell mutation tracing tool designed to identify and analyze mutations from
@@ -123,6 +125,8 @@ samtools view ENCFF491HQL.bam | cut -f 12- | tr "\t" "\n" | grep "CB:Z:" | uniq 
 You can check and search parameters using the following command:
 
 `./scMutrace.sh -h`
+
+Also, you can check input files format here: https://github.com/QunATCG/scMutrace/tree/main/Example/
 
 ```
     -a  
