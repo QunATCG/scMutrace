@@ -7,6 +7,7 @@
 - [Help information](#help-information)
 - [Parameter Index](#parameter-index)
 - [Models](#models)
+- [FAQs](#faqs)
 ## Dependencies
 **scMutrace** is a single-cell mutation tracing tool designed to identify and analyze mutations from single-cell sequencing data. It offers an efficient, one-step process for background filtering, SNP extraction, noise filtering, and population structure analysis. It can be run in [Linux](https://www.linux.org/), [MacOS](https://www.apple.com/macos/) and Windows Subsystem for Linux ([WSL](https://learn.microsoft.com/en-us/windows/wsl/install)) platforms.
 ### Requirements
