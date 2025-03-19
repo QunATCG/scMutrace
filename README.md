@@ -40,7 +40,7 @@
 > https://anaconda.org/anaconda/conda
 
 > https://docs.anaconda.com/free/miniconda/index.html
-#### conda installation
+#### Install conda
 If you haven't installed conda before, you can do so with the following commands:
 ``` shell
 mkdir -p ~/miniconda3
