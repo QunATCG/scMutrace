@@ -176,3 +176,18 @@ You can check and search parameters using the following command:
 ```
 
 ## Models
+
+## FAQs
+- Reference chromosome `test.fa` and BAM `test.bam` file chromosome should be same format (chr or without chr).
+```shell
+# check BAM file chromosome format
+samtools view -H test.bam | head -10
+# check reference fasta chromosome format
+head -10 test.fa
+```
+
+- The index file `test.bam.bai` cannot be older than the BAM file `test.bam`.
+```shell
+# update index file of BAM data
+samtools index test.bam
+```
