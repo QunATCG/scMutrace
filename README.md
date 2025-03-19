@@ -5,6 +5,7 @@
         - [conda installation](#conda-installation)
         - [conda install packages](#conda-install-packages)
 - [Help information](#help-information)
+- [Start](#start)
 - [Parameter Index](#parameter-index)
 - [Models](#models)
 - [FAQs](#faqs)
@@ -115,6 +116,8 @@ If you don't have a cell barcode file, all cells will be included. You can use `
 ```shell
 samtools view ENCFF491HQL.bam | cut -f 12- | tr "\t" "\n" | grep "CB:Z:" | uniq | awk -F':' '{print $3}' > ENCFF491HQL.cellbarcode
 ```
+
+## Start
 
 ## Parameter Index
 You can check and search parameters using the following command:
