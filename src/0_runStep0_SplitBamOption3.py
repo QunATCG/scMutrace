@@ -1,5 +1,6 @@
 # import
 import os
+import sys
 import pysam
 import timeit
 import argparse
@@ -142,6 +143,9 @@ def main():
     barcodeListFile.close()
     # generate_config_range
     configDic, chrList = generate_config_range(pysam.FastaFile(ref_Path), contigSelfInPath)
+    if len(chrList) == 0:
+        print("No chromosome in the reference genome")
+        sys.exit("No chr in the contig file")
     # extract bam by cellbarcode
     print(split_check)
     if split_check:
