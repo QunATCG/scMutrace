@@ -2,7 +2,7 @@
 - [Dependencies](#dependencies)
     - [Requirements](#requirements)
     - [Installation](#installation)
-        - [conda installation](#conda-installation)
+        - [install conda env](#install-conda-env)
         - [conda install packages](#conda-install-packages)
 - [Help information](#help-information)
 - [Start](#start)
@@ -40,7 +40,7 @@
 > https://anaconda.org/anaconda/conda
 
 > https://docs.anaconda.com/free/miniconda/index.html
-#### Install conda
+#### Install conda env
 If you haven't installed conda before, you can do so with the following commands:
 ``` shell
 mkdir -p ~/miniconda3
