@@ -34,7 +34,7 @@ helpFunction() {
     echo -e "\t -t \t[ncut:int] Number of read bases to be trimed cut (default: 10)."
     echo -e "\t -p \t[nprocs:int] Number of processes to use (default: 1)."
     echo -e "\t -q \t[minbq:int] Minimum base quality (default: 20)."
-    echo -e "\t -Q \t[minmq:int] Minimum mapping quality (default: 255). Check your mapping software's quality score range (e.g., STAR, BWA, HISAT2)."
+    echo -e "\t -Q \t[minmq:int] Minimum mapping quality (default: 255, scATAC: 30). Check your mapping software's quality score range (e.g., STAR, BWA, HISAT2)."
     echo -e "\t -n \t[mincellnumber:int] Minimum cell number (default: 3)."
     echo -e "\t -N \t[minaltcellnumber:int] Minimum altered cell number (default: 2)."
     echo -e "\t -m \t[maxmismatch:int] Maximum mismatch number (default: 4)."

@@ -202,7 +202,7 @@ samtools index test.bam
 
 - Base quality (BQ) and mapping quality (MQ) threshold of BAM file `test.bam` may be different. If threshold of BQ and MQ are higher than most sequenced reads, scMutrace will exclude these reads.
 ```shell
-# default scRNA MQ is 255 and scATAC MQ is 60
+# default scRNA MQ is 255 and 10x scATAC MQ is 30
 # default scRNA and scATAC BQ is 20; You should check BQ carefully, when you use scMutrace.
 # IGV (https://igv.org/)
 # Extract chromosome 1 region file (tab seperated bed file `chr1.bed`) from bam files and check BQ and MQ using IGV tool. 
