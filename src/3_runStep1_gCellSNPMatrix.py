@@ -222,7 +222,7 @@ def modify_mutinfo(inputpath, outputpath):
                             status = "Mut"
                         else:
                             status = "WT"
-                    outputFile.write(f"{output_tag}\t{fields[1]}\t{status}\n")
+                        outputFile.write(f"{output_tag}\t{fields[1]}\t{status}\n")
     except Exception as e:
         print(f"An error occurred while writing to the output file: {e}")
 
