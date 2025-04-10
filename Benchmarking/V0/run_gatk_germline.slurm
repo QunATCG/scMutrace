@@ -60,4 +60,5 @@ do
 	gatk --java-options "-Xmx32G" BaseRecalibrator -R ${refFa} --tmp-dir ${tmpDir} -I ${trimDir}/${sampleID}.sorted.marked.bam -O ${trimDir}/${sampleID}.recal_data.table --known-sites ${DBSNP} --known-sites ${DBSNP1000G} --known-sites ${DBINDEL1000G}
 	gatk --java-options "-Xmx32G" ApplyBQSR -R ${refFa} --tmp-dir ${tmpDir} -I ${trimDir}/${sampleID}.sorted.marked.bam --bqsr-recal-file ${trimDir}/${sampleID}.recal_data.table -O ${trimDir}/${sampleID}.sorted.marked.BQSR.bam
 	gatk --java-options "-Xmx32G" HaplotypeCaller -R ${refFa} -I ${trimDir}/${sampleID}.sorted.marked.BQSR.bam -ERC GVCF --tmp-dir ${tmpDir} -O ${VCFOUT}/${sampleID}.g.vcf
+	gatk --java-options "-Xmx32G" GenotypeGVCFs -R ${refFa} -V ${VCFOUT}/${sampleID}.g.vcf -O ${VCFOUT}/${sampleID}.vcf.gz
 done
