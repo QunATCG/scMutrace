@@ -62,3 +62,9 @@ do
 	gatk --java-options "-Xmx32G" HaplotypeCaller -R ${refFa} -I ${trimDir}/${sampleID}.sorted.marked.BQSR.bam -ERC GVCF --tmp-dir ${tmpDir} -O ${VCFOUT}/${sampleID}.g.vcf
 	gatk --java-options "-Xmx32G" GenotypeGVCFs -R ${refFa} -V ${VCFOUT}/${sampleID}.g.vcf -O ${VCFOUT}/${sampleID}.vcf.gz
 done
+
+# filter
+for sampleID in DRR016843 DRR016844 DRR016845 DRR016846 ENCSR521ELB
+do
+	gatk --java-options "-Xmx32G" VariantFiltration -R ${refFa} -V ${VCFOUT}/${sampleID}.vcf.gz -O ${VCFOUT}/${sampleID}_filter.vcf.gz --filter-expression "QD < 2.0 || FS > 60.0 || MQ < 40.0 || QUAL < 30" --filter-name "QunBenchmarking"
+done
