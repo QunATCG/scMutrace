@@ -19,6 +19,7 @@ module load samtools/1.19
 
 THREADS=16
 GENOMEINDEX=/home/qunli/qunr/refGenome/hg38/bow2Index/genome
+
 FQ1=/home/qunli/qunr/callVariantsTestData/scATAC/1_ENCFF126AEH.fastq.gz
 FQ2=/home/qunli/qunr/callVariantsTestData/scATAC/1_ENCFF989RBF.fastq.gz
 
