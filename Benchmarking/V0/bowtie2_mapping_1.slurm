@@ -12,6 +12,8 @@
 #SBATCH --mail-type ALL
 #SBATCH --mail-user qun.li@ki.se
 
+source /cfs/klemming/home/q/qunli/.bashrc
+conda activate scMutRNA
 ml bowtie2/2.5.4
 ml samtools/1.20
 
@@ -19,14 +21,21 @@ ml samtools/1.20
 THREADS=16
 GENOMEINDEX=/cfs/klemming/home/q/qunli/qundir/reference/homo/hg19/igenome/Homo_sapiens/UCSC/hg19/Sequence/Bowtie2Index/genome
 
-FQ1=/home/qunli/qunr/callVariantsTestData/scATAC/1_ENCFF126AEH.fastq.gz
-FQ2=/home/qunli/qunr/callVariantsTestData/scATAC/1_ENCFF989RBF.fastq.gz
+workingDir=/cfs/klemming/home/q/qunli/qunr/GSE52529/
+processDir=${workingDir}/processed/
 
+mkdir -p ${processDir}
 
-bowtie2 -p ${THREADS} -x ${GENOMEINDEX} -1 read1.fastq -2 read2.fastq -S output.sam
-
-
-samtools view -@ $THREADS -Sb -o bowtie2Out/1_ENCFF126AEH_ENCFF989RBF.bam bowtie2Out/1_ENCFF126AEH_ENCFF989RBF.sam
-
-
-bowtie2/2.5.4
+for sampleID in
+do
+	echo ${sampleID}
+	mkdir -p ${processDir}/${sampleID}/
+	FQ1=${workingDir}/Rawfastq/${sampleID}/${sampleID}_1.fastq.gz
+	FQ2=${workingDir}/Rawfastq/${sampleID}/${sampleID}_2.fastq.gz
+	bowtie2 -p ${THREADS} -x ${GENOMEINDEX} -1 ${FQ1} -2 ${FQ2} -S ${processDir}/${sampleID}/${sampleID}.sam
+	samtools view -@ ${THREADS} -Sb -o ${processDir}/${sampleID}/${sampleID}.bam ${processDir}/${sampleID}/${sampleID}.sam
+	samtools index -@ ${THREADS} ${processDir}/${sampleID}/${sampleID}.bam 
+	python /cfs/klemming/home/q/qunli/Private/scmutrace/src/0_runStep0_setCellBarcode.py --bam ${processDir}/${sampleID}/${sampleID}.bam --barcode ${sampleID} --outpath ${processDir}/${sampleID}/${sampleID}_CB.bam 
+	samtools sort -@ ${THREADS} ${processDir}/${sampleID}/${sampleID}_CB.bam -o ${processDir}/${sampleID}/${sampleID}_CB_sorted.bam 
+	samtools index -@ ${THREADS} ${processDir}/${sampleID}/${sampleID}_CB_sorted.bam
+done
