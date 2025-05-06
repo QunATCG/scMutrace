@@ -155,7 +155,7 @@ def main():
             print("Cores is over computer max cpus...")
     filterPath = outPath + "filterVCF/"
     model3ProbabilityDic = create_model3_probabilityDic(errorP)
-    quainfos = list(range(20, 100, 1))
+    quainfos = list(range(10, 100, 1))
     make_dir_check(filterPath)
     # split file
     print("Splitting files...")
