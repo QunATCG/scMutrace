@@ -207,6 +207,7 @@ samtools index test.bam
 # For bowtie2, If someone wanted to exclude "true multireads" from their data set, using MAPQ >= 2 would work. This would also exclude any uniquely mapping reads with >=4 mismatches over high quality bases. In terms of high quality bases and unireads, MAPQ >= 3 allows up to 3 mismatches, MAPQ >= 23 allows up to 2 mismatches, MAPQ >= 40 allows up to 1 mismatch, and MAPQ >= 42 allows 0 mismatches. There will also be other "maxireads" in most or all of these sets.
 # IGV (https://igv.org/)
 # Extract chromosome 1 region file (tab seperated bed file `chr1.bed`) from bam files and check BQ and MQ using IGV tool. 
+samtools coverage test.bam
 samtools view -hb -L chr1.bed test.bam > test1_chr.bam
 samtools index test1_chr.bam
 # get bam file mapping score distribution
