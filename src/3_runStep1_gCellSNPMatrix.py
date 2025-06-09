@@ -270,12 +270,92 @@ def generate_gCellSNP_matrix(outpath, vcfpath):
     matrix = matrix.reindex(sorted(matrix.columns), axis=1)
     matrix.to_csv(outpath, sep=',', index=True)
 
+def generate_gCellSNP_matrix_chunked_sparse(outpath, vcfpath, chunksize=100000):
+    """
+    分块读取VCF-like文件，逐步构建稀疏突变矩阵，避免内存溢出。
+
+    参数：
+    -------
+    outpath : str
+        输出csv路径
+    vcfpath : str
+        输入vcf-like文件路径（tab分隔，三列：Location, Cell, Status）
+    chunksize : int
+        每次读取行数，默认 1,000,000
+    """
+    # 用嵌套dict存稀疏矩阵，外层是Location，内层是Cell: Status
+    matrix = defaultdict(dict)
+    all_cells = set()
+    # 分块读取
+    for chunk in pd.read_csv(vcfpath, sep='\t', header=None, names=['Location', 'Cell', 'Status'], chunksize=chunksize):
+        for row in chunk.itertuples(index=False):
+            loc, cell, status = row
+            all_cells.add(cell)
+            # 如果当前已有'Mut'，跳过，优先保留'Mut'
+            if matrix[loc].get(cell) == 'Mut':
+                continue
+            matrix[loc][cell] = status
+    # 转DataFrame（稀疏存储）
+    all_cells = sorted(all_cells)
+    df = pd.DataFrame(index=matrix.keys(), columns=all_cells, dtype="string")
+    for loc, cell_statuses in matrix.items():
+        for cell, status in cell_statuses.items():
+            df.at[loc, cell] = status
+    # 填充缺失值为'NoCall'
+    df = df.fillna('NoCall')
+    # 转稀疏类型，节省内存
+    for col in df.columns:
+        df[col] = pd.Series(pd.arrays.SparseArray(df[col], fill_value='NoCall'))
+    # 输出
+    df.to_csv(outpath, sep=',', index=True)
+    print(f"Done! Matrix shape: {df.shape}")
+
 # generate gSNPSample matrix
 def generate_gSNPSample_matrix(outpath, vcfpath):
     df = pd.read_csv(vcfpath, sep='\t', header=None, names=['Location', 'ID', 'Status'])
     matrix = df.pivot_table(index='Location', columns='ID', values='Status', aggfunc=lambda x: 'Mut' if 'Mut' in x.values else 'WT').fillna('NoCall')
     matrix = matrix.reindex(sorted(matrix.columns), axis=1)
     matrix.to_csv(outpath, sep=',', index=True)
+
+def generate_gSNPSample_matrix_chunked_sparse(outpath, vcfpath, chunksize=100000):
+    """
+    分块读取VCF-like文件，逐步构建稀疏突变矩阵（Location × Sample）。
+
+    参数：
+    -------
+    outpath : str
+        输出csv路径
+    vcfpath : str
+        输入vcf-like文件路径（tab分隔，三列：Location, ID, Status）
+    chunksize : int
+        每次读取行数，默认 1,000,000
+    """
+    # 用嵌套dict存稀疏矩阵，外层是Location，内层是ID: Status
+    matrix = defaultdict(dict)
+    all_ids = set()
+    # 分块读取
+    for chunk in pd.read_csv(vcfpath, sep='\t', header=None, names=['Location', 'ID', 'Status'], chunksize=chunksize):
+        for row in chunk.itertuples(index=False):
+            loc, sample_id, status = row
+            all_ids.add(sample_id)
+            # 如果当前已有'Mut'，跳过，优先保留'Mut'
+            if matrix[loc].get(sample_id) == 'Mut':
+                continue
+            matrix[loc][sample_id] = status
+    # 转DataFrame（稀疏存储）
+    all_ids = sorted(all_ids)
+    df = pd.DataFrame(index=matrix.keys(), columns=all_ids, dtype="string")
+    for loc, id_statuses in matrix.items():
+        for sample_id, status in id_statuses.items():
+            df.at[loc, sample_id] = status
+    # 填充缺失值为'NoCall'
+    df = df.fillna('NoCall')
+    # 转稀疏类型，节省内存
+    for col in df.columns:
+        df[col] = pd.Series(pd.arrays.SparseArray(df[col], fill_value='NoCall'))
+    # 输出
+    df.to_csv(outpath, sep=',', index=True)
+    print(f"Done! Matrix shape: {df.shape}")
 
 # Main function
 def main():
@@ -336,8 +416,8 @@ def main():
     print(">>> Generate gCellSNP matrix")
     finalResult1 = outdir + "/gCellSNPMatrix.step3.1_excludeControlSites.csv"
     finalResult2 = outdir + "/gCellSNPMatrix.step3.2_includeControlSites.csv"
-    generate_gCellSNP_matrix(finalResult1, outdir + "/gCellSNPMatrix.step2.txt")
-    generate_gCellSNP_matrix(finalResult2, outdir + "/gCellSNPMatrix.step1.txt")
+    generate_gCellSNP_matrix_chunked_sparse(finalResult1, outdir + "/gCellSNPMatrix.step2.txt")
+    generate_gCellSNP_matrix_chunked_sparse(finalResult2, outdir + "/gCellSNPMatrix.step1.txt")
     print(">>> Generate gSNPSample matrix")
     outpath1 = outdir + "/gSNPSampleMatrix.step2.1.txt"
     outpath2 = outdir + "/gSNPSampleMatrix.step2.2.txt"
@@ -345,8 +425,8 @@ def main():
     generate_snp_sample_mutInfo(outdir + "/gCellSNPMatrix.step1.txt", outpath2)
     finalResult3 = outdir + "/gSNPSampleMatrix.step3.1_excludeControlSites.csv"
     finalResult4 = outdir + "/gSNPSampleMatrix.step3.2_includeControlSites.csv"
-    generate_gSNPSample_matrix(finalResult3, outpath1)
-    generate_gSNPSample_matrix(finalResult4, outpath2)
+    generate_gSNPSample_matrix_chunked_sparse(finalResult3, outpath1)
+    generate_gSNPSample_matrix_chunked_sparse(finalResult4, outpath2)
 
 if __name__ == "__main__":
     start = timeit.default_timer()
