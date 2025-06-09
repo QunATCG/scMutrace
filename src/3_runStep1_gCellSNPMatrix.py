@@ -411,8 +411,8 @@ def main():
     print(">>> Generate gCellSNP matrix")
     finalResult1 = outdir + "/gCellSNPMatrix.step3.1_excludeControlSites.csv"
     finalResult2 = outdir + "/gCellSNPMatrix.step3.2_includeControlSites.csv"
-    generate_gCellSNP_matrix_chunked_sparse(finalResult1, outdir + "/gCellSNPMatrix.step2.txt")
-    generate_gCellSNP_matrix_chunked_sparse(finalResult2, outdir + "/gCellSNPMatrix.step1.txt")
+    generate_gCellSNP_matrix(finalResult1, outdir + "/gCellSNPMatrix.step2.txt")
+    generate_gCellSNP_matrix(finalResult2, outdir + "/gCellSNPMatrix.step1.txt")
     print(">>> Generate gSNPSample matrix")
     outpath1 = outdir + "/gSNPSampleMatrix.step2.1.txt"
     outpath2 = outdir + "/gSNPSampleMatrix.step2.2.txt"
@@ -420,8 +420,8 @@ def main():
     generate_snp_sample_mutInfo(outdir + "/gCellSNPMatrix.step1.txt", outpath2)
     finalResult3 = outdir + "/gSNPSampleMatrix.step3.1_excludeControlSites.csv"
     finalResult4 = outdir + "/gSNPSampleMatrix.step3.2_includeControlSites.csv"
-    generate_gSNPSample_matrix_chunked_sparse(finalResult3, outpath1)
-    generate_gSNPSample_matrix_chunked_sparse(finalResult4, outpath2)
+    generate_gSNPSample_matrix(finalResult3, outpath1)
+    generate_gSNPSample_matrix(finalResult4, outpath2)
 
 if __name__ == "__main__":
     start = timeit.default_timer()
