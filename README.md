@@ -3,7 +3,7 @@
     - [Requirements](#requirements)
     - [Installation](#installation)
         - [install conda env](#install-conda-env)
-        - [conda install packages](#conda-install-packages)
+        - [install scMutrace](#install-scMutrace)
 - [Model](#model)
 - [Help information](#help-information)
 - [Start](#start)
