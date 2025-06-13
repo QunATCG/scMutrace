@@ -51,8 +51,10 @@ rm -rf ~/miniconda3/miniconda.sh
 
 #### conda install packages used in scMutrace
 ```shell
+# create env for scMutrace
 conda create -n scMutrace
 conda activate scMutrace
+# Install dependencies
 conda install -c bioconda pysam=0.21.0
 conda install -c conda-forge numpy
 conda install -c conda-forge scipy
@@ -61,9 +63,12 @@ conda install -c conda-forge statsmodels
 conda install -c conda-forge biopython
 conda install -c conda-forge argparse
 conda install -c conda-forge scikit-allel
-conda install etetoolkit ete3
+conda install -c etetoolkit ete3
+# download scMutrace codes
+git clone https://github.com/QunATCG/scMutrace.git
 conda clean -a
 ```
+
 ## Model
 ![scMutrace](./Figures/scMutrace.png)
 
