@@ -120,6 +120,7 @@ samtools view ENCFF491HQL.bam | cut -f 12- | tr "\t" "\n" | grep "CB:Z:" | uniq 
 ```
 
 ## Start
+[Quick Start](./Example/README.md)
 
 ## Parameter Index
 You can check and search parameters using the following command:
