@@ -49,7 +49,7 @@ bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
 rm -rf ~/miniconda3/miniconda.sh
 ```
 
-#### conda install packages used in scMutrace
+#### Install scMutrace
 ```shell
 # create env for scMutrace
 conda create -n scMutrace
