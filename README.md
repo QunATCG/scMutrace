@@ -4,10 +4,10 @@
     - [Installation](#installation)
         - [install conda env](#install-conda-env)
         - [conda install packages](#conda-install-packages)
+- [Model](#model)
 - [Help information](#help-information)
 - [Start](#start)
 - [Parameter Index](#parameter-index)
-- [Models](#models)
 - [FAQs](#faqs)
 ## Dependencies
 **scMutrace** is a single-cell mutation tracing tool designed to identify and analyze mutations from single-cell sequencing data. It offers an efficient, one-step process for background filtering, SNP extraction, noise filtering, and population structure analysis. It can be run in [Linux](https://www.linux.org/), [MacOS](https://www.apple.com/macos/) and Windows Subsystem for Linux ([WSL](https://learn.microsoft.com/en-us/windows/wsl/install)) platforms.
@@ -64,6 +64,8 @@ conda install -c conda-forge scikit-allel
 conda install etetoolkit ete3
 conda clean -a
 ```
+## Model
+![scMutrace](./Figures/scMutrace.png)
 
 ## Help information
 You can obtain help information using the following command
@@ -183,8 +185,6 @@ Also, you can check input files format here: https://github.com/QunATCG/scMutrac
     -z
     -Z
 ```
-
-## Models
 
 ## FAQs
 - Reference `test.fa`, BAM `test.bam` and Contig `test.contig` chromosome should be the same prefix format (chr or without chr).
