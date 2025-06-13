@@ -408,11 +408,6 @@ def main():
     # exclude control mutations
     print(">>> Exclude control mutations")
     exclude_control_mut(modifyedFile, jobconfig, outdir)
-    print(">>> Generate gCellSNP matrix")
-    finalResult1 = outdir + "/gCellSNPMatrix.step3.1_excludeControlSites.csv"
-    finalResult2 = outdir + "/gCellSNPMatrix.step3.2_includeControlSites.csv"
-    generate_gCellSNP_matrix(finalResult1, outdir + "/gCellSNPMatrix.step2.txt")
-    generate_gCellSNP_matrix(finalResult2, outdir + "/gCellSNPMatrix.step1.txt")
     print(">>> Generate gSNPSample matrix")
     outpath1 = outdir + "/gSNPSampleMatrix.step2.1.txt"
     outpath2 = outdir + "/gSNPSampleMatrix.step2.2.txt"
@@ -422,6 +417,11 @@ def main():
     finalResult4 = outdir + "/gSNPSampleMatrix.step3.2_includeControlSites.csv"
     generate_gSNPSample_matrix(finalResult3, outpath1)
     generate_gSNPSample_matrix(finalResult4, outpath2)
+    print(">>> Generate gCellSNP matrix")
+    finalResult1 = outdir + "/gCellSNPMatrix.step3.1_excludeControlSites.csv"
+    finalResult2 = outdir + "/gCellSNPMatrix.step3.2_includeControlSites.csv"
+    generate_gCellSNP_matrix(finalResult1, outdir + "/gCellSNPMatrix.step2.txt")
+    generate_gCellSNP_matrix(finalResult2, outdir + "/gCellSNPMatrix.step1.txt")
 
 if __name__ == "__main__":
     start = timeit.default_timer()
