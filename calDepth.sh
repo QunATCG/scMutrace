@@ -92,9 +92,10 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+rm $depth_file
+
 echo "Depth of coverage calculation completed successfully."
 echo "Output files:"
-echo "  $depth_file"
 echo "  ${bamInput}.depth.gt5.bed.merge"
 echo "  ${bamInput}.depth.gt8.bed.merge"
 echo "  ${bamInput}.depth.gt10.bed.merge"
