@@ -154,8 +154,8 @@ def main():
             COREUSE = mp.cpu_count() - 1
             print("Cores is over computer max cpus...")
     filterPath = outPath + "filterVCF/"
-    model3ProbabilityDic = create_model3_probabilityDic(errorP)
     quainfos = list(range(10, 100, 1))
+    model3ProbabilityDic = create_model3_probabilityDic(errorP, quainfos)
     make_dir_check(filterPath)
     # split file
     print("Splitting files...")

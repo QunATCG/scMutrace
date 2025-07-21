@@ -1398,7 +1398,7 @@ def calculate_probility_oneRead(observedBase, observedBaseQuality, genotype, per
     )
     return probabilityGT_oneread
 
-def create_model3_probabilityDic(errorp):
+def create_model3_probabilityDic(errorp, quainfos):
     """
     Create a dictionary of probabilities for model 3 based on error probability.
     Args:
@@ -1409,7 +1409,7 @@ def create_model3_probabilityDic(errorp):
     outDic = {}
     genotypes = ["AA", "AT", "AC", "AG", "AD", "AI", "TT", "TC", "TG", "TD", "TI", "CC", "CG", "CD", "CI", "GG", "GD", "GI", "DD", "DI", "II"]
     observed_bases = ["A", "T", "C", "G", "D", "I"]
-    quainfos = list(range(20, 60, 1))
+    # quainfos = list(range(20, 60, 1))
     # Initialize outDic with nested dictionaries
     for genotype in genotypes:
         outDic[genotype] = {}
