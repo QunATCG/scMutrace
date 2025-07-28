@@ -24,5 +24,5 @@ Analyze.cosmic_fit("/Users/liqun/scMutraceProject/Data/EGA_AML/SBS/SBS/Mutationa
                     collapse_to_SBS96=True, cosmic_version=3.4, exome=False,
                     genome_build="GRCh38", signature_database=None,
                     exclude_signature_subgroups=None, export_probabilities=False,
-                    export_probabilities_per_mutation=False, make_plots=True,
+                    export_probabilities_per_mutation=False, make_plots=False,
                     sample_reconstruction_plots=True, verbose=False)
