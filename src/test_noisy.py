@@ -7,7 +7,7 @@ import scipy.stats as stats
 import multiprocessing as mp
 
 def initialize_parser():
-    parser = argparse.ArgumentParser(description='filter SNP based on public database')
+    parser = argparse.ArgumentParser(description='filter SNP based on public database when breakpoint is not available')
     parser.add_argument('--outdir', type=str, default='', help='out file path', required = True)
     parser.add_argument('--bam', type=str, default='', help='bam file path', required = True)
     parser.add_argument('--ref', type=str, default='', help='reference file path', required = True)
