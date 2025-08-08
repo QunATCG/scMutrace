@@ -386,7 +386,7 @@ def main():
     print("Processing " + bam_Path)
     config_i = [config_info.split("_")[0], int(config_info.split("_")[1]) - 5, int(config_info.split("_")[2]) + 5]
     count_mut_information_getPosCNDepth(BamPath=bam_Path, referencePath=ref_Path, outVcfPath=outDirPathVCFTmp, config_posList=config_i, min_bq=minbq, min_mq=minmq, dp_check=True, nm_check=nmCheckStates, min_cov=min_cov, max_nm=max_nm, cbtag=cbtag)
-    merge_VCF_filesShell(VcfPOSOUT, outDirPathVCFTmp, nameSplitBamTag, str(config_info.split("_")[0]))
+    #merge_VCF_filesShell(VcfPOSOUT, outDirPathVCFTmp, nameSplitBamTag, str(config_info.split("_")[0]))
 
 if __name__=='__main__':
     start = timeit.default_timer()
