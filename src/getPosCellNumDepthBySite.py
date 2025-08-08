@@ -21,7 +21,6 @@ def initialize_parser():
     parser.add_argument('--maxnm', type=int, default=3, help='max mismatch number [Default: 3]', required=False)
     parser.add_argument('--id', help='Prefix used to name output file', required=False)
     parser.add_argument('--maxcheck', action='store_true', help='A boolean flag for best performance checking, it will use full cpus')
-    parser.add_argument('--nprocs', default=1, help='Number of processes [Default: 1]', required=False, type=int)
     parser.add_argument('--outdir', default='.', help='Out folder', required=False)
     return parser
 
@@ -364,9 +363,7 @@ def main():
     min_cov = args.mindp
     max_nm = args.maxnm
     nmcheck = args.nmcheck
-    maxcheck = args.maxcheck
     nmCheckStates = nmcheck
-    COREUSE = args.nprocs
     outDirPath = args.outdir
     outDirPathVCFTmp = os.path.join(outDirPath, "tmpVCF")
     # clean tmpVCF if it exists
