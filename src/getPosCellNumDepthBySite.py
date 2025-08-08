@@ -368,15 +368,6 @@ def main():
     nmCheckStates = nmcheck
     outDirPath = args.outdir
     outDirPathVCFTmp = os.path.join(outDirPath, "tmpVCF")
-    # clean tmpVCF if it exists
-    if os.path.exists(outDirPathVCFTmp):
-        cmdclean = f"rm -f {outDirPathVCFTmp}/*"
-        try:
-            subprocess.run(cmdclean, shell=True, check=True)
-        except subprocess.CalledProcessError as e:
-            print(f"An error occurred while executing command: {e.cmd}")
-            print(f"Return code: {e.returncode}")
-            print(f"Output: {e.output}")
     
     VcfPOSOUT = os.path.join(outDirPath, "VCFPOS")
     
