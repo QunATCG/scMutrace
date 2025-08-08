@@ -13,6 +13,7 @@ def initialize_parser():
     parser.add_argument('--bam', type=str, default='', help='BAM file to be analysed', required=True)
     parser.add_argument('--ref', type=str, default='', help='Path to reference genome version. *fai must be available in the same directory as the reference genome file', required=True)
     parser.add_argument('--cbtag', type=str, default='CB', help='cell barcode tag', required=True)
+    parser.add_argument('--nmtag', type=str, default='nM', help='number of mismatches tag, XM, xM, nM, NM')
     parser.add_argument('--contig', type=str, help='Contig. Chr_Start_End', required=True)
     parser.add_argument('--minmq', type=int, default=255, help='min mapping quality [Default: 255]', required=False)
     parser.add_argument('--minbq', type=int, default=20, help='min base quality [[Default: 20]]', required=False)
@@ -214,7 +215,7 @@ def count_base_typeNum_getPosCNDepth(pileupList, SkipCheck):
                     NEW_PILE_LIST.append("NA")
     return NEW_PILE_LIST
 
-def count_mut_information_getPosCNDepth(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, nm_check, min_cov, max_nm, cbtag):
+def count_mut_information_getPosCNDepth(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, nmTag, nm_check, min_cov, max_nm, cbtag):
     """
     Count mutation information from BAM file and write to VCF file.
 
@@ -313,17 +314,17 @@ def count_mut_information_getPosCNDepth(BamPath, referencePath, outVcfPath, conf
                         continue
                     # num_mismatch
                     if nm_check:
-                        tagCheck_NM = READ_ALIGNMENT.has_tag("XM")
+                        tagCheck_NM = READ_ALIGNMENT.has_tag(nmTag)
                         if tagCheck_NM:
-                            NM_count = READ_ALIGNMENT.opt("XM")
+                            NM_count = READ_ALIGNMENT.opt(nmTag)
                             if NM_count > max_nm:
                                 continue
                         else:
-                            tagCheck_NM = READ_ALIGNMENT.has_tag("xM")
+                            tagCheck_NM = READ_ALIGNMENT.has_tag(nmTag)
                             if tagCheck_NM == False:
                                 print("No NM/nM tag in your bam, please set nm_check as False")
                             if tagCheck_NM:
-                                NM_count = READ_ALIGNMENT.opt("xM")
+                                NM_count = READ_ALIGNMENT.opt(nmTag)
                                 if NM_count > max_nm:
                                     continue
                     # BASE
@@ -363,6 +364,7 @@ def main():
     min_cov = args.mindp
     max_nm = args.maxnm
     nmcheck = args.nmcheck
+    nmtag = args.nmtag
     nmCheckStates = nmcheck
     outDirPath = args.outdir
     outDirPathVCFTmp = os.path.join(outDirPath, "tmpVCF")
@@ -385,7 +387,7 @@ def main():
     
     print("Processing " + bam_Path)
     config_i = [config_info.split("_")[0], int(config_info.split("_")[1]) - 5, int(config_info.split("_")[2]) + 5]
-    count_mut_information_getPosCNDepth(BamPath=bam_Path, referencePath=ref_Path, outVcfPath=outDirPathVCFTmp, config_posList=config_i, min_bq=minbq, min_mq=minmq, dp_check=True, nm_check=nmCheckStates, min_cov=min_cov, max_nm=max_nm, cbtag=cbtag)
+    count_mut_information_getPosCNDepth(BamPath=bam_Path, referencePath=ref_Path, outVcfPath=outDirPathVCFTmp, config_posList=config_i, min_bq=minbq, min_mq=minmq, dp_check=True, nmTag=nmtag, nm_check=nmCheckStates, min_cov=min_cov, max_nm=max_nm, cbtag=cbtag)
     #merge_VCF_filesShell(VcfPOSOUT, outDirPathVCFTmp, nameSplitBamTag, str(config_info.split("_")[0]))
 
 if __name__=='__main__':
