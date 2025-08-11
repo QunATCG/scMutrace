@@ -114,7 +114,20 @@ def merge_VCF_filesShell(outPath, VCFtmpPath, IDSample, chrTag):
         print(f"Return code: {e.returncode}")
         print(f"Output: {e.output}")
 
-def get_mut_total_getPosCNDepth(CELL_COUNTS_DIC):
+def count_base_fromDic(baseDic, excludeBaseList):
+    """
+    Counts the number of bases in a dictionary, excluding specified bases.
+    Args:
+        baseDic (dict): Dictionary containing base counts.
+        excludeBaseList (list): List of bases to exclude from the count.
+    Returns:
+        int: The count of bases excluding the specified bases.
+    """
+    check_bases = list(set(baseDic.keys()).difference(set(excludeBaseList)))
+    ALT_NUM = sum(baseDic[base] for base in check_bases)
+    return ALT_NUM
+
+def get_mut_total_getPosCNDepth(CELL_COUNTS_DIC, refBase):
     """
     Calculate the total number of mutations and cell counts for each base type.
     Args:
@@ -131,7 +144,8 @@ def get_mut_total_getPosCNDepth(CELL_COUNTS_DIC):
     #basic_base = ["A", "T", "C", "G", "D", "I"]
     CELL_COUNTS_DIC_NEW_0 = {x: len(set(CELL_COUNTS_DIC[x])) for x in BASIC_BASE}
     countCellNum = sum(CELL_COUNTS_DIC_NEW_0.values())
-    return countCellNum
+    countAltCellNum = count_base_fromDic(CELL_COUNTS_DIC_NEW_0, [refBase])
+    return countCellNum, countAltCellNum
 
 # count base number exclude other base
 def count_base_fromDic_getPosCNDepth(baseDic, excludeBaseList):
@@ -339,12 +353,13 @@ def count_mut_information_getPosCNDepth(BamPath, referencePath, outVcfPath, conf
                     # ALTERNATIVE BASE
             # get real DP of cells with barcodes
             DP_TOTAL = count_base_fromDic_getPosCNDepth(BASE_COUNTS_DIC, ["N"])
+            DP_ALT_REAL = count_base_fromDic(BASE_COUNTS_DIC, [REF_BASE, "N"])
             if dp_check:
                 if int(DP_TOTAL) <= int(min_cov):
                     continue
             # CELL NUMBER
-            COUNTOTALCELL = get_mut_total_getPosCNDepth(CELL_COUNTS_DIC)
-            SQL_0 = f"{chr}\t{POS_PILEUP + 1}\t{REF_BASE}\t{DP_TOTAL}\t{COUNTOTALCELL}"
+            COUNTOTALCELL, COUNTOTALCELLALT = get_mut_total_getPosCNDepth(CELL_COUNTS_DIC, REF_BASE)
+            SQL_0 = f"{chr}\t{POS_PILEUP + 1}\t{REF_BASE}\t{DP_TOTAL}\t{DP_ALT_REAL}\t{COUNTOTALCELL}\t{COUNTOTALCELLALT}"
             outVcfFile.writelines(SQL_0 + "\n")
             outVcfFile.flush()
     refFasta.close()
