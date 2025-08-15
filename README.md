@@ -219,3 +219,7 @@ samtools index test1_chr.bam
 # get bam file mapping score distribution
 samtools view test.bam | head -40000 | cut -f 5 | sort | uniq  -c | sort -n | awk '{printf("MAPQ:%s\t%d\n",$2,$1);}'
 ```
+
+# Citing scMutrace
+
+# License
