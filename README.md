@@ -8,7 +8,12 @@
 - [Help information](#help-information)
 - [Start](#start)
 - [Parameter Index](#parameter-index)
+- [Panel of Normals](#panel-of-normals)
+- [Databases](#databases)
 - [FAQs](#faqs)
+- [Citing scMutrace](#citing-scmutrace)
+- [License](#license)
+
 ## Dependencies
 **scMutrace** is a single-cell mutation tracing tool designed to identify and analyze mutations from single-cell sequencing data. It offers an efficient, one-step process for background filtering, SNP extraction, noise filtering, and population structure analysis. It can be run in [Linux](https://www.linux.org/), [MacOS](https://www.apple.com/macos/) and Windows Subsystem for Linux ([WSL](https://learn.microsoft.com/en-us/windows/wsl/install)) platforms.
 ### Requirements
@@ -190,6 +195,9 @@ Also, you can check input files format here: https://github.com/QunATCG/scMutrac
     -z
     -Z
 ```
+## Panel of Normals
+
+## Databases
 
 ## FAQs
 - Reference `test.fa`, BAM `test.bam` and Contig `test.contig` chromosome should be the same prefix format (chr or without chr).
