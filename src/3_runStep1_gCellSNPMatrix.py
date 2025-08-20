@@ -43,7 +43,7 @@ def merge_mut_info(jobconfigPath, mutinfoPath):
                             # Skip header
                             if vcfLineSets[0] == "chr":
                                 continue
-                            mutation_key = f"{vcfLineSets[0]}_{vcfLineSets[1]}"
+                            mutation_key = f"{vcfLineSets[0]}_{vcfLineSets[1]}_{vcfLineSets[2]}_{vcfLineSets[3]}"
                             if mutation_key not in seen_mutations:
                                 seen_mutations.add(mutation_key)
                                 sql = f"{vcfLineSets[0]}\t{vcfLineSets[1]}\t{vcfLineSets[2]}"
