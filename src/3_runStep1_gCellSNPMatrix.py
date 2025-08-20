@@ -30,6 +30,7 @@ def err_call_back(err):
 def merge_mut_info(jobconfigPath, mutinfoPath):
     # Use a set for O(1) average time complexity for lookups
     seen_mutations = set()
+    seen_mutations_check = set()
     pattern = r'([ATCGDI])\[(\d+)\]'
     try:
         with open(jobconfigPath, "r") as jobconfig, open(mutinfoPath, "w") as mutinfo:
@@ -49,7 +50,9 @@ def merge_mut_info(jobconfigPath, mutinfoPath):
                                 sql = f"{vcfLineSets[0]}\t{vcfLineSets[1]}\t{vcfLineSets[2]}"
                                 mutBases = [f"{sql}\t{match[0]}" for match in re.findall(pattern, vcfLineSets[3])]
                                 for mutBase in mutBases:
-                                    mutinfo.write(mutBase + "\n")
+                                    if mutBase not in seen_mutations_check:
+                                        seen_mutations_check.add(mutBase)
+                                        mutinfo.write(mutBase + "\n")
                 except IOError as e:
                     print(f"Unable to open VCF file: {vcf_path}, error: {e}")
     except IOError as e:
