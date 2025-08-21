@@ -134,6 +134,8 @@ samtools view ENCFF491HQL.bam | cut -f 12- | tr "\t" "\n" | grep "CB:Z:" | uniq 
 ## Start
 [Quick Start](https://github.com/QunATCG/scMutrace-tutorial/tree/main/QuickStart)
 
+[Step-by-Step scMutrace Tutorial](https://github.com/QunATCG/scMutrace-tutorial)
+
 ## Parameter Index
 You can check and search parameters using the following command:
 
