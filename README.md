@@ -20,7 +20,7 @@
 - Java 8 (https://www.java.com/en/download/manual.jsp)
     - picard.jar (https://broadinstitute.github.io/picard/)
 - Python 3 (https://www.python.org/downloads/)
-    - Packages
+    - libraries
         - math (https://docs.python.org/3/library/math.html)
         - **pysam 0.21+** (https://pysam.readthedocs.io/en/latest/index.html)
         - linecache (https://docs.python.org/3/library/linecache.html)
