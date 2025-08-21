@@ -41,7 +41,7 @@
     - `cat, mkdir, echo, head, sed, awk, grep, cd, dirname, pwd, rm, mv, while, if, uniq`
 
 ### Installation
-**Anaconda** simplifies scientific computing in Python by bundling essential packages like NumPy, SciPy, Pandas, Matplotlib, and Jupyter. It manages dependencies and environments, making setup easier by eliminating the need to install each package individually.
+**Anaconda** simplifies scientific computing in Python by bundling essential packages like NumPy, SciPy and Pandas. It manages dependencies and environments, making setup easier by eliminating the need to install each package individually.
 > https://anaconda.org/anaconda/conda
 
 > https://docs.anaconda.com/free/miniconda/index.html
