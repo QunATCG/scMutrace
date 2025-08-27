@@ -1,8 +1,10 @@
 How to generate PoNs (**3 steps**):
 
+## Step 1
 **Step 1**:
 run scMutrace on all normal samples and you will find `VCFPOS` folder in the output for each sample
 
+## Step 2
 **Step 2**:
 run ./src/1_runStep2_generatePoN.py to extract all normal sample mutation sites
 
@@ -49,6 +51,7 @@ qunli@login1:> head PoN.txt
 10	100000557	100000557
 ```
 
+## Step 3
 **Step 3**:
 add output file path to `[removeitems:str]`
 Example can be found here
