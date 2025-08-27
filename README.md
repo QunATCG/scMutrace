@@ -200,6 +200,13 @@ Also, you can check input files format here: https://github.com/QunATCG/scMutrac
 ## Panel of Normals
 
 ## Databases
+[Databases](https://github.com/QunATCG/scMutrace/tree/main/resources)
+
+### Resources
+- COSMIC and 1000 Genomes–Based Mutation Annotation: https://doi.org/10.5281/zenodo.16925906
+
+- Databases for scMutrace calling: https://doi.org/10.5281/zenodo.16962722  or https://drive.google.com/file/d/18DEmJ2CbmFV7vpADlLIxdHVpxw31DTWI/view?usp=drive_link
+
 
 ## FAQs
 - Reference `test.fa`, BAM `test.bam` and Contig `test.contig` chromosome should be the same prefix format (chr or without chr).
