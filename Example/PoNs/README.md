@@ -31,4 +31,28 @@ conda activate scMutrace
 python /path/to/1_runStep2_generatePoN.py --vcfilelist path/to/Example_vcflist_file --mincut 2 --outdir path/to/PoN_output/
 ```
 
+Example *output*
+```bash
+qunli@login1:> head PoN.txt 
+```
 
+```bash
+10	100000193	100000193
+10	100000235	100000235
+10	100000456	100000456
+10	100000475	100000475
+10	100000541	100000541
+10	100000543	100000543
+10	100000544	100000544
+10	100000546	100000546
+10	100000551	100000551
+10	100000557	100000557
+```
+
+**Step 3**:
+add output file path to `[removeitems:str]`
+Example can be found here
+![example_excludeIterms](./example_excludeIterms.png)
+
+run with this argument: `-r`
+![removeitems:str](./r_i.png)
