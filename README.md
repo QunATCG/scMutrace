@@ -199,6 +199,8 @@ Also, you can check input files format here: https://github.com/QunATCG/scMutrac
 ```
 ## Panel of Normals
 
+scMutrace can be run without matched normal samples. If matched normal samples are available (e.g., normal tissues, other samples processed in the same way, or public datasets generated with the same sequencing protocol), scMutrace will filter out all mutations present in the Panel of Normals (PoNs).
+
 [How to generate PoNs](https://github.com/QunATCG/scMutrace/tree/main/Example/PoNs)
 
 ## Databases
