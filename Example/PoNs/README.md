@@ -1,4 +1,4 @@
-How to generate PoNs:
+How to generate PoNs (**3 steps**):
 
 **Step 1**:
 run scMutrace on all normal samples and you will find `VCFPOS` folder in the output for each sample
