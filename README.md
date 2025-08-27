@@ -199,6 +199,12 @@ Also, you can check input files format here: https://github.com/QunATCG/scMutrac
 ```
 ## Panel of Normals
 
+```bash
+./HEALTHY001/scMutrace/VCFPOS/
+./HEALTHY002/scMutrace/VCFPOS/
+./HEALTHY003/scMutrace/VCFPOS/
+./HEALTHY004/scMutrace/VCFPOS/
+```
 ## Databases
 [Databases](https://github.com/QunATCG/scMutrace/tree/main/resources)
 
