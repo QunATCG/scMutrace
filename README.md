@@ -214,6 +214,10 @@ Resources
 ```
 
 ## FAQs
+If you have any questions or encounter problems, please open an issue here: [scMutrace-tutorial Issues](https://github.com/QunATCG/scMutrace-tutorial/issues)
+
+Or contact us: qun.li@ki.se and claudia.kutter@ki.se
+
 - Reference `test.fa`, BAM `test.bam` and Contig `test.contig` chromosome should be the same prefix format (chr or without chr).
 ```shell
 # check BAM file chromosome format
