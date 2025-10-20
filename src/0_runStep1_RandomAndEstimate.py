@@ -218,11 +218,13 @@ def main():
     config_info = args.contig
     COREUSE = args.nprocs
     min_mq = args.minmq
+    groupNum = args.groupnum
+    sampleSize = args.samplesize
     outDirPath = args.outdir
     cbtag = args.cbtag
     make_dir_check(outDirPath)
-    K = batch_config_window(config_info, groupNum=3000)
-    contigs_random = random.sample(K, 20)
+    K = batch_config_window(config_info, groupNum=groupNum)
+    contigs_random = random.sample(K, sampleSize)
     maxcheck = args.maxcheck
     # try to use max cores
     if maxcheck:
