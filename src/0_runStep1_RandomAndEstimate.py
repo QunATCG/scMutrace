@@ -15,6 +15,8 @@ def initialize_parser():
     parser.add_argument('--ref', type=str, default=1, help='Path to reference genome version. *fai must be available in the same directory as the reference genome file', required = True)
     parser.add_argument('--contig', type=str, help='Config. Chr_Start_End', required = True)
     parser.add_argument('--minmq', default = 255, help='mapping quality', required = False, type = int)
+    parser.add_argument('--groupnum', default = 3000, help='Number of groups for random sampling', required = False, type = int)
+    parser.add_argument('--samplesize', default = 20, help='Number of samples to draw from each group', required = False, type = int)
     parser.add_argument('--nprocs', default = 1, help='Number of processes [Default: 1]', required=False, type = int)
     parser.add_argument('--maxcheck', action='store_true', help='A boolean flag for best performance checking, it will use full cpus')
     parser.add_argument('--cbtag', default= "CB", help='cell barcode tag', required = False)
