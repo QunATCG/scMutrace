@@ -127,6 +127,7 @@ def main():
             subprocess.run(['rm', tmpVcfPath], check=True)
         except subprocess.CalledProcessError as e:
             print(f"Error removing temporary files: {e}")
+    subprocess.run(f'rm -rf {outdirTmp}/*', shell=True, check=True)
 
 if __name__ == "__main__":
     start_time = timeit.default_timer()
