@@ -51,6 +51,7 @@ def check_noisy_bg(targetVcfPath, altDp, altCell):
         line = lineeach.strip().split("\t")
         if int(line[5]) >= altDp and int(line[8]) >= altCell:
             mutCount = mutCount + 1
+    data.close()
     return mutCount
 
 
@@ -72,6 +73,7 @@ def count_cluster_snp(vcfPathIn, vcfPathOut, bamPath, refPath, outdirTmp, min_bq
             vcfOut.writelines(sqlinline)
             vcfOut.flush()
             
+
 def main():
     parser = initialize_parser()
     args = parser.parse_args()
