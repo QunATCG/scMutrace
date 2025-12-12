@@ -253,7 +253,7 @@ def check_noisy_bg(targetVcfPath, pos, altGTCheck):
         if lineeach.startswith("#"):
             continue
         line = lineeach.strip().split("\t")
-        if int(line[5]) > 2:
+        if int(line[5])/int(line[3]) > 0.04 and int(line[5]) >= 2:
             mutCount = mutCount + 1
             altgt_tmp = assign_alt_gt(line[2], line[4])
             # check if the altGT is intersect with the altGTCheck
