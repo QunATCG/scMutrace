@@ -149,6 +149,16 @@ do
     esac
 done
 
+cat << 'EOF'
+==================================================
+             __  __       _
+   ___  ___|  \/  |_   _| |_ _ __ __ _  ___ ___
+  / __|/ __| |\/| | | | | __| '__/ _` |/ __/ _ \
+  \__ \ (__| |  | | |_| | |_| | | (_| | (_|  __/
+  |___/\___|_|  |_|\__,_|\__|_|  \__,_|\___\___|
+==================================================
+EOF
+
 # check barcodecheck
 if [ "${barcodecheck}" != "true" ] && [ "${barcodecheck}" != "false" ]; then
     echo "Invalid value for -x. Please provide 'true' or 'false'."
@@ -242,6 +252,7 @@ validate_column_count "$barcode"
 echo "Barcode file header and format are correct."
 
 # main steps
+
 # step0_excludeBGCell.sh
 echo "making the output directory.."${id}
 echo "running step0_excludeBGCell.sh"
