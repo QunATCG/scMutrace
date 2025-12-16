@@ -214,6 +214,8 @@ Resources
 ```
 
 ## FAQs
+**If there is an issue, please report to github with logFile!**
+
 If you have any questions or encounter problems, please open an issue here: [scMutrace Issues](https://github.com/QunATCG/scMutrace/issues)
 
 Or contact us: qun.li@ki.se and claudia.kutter@ki.se
