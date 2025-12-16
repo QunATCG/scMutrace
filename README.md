@@ -84,7 +84,7 @@ You can obtain help information using the following command
 
 Also, you can check input files format here: https://github.com/QunATCG/scMutrace/tree/main/Example/
 
-```shell
+```text
 ==================================================
              __  __       _
    ___  ___|  \/  |_   _| |_ _ __ __ _  ___ ___
@@ -92,7 +92,9 @@ Also, you can check input files format here: https://github.com/QunATCG/scMutrac
   \__ \ (__| |  | | |_| | |_| | | (_| | (_|  __/
   |___/\___|_|  |_|\__,_|\__|_|  \__,_|\___\___|
 ==================================================
+```
 
+```shell
 Description:
 scMutrace is a single-cell mutation tracing tool designed to identify and analyze mutations from
 single-cell sequencing data. It offers an efficient, one-step process for background filtering,
