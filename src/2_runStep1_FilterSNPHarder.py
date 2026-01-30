@@ -62,6 +62,11 @@ def merge_out_vcfiles(vcfdir, idTag):
     vcfiles = os.listdir(vcfdir)
     filterCheckPaths = [os.path.join(vcfdir, i) for i in vcfiles if re.search("filter_" + str(idTag), i) is not None]
     filesCheck = " ".join(filterCheckPaths)
+    if len(filterCheckPaths) < 1:
+        print("No files to merge.")
+        cmdempty = f"touch {os.path.join(vcfdir, str(idTag) + '_scmutrace.vcf')}"
+        subprocess.run(cmdempty, shell=True, check=True)
+        return
     sqlCheckmerge = f"cat {filesCheck} > {os.path.join(vcfdir, str(idTag) + '_scmutrace.vcf')}"
     print(sqlCheckmerge)
     sqlCheckrm = f"rm {filesCheck}"

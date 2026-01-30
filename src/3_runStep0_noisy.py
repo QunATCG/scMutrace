@@ -429,9 +429,15 @@ def main():
     min_mq = args.min_mq
     cbtag = args.cbtag
     CellTypeDictmp = generate_cellType_dic(barcodePath, ["CellType"])
+    sqlHeaderList = ["chr", "pos", "refbase", "altbase", "mode", "altCellType", "totalCellNumber", "totalReadsNumber", "isMultiAlleles", "isMultiCellType", "isCluster", "SNP", "INDEL", "otherFilter"] + [i for i in CellTypeDictmp.keys()]
+    sqlHeader = "\t".join(sqlHeaderList)
     finalOutPath = outpath + ".scmutrace.clean.vcf"
     filter_VCF_withoutCB(vcfpath, outpath, binsize, clustersize, dpsize, altsize)
     lines_per_file = int(get_Vcf_rownum(outpath + ".f1") / COREUSE)
+    vcfOutfinal = open(finalOutPath, "w")
+    if lines_per_file < 1:
+        vcfOutfinal.writelines(sqlHeader + "\n")
+        return
     split_file_by_lines(outpath + ".f1", "clean_" + id + "_", lines_per_file, outpathtmp)
     tmpSplitFiles = [f for f in os.listdir(outpathtmp) if f.startswith("splitVcf_clean_" + id + "_")]
     if COREUSE > 1:
@@ -452,9 +458,6 @@ def main():
         subprocess.run(cmdrm, shell=True, check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error executing command '{cmdrm}': {e}")
-    vcfOutfinal = open(finalOutPath, "w")
-    sqlHeaderList = ["chr", "pos", "refbase", "altbase", "mode", "altCellType", "totalCellNumber", "totalReadsNumber", "isMultiAlleles", "isMultiCellType", "isCluster", "SNP", "INDEL", "otherFilter"] + [i for i in CellTypeDictmp.keys()]
-    sqlHeader = "\t".join(sqlHeaderList)
     vcfOutfinal.writelines(sqlHeader + "\n")
     for tmpSplitFile in tmpSplitFiles:
         with open(outpathtmp + "/" + tmpSplitFile + ".vcf", "r") as vcfIn:

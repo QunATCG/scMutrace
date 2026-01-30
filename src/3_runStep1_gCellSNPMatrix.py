@@ -275,41 +275,41 @@ def generate_gCellSNP_matrix(outpath, vcfpath):
 
 def generate_gCellSNP_matrix_chunked_sparse(outpath, vcfpath, chunksize=100000):
     """
-    分块读取VCF-like文件，逐步构建稀疏突变矩阵，避免内存溢出。
-
-    参数：
+    load large VCF-like file in chunks to build a sparse mutation matrix (Location Cell).
+    parameters
     -------
     outpath : str
-        输出csv路径
+        outpath
     vcfpath : str
-        输入vcf-like文件路径（tab分隔，三列：Location, Cell, Status）
+        tab separated vcf-like file path, three columns: Location, Cell, Status
     chunksize : int
-        每次读取行数，默认 1,000,000
+        number of rows to read per chunk, default 100,000
     """
-    # 用嵌套dict存稀疏矩阵，外层是Location，内层是Cell: Status
+    # save memory by sparse storage
     matrix = defaultdict(dict)
     all_cells = set()
-    # 分块读取
+    # read in chunks
     for chunk in pd.read_csv(vcfpath, sep='\t', header=None, names=['Location', 'Cell', 'Status'], chunksize=chunksize):
         for row in chunk.itertuples(index=False):
             loc, cell, status = row
             all_cells.add(cell)
-            # 如果当前已有'Mut'，跳过，优先保留'Mut'
+            # This line is unnecessary since we always want to keep 'Mut' if it exists
             if matrix[loc].get(cell) == 'Mut':
                 continue
             matrix[loc][cell] = status
-    # 转DataFrame（稀疏存储）
+    # Sort cells to ensure consistent column order
     all_cells = sorted(all_cells)
     df = pd.DataFrame(index=matrix.keys(), columns=all_cells, dtype="string")
     for loc, cell_statuses in matrix.items():
         for cell, status in cell_statuses.items():
             df.at[loc, cell] = status
-    # 填充缺失值为'NoCall'
+    # Fill missing values with 'NoCall'
+    # NoCall 
     df = df.fillna('NoCall')
-    # 转稀疏类型，节省内存
+    # Convert to sparse type to save memory
     for col in df.columns:
         df[col] = pd.Series(pd.arrays.SparseArray(df[col], fill_value='NoCall'))
-    # 输出
+    # Output
     df.to_csv(outpath, sep=',', index=True)
     print(f"Done! Matrix shape: {df.shape}")
 
@@ -322,41 +322,41 @@ def generate_gSNPSample_matrix(outpath, vcfpath):
 
 def generate_gSNPSample_matrix_chunked_sparse(outpath, vcfpath, chunksize=100000):
     """
-    分块读取VCF-like文件，逐步构建稀疏突变矩阵（Location × Sample）。
+    Read VCF-like file in chunks to gradually build a sparse mutation matrix (Location × Sample).
 
-    参数：
+    Parameters:
     -------
     outpath : str
-        输出csv路径
+        Output CSV path
     vcfpath : str
-        输入vcf-like文件路径（tab分隔，三列：Location, ID, Status）
+        Input VCF-like file path (tab-separated, three columns: Location, ID, Status)
     chunksize : int
-        每次读取行数，默认 1,000,000
+        number of rows to read per chunk, default 100,000
     """
-    # 用嵌套dict存稀疏矩阵，外层是Location，内层是ID: Status
+    # save memory by sparse storage
     matrix = defaultdict(dict)
     all_ids = set()
-    # 分块读取
+    # read in chunks
     for chunk in pd.read_csv(vcfpath, sep='\t', header=None, names=['Location', 'ID', 'Status'], chunksize=chunksize):
         for row in chunk.itertuples(index=False):
             loc, sample_id, status = row
             all_ids.add(sample_id)
-            # 如果当前已有'Mut'，跳过，优先保留'Mut'
+            # This line is unnecessary since we always want to keep 'Mut' if it exists
             if matrix[loc].get(sample_id) == 'Mut':
                 continue
             matrix[loc][sample_id] = status
-    # 转DataFrame（稀疏存储）
+    # Convert to DataFrame (sparse storage)
     all_ids = sorted(all_ids)
     df = pd.DataFrame(index=matrix.keys(), columns=all_ids, dtype="string")
     for loc, id_statuses in matrix.items():
         for sample_id, status in id_statuses.items():
             df.at[loc, sample_id] = status
-    # 填充缺失值为'NoCall'
+    # Fill missing values with 'NoCall'
     df = df.fillna('NoCall')
-    # 转稀疏类型，节省内存
+    # Convert to sparse type to save memory
     for col in df.columns:
         df[col] = pd.Series(pd.arrays.SparseArray(df[col], fill_value='NoCall'))
-    # 输出
+    # Output
     df.to_csv(outpath, sep=',', index=True)
     print(f"Done! Matrix shape: {df.shape}")
 

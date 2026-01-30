@@ -44,6 +44,11 @@ def merge_filteredVcf_file(sampleID, filteredVcfPaths, dirPath):
     for chr in chrs:
         tmpipaths = [j for j in filteredVcfPaths if re.search(sampleID + "_" + str(chr) + ".vcf", j) != None]
         tmpsql = " ".join(tmpipaths)
+        if len(tmpsql) <= 3:
+            print(f"No filtered VCF files found for {sampleID} on chromosome {chr}. Creating an empty VCF file.")
+            cmdempty = f"touch {dirPath}{sampleID}_{chr}_filter.vcf"
+            subprocess.run(cmdempty, shell=True, check=True)
+            continue
         cmdmerge = f"cat {tmpsql} > {dirPath}{sampleID}_{chr}_filter.vcf"
         cmdrm = f"rm {tmpsql}"
         try:
