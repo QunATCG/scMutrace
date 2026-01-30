@@ -1,6 +1,6 @@
 How to generate PoNs (**3 steps**):
 
-You can directly use your own generated PoNs. The format should be a tab-separated file, for example:
+You can directly use your own generated/public PoNs. The format should be a tab-separated file, for example:
 
 ```bash
 10	100000193	100000193
