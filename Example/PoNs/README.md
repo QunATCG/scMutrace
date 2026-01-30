@@ -1,5 +1,20 @@
 How to generate PoNs (**3 steps**):
 
+You can directly use your own generated PoNs. The format should be a tab-separated file, for example:
+
+```bash
+10	100000193	100000193
+10	100000235	100000235
+10	100000456	100000456
+10	100000475	100000475
+10	100000541	100000541
+10	100000543	100000543
+10	100000544	100000544
+10	100000546	100000546
+10	100000551	100000551
+10	100000557	100000557
+```
+
 ## Step 1
 **Step 1**:
 run scMutrace on all normal samples and you will find `VCFPOS` folder in the output for each sample
@@ -35,6 +50,7 @@ python /path/to/1_runStep2_generatePoN.py --vcfilelist path/to/Example_vcflist_f
 
 Example *output*
 ```bash
+# tab seperated file
 qunli@login1:> head PoN.txt 
 ```
 
