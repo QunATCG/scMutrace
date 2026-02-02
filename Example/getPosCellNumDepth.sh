@@ -103,5 +103,5 @@ while read chrtmp starttmp endtmp
 do
     tmpConfig=${chrtmp}_${starttmp}_${endtmp}
     echo "extract cell number and depth of ${tmpConfig}"
-    python -u ${scMutrace_src_dir}/src/getPosCellNumDepth.py --bam ${bam} --ref ${ref} --cbtag ${cellbarcodetag} --contig ${tmpConfig} --minmq ${minmq} --minbq ${minbq} --mindp ${minsequencingdepth} --nmcheck --maxnm ${maxmismatch} --id ${id} --nprocs ${nprocs} --outdir ${outdir}
+    python -u ${scMutrace_src_dir}/../src/getPosCellNumDepth.py --bam ${bam} --ref ${ref} --cbtag ${cellbarcodetag} --contig ${tmpConfig} --minmq ${minmq} --minbq ${minbq} --mindp ${minsequencingdepth} --nmcheck --maxnm ${maxmismatch} --id ${id} --nprocs ${nprocs} --outdir ${outdir}
 done < $contig
