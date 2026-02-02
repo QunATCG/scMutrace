@@ -60,7 +60,8 @@ rm -rf ~/miniconda3/miniconda.sh
 conda create -n scMutrace
 conda activate scMutrace
 # Install dependencies
-conda install -c bioconda pysam=0.21.0
+# pysam>=0.21.0
+conda install -c bioconda pysam
 conda install -c conda-forge numpy
 conda install -c conda-forge scipy
 conda install -c bioconda bedtools
