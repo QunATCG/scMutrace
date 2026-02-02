@@ -82,8 +82,6 @@ You can obtain help information using the following command
 
 `./scMutrace.sh -h`
 
-Also, you can check input files format here: https://github.com/QunATCG/scMutrace/tree/main/Example/
-
 ```text
 ==================================================
              __  __       _
@@ -146,67 +144,6 @@ samtools view ENCFF491HQL.bam | cut -f 12- | tr "\t" "\n" | grep "CB:Z:" | uniq 
 
 [Step-by-Step scMutrace Tutorial](https://github.com/QunATCG/scMutrace-tutorial)
 
-## Parameter Index
-You can check and search parameters using the following command:
-
-`./scMutrace.sh -h`
-
-Also, you can check input files format here: https://github.com/QunATCG/scMutrace/tree/main/Example/
-
-```
-    -a  
-    -A
-    -b  [bam] bam file path
-    -B  [lowBaseCutoff] cutoff of low base quality (default 20)
-    -c  [barcode] cell barcode path
-    -C  [barcode tag] cell barcode tag in bam file (default: CB)
-    -d  [minsequencingdepth] min sequecing depth (default: 3)
-    -D  [min altdpsize] min alternative bases depth (default: 2)
-    -e  [backp] background mutant cells threshold used to filter SNPs[0.03-0.06, default: 0.05]
-    -E  [errorp] background error threshold used to filter SNPs[0.001-0.006, default: 0.006]
-    -f  [ref] reference file path
-    -F
-    -g  [contig] contig information, tab separated format for each line: Chr start end
-    -G
-    -h  [help] display help message
-    -H
-    -i  [includeitems] files to be included, tab seperated format: path id
-    -I
-    -j
-    -J
-    -k  [iteration] number of iterations (default: 1000)
-    -K
-    -l  [binsize] base number between two snps (default: 20)
-    -L  [clustersize] number of snps in one cluster (default: 3)
-    -m  [maxmismatch] number max mismatch number (default: 4)
-    -M
-    -n  [mincellnumber] min cell number (default: 3)
-    -N  [minaltcellnumber] min alteration cell number (default: 2)
-    -o  [outputpath] output path
-    -O  [outdir] output directory
-    -p  [nprocs] number of processes (default: 1)
-    -P
-    -q  [minbq] min base quality (default: 20)
-    -Q  [minmq] min mapping quality (default: 255)
-    -r  [removeitems] files to be excluded, tab seperated format: path id
-    -R
-    -s  [id] sample id
-    -S
-    -t  [ncut] number of reads bases will be trimmed (default: 10)
-    -T
-    -u  [umi:str] umi to be used to remove duplicated reads (default: CB, if XX, no umi).
-    -U
-    -v  [vcf path] vcf file full path
-    -V  [vcf directory] vcf file directory to filter SNPs
-    -W
-    -w
-    -x  [barcodecheck:str] if barcode check, split bam based on cell barcodes (false or true, default: true.).]
-    -X
-    -y
-    -Y
-    -z
-    -Z
-```
 ## Panel of Normals
 
 scMutrace can be run without matched normal samples. If matched normal samples are available (e.g., normal tissues, other samples processed in the same way, or public datasets generated with the same sequencing protocol), scMutrace will filter out all mutations present in the Panel of Normals (PoNs).
