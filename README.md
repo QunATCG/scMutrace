@@ -126,8 +126,8 @@ Optional Arguments:
      -d     [minsequencingdepth:int] Minimum sequencing depth (default: 3).
      -D     [minaltdepth:int] Minimum alternative base depth (default: 2).
      -k     [iteration:int] Number of iterations (default: 1000).
-     -e     [backp:float] Background mutant cells threshold to filter SNPs (0.03-0.06, default: 0.05).
-     -E     [errorp:float] Background error threshold to filter SNPs (0.001-0.006, default: 0.006).
+     -e     [backp:float] Background mutant cells threshold to filter SNPs (0.03-0.07, default: 0.05).
+     -E     [errorp:float] Background error threshold to filter SNPs (0.001-0.007, default: 0.006).
      -l     [binsize:int] Base number between two SNPs (default: 20).
      -L     [clustersize:int] Number of SNPs in one cluster (default: 3).
      -B     [lowBaseCutoff:int] Cutoff for low base quality (default: 20).
