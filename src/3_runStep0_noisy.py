@@ -262,7 +262,7 @@ def check_noisy_bg(targetVcfPath, pos, altGTCheck):
                     if abs(int(line[1]) - int(pos)) > 10:
                         sameMutCount = sameMutCount + 1
                     if abs(int(line[1]) - int(pos)) <= 10:
-                        sameMutCount = sameMutCount + 2
+                        sameMutCount = sameMutCount + 1
     return mutCount, sameMutCount
 
 # get cell mutation info
