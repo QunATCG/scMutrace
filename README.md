@@ -79,6 +79,31 @@ git clone https://github.com/QunATCG/scMutrace.git
 conda clean -a
 ```
 
+```bash
+# create environment and install dependencies
+conda create -n scMutrace -y \
+  -c conda-forge \
+  -c bioconda \
+  -c etetoolkit \
+  python=3.9 \
+  pysam>=0.21.0 \
+  numpy \
+  scipy \
+  bedtools \
+  statsmodels \
+  biopython \
+  argparse \
+  scikit-allel \
+  ete3
+
+conda activate scMutrace
+
+# download scMutrace
+git clone https://github.com/QunATCG/scMutrace.git
+
+conda clean -a -y
+```
+
 #### Install scMutrace (option 2)
 ```shell
 git clone https://github.com/QunATCG/scMutrace.git
