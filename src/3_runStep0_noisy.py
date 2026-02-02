@@ -369,7 +369,7 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
                 tag_noisyCluster0 = "NonePASS_noisyClusterBackground:" + str(mutCount) 
             else:
                 tag_noisyCluster0 = "PASS_noisyClusterBackground:" + str(mutCount)
-            if sameMutCount > 3:
+            if sameMutCount >= 3:
                 tag_noisyCluster1 = "NonePASS_noisyClusterSameGT:" + str(sameMutCount)
             else:
                 tag_noisyCluster1 = "PASS_noisyClusterSameGT:" + str(sameMutCount)
