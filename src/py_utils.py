@@ -223,26 +223,26 @@ def shuffle_cell_barcodes(barcodeList, groupNum):
     return res
 
 # count mutations
-"""
+# """
 #Information on match, mismatch, indel, strand, mapping
 #quality and start and end of a read are all encoded at the
 #read base column. At this column, a dot stands for a match
 #to the reference base on the forward strand, a comma for a
-#match on the reverse strand, a '>' or '<' for a reference
-#skip, `ACGTN' for a mismatch on the forward strand and
-#`acgtn' for a mismatch on the reverse strand. A pattern
-#`\+[0-9]+[ACGTNacgtn]+' indicates there is an insertion
+#match on the reverse strand, a > or < for a reference
+#skip, ACGTN for a mismatch on the forward strand and
+# acgtn for a mismatch on the reverse strand. A pattern
+# +[0-9]+[ACGTNacgtn]+ indicates there is an insertion
 #between this reference position and the next reference
 #position. The length of the insertion is given by the
 #integer in the pattern, followed by the inserted
-#sequence. Similarly, a pattern `-[0-9]+[ACGTNacgtn]+'
+#sequence. Similarly, a pattern -[0-9]+[ACGTNacgtn]+
 #represents a deletion from the reference. The deleted bases
-#will be presented as `*' in the following lines. Also at
-#the read base column, a symbol `^' marks the start of a
-#read. The ASCII of the character following `^' minus 33
-#gives the mapping quality. A symbol `$' marks the end of a
+#will be presented as * in the following lines. Also at
+#the read base column, a symbol ^ marks the start of a
+#read. The ASCII of the character following ^ minus 33
+#gives the mapping quality. A symbol $ marks the end of a
 #read segment
-"""
+# """
 # count alt
 def count_alt_num(pileupList, refBase):
     #count_num = 0
@@ -271,13 +271,13 @@ def count_alt_num(pileupList, refBase):
             else:
                 pass
         elif len_pileupItem > 1:
-            if check_string_re('\+[0-9]+[ACGTN]+', pileupItem):
+            if check_string_re(r'\+[0-9]+[ACGTN]+', pileupItem):
                 CountList_Forward["Insert"] += 1
-            elif check_string_re('\+[0-9]+[acgtn]+', pileupItem):
+            elif check_string_re(r'\+[0-9]+[acgtn]+', pileupItem):
                 CountList_REVERSE["Insert"] += 1
-            elif check_string_re('\-[0-9]+[ACGTN]+', pileupItem):
+            elif check_string_re(r'\-[0-9]+[ACGTN]+', pileupItem):
                 CountList_Forward["Del"] += 1
-            elif check_string_re('\-[0-9]+[acgtn]+', pileupItem):
+            elif check_string_re(r'\-[0-9]+[acgtn]+', pileupItem):
                 CountList_REVERSE["Del"] += 1
             else:
                 CountList_Total["Other"] += 1
