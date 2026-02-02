@@ -58,7 +58,7 @@ bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
 rm -rf ~/miniconda3/miniconda.sh
 ```
 
-#### Install scMutrace
+#### Install scMutrace (option 1)
 ```shell
 # create env for scMutrace
 conda create -n scMutrace
@@ -77,6 +77,17 @@ conda install -c etetoolkit ete3
 # download scMutrace codes
 git clone https://github.com/QunATCG/scMutrace.git
 conda clean -a
+```
+
+#### Install scMutrace (option 2)
+```shell
+git clone https://github.com/QunATCG/scMutrace.git
+conda clean -a -y
+
+conda env create -f environment.yml
+conda activate scMutrace
+
+
 ```
 
 ## Model

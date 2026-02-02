@@ -1,0 +1,16 @@
+name: scMutrace
+channels:
+  - conda-forge
+  - bioconda
+  - etetoolkit
+dependencies:
+  - python=3.9
+  - pysam>=0.21.0
+  - numpy
+  - scipy
+  - bedtools
+  - statsmodels
+  - biopython
+  - argparse
+  - scikit-allel
+  - ete3
