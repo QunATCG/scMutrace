@@ -18,7 +18,7 @@ helpFunction() {
     echo ""
     echo "Options:"
     echo "Required Arguments:"
-    echo -e "\t -b \t[bam:str] Path to the BAM file to exclude background cells."
+    echo -e "\t -b \t[bam:str] Path to the BAM file to exclude background cells, format: ExcludeBG_SampleID.sort.rmdupicard.bam."
     echo -e "\t -f \t[ref:str] Path to the reference file."
     echo -e "\t -c \t[barcode:str] Cell barcode file path (tab-separated with header: Barcode CellType). If CellType is not provided, all cells will be defined as 'CellType1'."
     echo -e "\t -C \t[barcodetag:str] Cell barcode tag in the BAM file (default: CB)."
