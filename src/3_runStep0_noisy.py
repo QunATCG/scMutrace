@@ -397,6 +397,11 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
                     mutCellMutInfoList.append(cellmutInfoList[i])
             if mutCellnum < altcellsize:
                 continue
+            # filter germline mutation based on cell fraction and read fraction
+            # combine both altcellnum and altreadnum filteration
+            if int(mutCellnum) / int(totalCellnum) >= 0.8 and int(altReadsnum) / int(totalReadsnum) >= 0.8:
+                print(f"Skip potential germline mutation at {chr}:{pos} with cell fraction {mutCellnum}/{totalCellnum} and read fraction {altReadsnum}/{totalReadsnum}")
+                continue
             CellTypeCountDic, altCellType, MultiCellType = generate_cellType_countDic(cellTypeDic, totalCellBarcodeList, mutCellBarcodeList, mutCellMutInfoList, refBase)
             sqlinlineList = [chr, pos, refBase, altGT, mode, ",".join(altCellType), str(mutCellnum) + "|" + str(totalCellnum), str(altReadsnum) + "|" + str(totalReadsnum), MultiAllelesCheck, MultiCellType, clusterCheck, SNPCheck, INDELCheck, otherfilterInfo] + [i for i in CellTypeCountDic.values()]
             sqlinline = "\t".join(sqlinlineList)
