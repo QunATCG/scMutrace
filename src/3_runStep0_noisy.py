@@ -400,8 +400,9 @@ def get_cellmutInfo_forTest(vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcel
             # filter germline mutation based on cell fraction and read fraction
             # combine both altcellnum and altreadnum filteration
             if int(mutCellnum) / int(totalCellnum) >= 0.9 and int(altReadsnum) / int(totalReadsnum) >= 0.9:
-                #print(f"Skip potential germline mutation at {chr}:{pos} with cell fraction {mutCellnum}/{totalCellnum} and read fraction {altReadsnum}/{totalReadsnum}")
-                continue
+                if linsets[21].split(";")[0].strip() != "NonePASS_commonSNP" or linsets[21].split(";")[2].strip() != "NonePASS_gnomAD":
+                    #print(f"Skip potential germline mutation at {chr}:{pos} with cell fraction {mutCellnum}/{totalCellnum} and read fraction {altReadsnum}/{totalReadsnum}")
+                    continue
             CellTypeCountDic, altCellType, MultiCellType = generate_cellType_countDic(cellTypeDic, totalCellBarcodeList, mutCellBarcodeList, mutCellMutInfoList, refBase)
             sqlinlineList = [chr, pos, refBase, altGT, mode, ",".join(altCellType), str(mutCellnum) + "|" + str(totalCellnum), str(altReadsnum) + "|" + str(totalReadsnum), MultiAllelesCheck, MultiCellType, clusterCheck, SNPCheck, INDELCheck, otherfilterInfo] + [i for i in CellTypeCountDic.values()]
             sqlinline = "\t".join(sqlinlineList)
