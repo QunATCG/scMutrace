@@ -168,6 +168,8 @@ samtools view ENCFF491HQL.bam | cut -f 12- | tr "\t" "\n" | grep "CB:Z:" | uniq 
 
 [Step-by-Step scMutrace Tutorial](https://github.com/QunATCG/scMutrace-tutorial)
 
+[Reproducibility Analysis](https://github.com/QunATCG/scMutrace-tutorial/tree/main/ReproducibilityAnalysis)
+
 ## Panel of Normals
 
 scMutrace can be run without matched normal samples. If matched normal samples are available (e.g., normal tissues, other samples processed in the same way, or public datasets generated with the same sequencing protocol), scMutrace will filter out all mutations present in the Panel of Normals (PoNs).
