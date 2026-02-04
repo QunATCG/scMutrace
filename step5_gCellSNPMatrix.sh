@@ -84,5 +84,19 @@ echo "NPROCS: ${nprocs}"
 echo ""
 echo ""
 
+# check input files
+while IFS=$'\t' read -r sample vcf bam type
+do
+  if [[ ! -f "$vcf" ]]; then
+    echo "[ERROR] VCF file not found for ${sample}: $vcf, please check the config file."
+    exit 1
+  fi
+
+  if [[ ! -f "$bam" ]]; then
+    echo "[ERROR] BAM file not found for ${sample}: $bam, please check the config file."
+    exit 1
+  fi
+done < "${contigfile}"
+
 # generate Cell-SNP Matrix
 python3 ${scMutrace_src_dir}/src/3_runStep1_gCellSNPMatrix.py --outdir ${outputdir} --jobconfig ${contigfile} --reference ${ref} --min_bq ${min_bq} --min_mq ${min_mq} --cbtag ${cbtag} --nprocs ${nprocs}
