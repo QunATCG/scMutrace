@@ -60,12 +60,18 @@ rm -rf ~/miniconda3/miniconda.sh
 
 #### Install scMutrace (option 1, recommended)
 ```shell
-# create env for scMutrace
+# Step 1. create env for scMutrace
 conda create -n scMutrace
 conda activate scMutrace
-# install java
+
+# Step 2. make sure Java is available:
+# you can check java using `java -version`
 # https://www.java.com/en/download/manual.jsp
-# Install dependencies
+# If Java is not installed, download and install it from:
+# https://www.java.com/en/download/manual.jsp
+# Java 8 or newer is recommended.
+
+# Step3. install dependencies
 # pysam>=0.21.0
 conda install -c bioconda pysam -y
 conda install -c conda-forge numpy -y
@@ -77,7 +83,8 @@ conda install -c conda-forge biopython -y
 conda install -c conda-forge argparse -y
 conda install -c conda-forge scikit-allel -y
 conda install -c etetoolkit ete3 -y
-# download scMutrace codes
+
+# Step 4. download scMutrace codes
 git clone https://github.com/QunATCG/scMutrace.git
 conda clean -a -y
 ```
