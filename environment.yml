@@ -5,10 +5,11 @@ channels:
   - etetoolkit
 dependencies:
   - python=3.9
-  - pysam>=0.21.0
+  - pysam
   - numpy
   - scipy
   - bedtools
+  - samtools
   - statsmodels
   - biopython
   - argparse

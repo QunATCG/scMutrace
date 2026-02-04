@@ -63,44 +63,22 @@ rm -rf ~/miniconda3/miniconda.sh
 # create env for scMutrace
 conda create -n scMutrace
 conda activate scMutrace
+# install java
+# https://www.java.com/en/download/manual.jsp
 # Install dependencies
 # pysam>=0.21.0
-conda install -c bioconda pysam
-conda install -c conda-forge numpy
-conda install -c conda-forge scipy
-conda install -c bioconda bedtools
-conda install -c conda-forge statsmodels
-conda install -c conda-forge biopython
-conda install -c conda-forge argparse
-conda install -c conda-forge scikit-allel
-conda install -c etetoolkit ete3
+conda install -c bioconda pysam -y
+conda install -c conda-forge numpy -y
+conda install -c conda-forge scipy -y
+conda install -c bioconda bedtools -y
+conda install -c bioconda samtools -y
+conda install -c conda-forge statsmodels -y
+conda install -c conda-forge biopython -y
+conda install -c conda-forge argparse -y
+conda install -c conda-forge scikit-allel -y
+conda install -c etetoolkit ete3 -y
 # download scMutrace codes
 git clone https://github.com/QunATCG/scMutrace.git
-conda clean -a
-```
-
-```bash
-# create environment and install dependencies
-conda create -n scMutrace -y \
-  -c conda-forge \
-  -c bioconda \
-  -c etetoolkit \
-  python=3.9 \
-  pysam>=0.21.0 \
-  numpy \
-  scipy \
-  bedtools \
-  statsmodels \
-  biopython \
-  argparse \
-  scikit-allel \
-  ete3
-
-conda activate scMutrace
-
-# download scMutrace
-git clone https://github.com/QunATCG/scMutrace.git
-
 conda clean -a -y
 ```
 
