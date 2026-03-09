@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 scMutrace_src_dir=$(cd `dirname $0`; pwd)
 
 # Help function
