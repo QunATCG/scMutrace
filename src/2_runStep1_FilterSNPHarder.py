@@ -183,8 +183,8 @@ def filter_SNP_f1(PathVCFIn, PathVCFOut, PathVCFInBed, excludeFilePath=None, inc
     if excludeFilePath:
         with open(excludeFilePath, "r") as excludeFile_total:
             for line in excludeFile_total:
-                exPath = line.split("\t")[0].strip()
-                exID = line.split("\t")[1].strip()
+                exPath = line.split()[0].strip()
+                exID = line.split()[1].strip()
                 print(exID)
                 tmpOut_ex = PathVCFInBed + "." + str(exID)
                 _, ex_locList = bedtools_intersect_v(PathVCFInBed, tmpOut_ex, exPath)
@@ -194,8 +194,8 @@ def filter_SNP_f1(PathVCFIn, PathVCFOut, PathVCFInBed, excludeFilePath=None, inc
     if includeFilePath:
         with open(includeFilePath, "r") as includeFile_total:
             for line in includeFile_total:
-                inPath = line.split("\t")[0].strip()
-                inID = line.split("\t")[1].strip()
+                inPath = line.split()[0].strip()
+                inID = line.split()[1].strip()
                 print(inID)
                 tmpOut_in = PathVCFInBed + "." + str(inID)
                 in_locList, _ = bedtools_intersect_v(PathVCFInBed, tmpOut_in, inPath)

@@ -115,7 +115,7 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir, referencePath, min_
                 refBase = str(lineSets[2])
                 with open(jobconfigPath, "r") as jobconfig:
                     for jobLine in jobconfig:
-                        jobLineSets = jobLine.strip().split("\t")
+                        jobLineSets = jobLine.strip().split()
                         # Validate jobLineSets
                         if len(jobLineSets) < 3:
                             print(f"Skipping invalid job line: {jobLine}")
@@ -235,7 +235,7 @@ def exclude_control_mut(gCSMPath, jobconfigPath, outpathDir):
     ControlIDs = []
     with open(jobconfigPath, "r") as jobconfig:
         for jobLine in jobconfig:
-            jobLineSets = jobLine.strip().split("\t")
+            jobLineSets = jobLine.strip().split()
             if jobLineSets[3].strip() == "Control":
                 ControlIDs.append(jobLineSets[0])
     SNPsControl = set()
