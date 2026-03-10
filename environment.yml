@@ -12,6 +12,5 @@ dependencies:
   - samtools
   - statsmodels
   - biopython
-  - argparse
   - scikit-allel
   - ete3

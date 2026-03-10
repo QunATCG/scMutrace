@@ -80,7 +80,6 @@ conda install -c bioconda bedtools -y
 conda install -c bioconda samtools -y
 conda install -c conda-forge statsmodels -y
 conda install -c conda-forge biopython -y
-conda install -c conda-forge argparse -y
 conda install -c conda-forge scikit-allel -y
 conda install -c etetoolkit ete3 -y
 
