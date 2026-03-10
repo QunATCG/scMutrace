@@ -90,6 +90,12 @@ conda clean -a -y
 
 #### Install scMutrace (option 2)
 ```shell
+# Before: make sure Java is available:
+# you can check java using `java -version`
+# https://www.java.com/en/download/manual.jsp
+# If Java is not installed, download and install it from:
+# https://www.java.com/en/download/manual.jsp
+# Java 8 or newer is recommended.
 git clone https://github.com/QunATCG/scMutrace.git
 conda clean -a -y
 
