@@ -136,7 +136,7 @@ def main():
     barcodeListFile = open(outDirPath + "/barcodeList.txt", "w+")
     totalBarcode = open(barcodePath, "r")
     for line in totalBarcode:
-        barcodeTmp = line.split("\t")[0].strip().split("-")[0]
+        barcodeTmp = line.split()[0].strip().split("-")[0]
         if barcodeTmp not in barcodeListCell:
             barcodeListFile.writelines(barcodeTmp + "\n")
             barcodeListCell.append(barcodeTmp)

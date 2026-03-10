@@ -124,7 +124,7 @@ def generate_cellType_dic(barcodePath, excludeList):
     cellTypeDic = {}
     with open(barcodePath, "r") as barcodeIn:
         for line in barcodeIn:
-            numCheck = line.split("\t")
+            numCheck = line.split()
             if len(numCheck) >= 2:
                 barcodetmp = numCheck[0].strip()
                 cellTypetmp = numCheck[1].strip()
