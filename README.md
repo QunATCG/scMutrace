@@ -162,7 +162,13 @@ Optional Arguments:
      -B     [lowBaseCutoff:int] Cutoff for low base quality (default: 20).
      -h     [help] Display this help message.
 ```
-If you don't have a cell barcode file, all cells will be included. You can use `-x false` to skip the cell barcode filtering process. Alternatively, you can obtain all cell barcodes using the following command, with `ENCFF491HQL.bam` as an example:
+
+Cell barcode file should contain all cells that passed quality control (QC). This file can be generated using tools such as Seurat, Signac, ArchR, or other single-cell analysis pipelines.
+
+If a cell barcode file is not provided, all cells in the BAM file will be included in the analysis. You can also use the option -x false to skip the cell barcode filtering step.
+
+Alternatively, if you need to extract all cell barcodes directly from the BAM file, you can use the following command (using ENCFF491HQL.bam as an example):
+
 
 ```shell
 samtools view ENCFF491HQL.bam | cut -f 12- | tr "\t" "\n" | grep "CB:Z:" | uniq | awk -F':' '{print $3}' > ENCFF491HQL.cellbarcode
