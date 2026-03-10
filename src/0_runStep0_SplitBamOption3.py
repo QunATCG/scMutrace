@@ -133,7 +133,7 @@ def main():
     make_dir_check(outDirPath)
     # extract barcode
     barcodeListCell = []
-    barcodeListFile = open(outDirPath + "barcodeList.txt", "w+")
+    barcodeListFile = open(outDirPath + "/barcodeList.txt", "w+")
     totalBarcode = open(barcodePath, "r")
     for line in totalBarcode:
         barcodeTmp = line.split("\t")[0].strip().split("-")[0]

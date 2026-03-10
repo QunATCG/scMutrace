@@ -118,6 +118,8 @@ echo ""
 echo ""
 
 # main steps
+outdir="${outdir%/}"
+
 while read chrtmp starttmp endtmp
 do
     tmpConfig=${chrtmp}_${starttmp}_${endtmp}

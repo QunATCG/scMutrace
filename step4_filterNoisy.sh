@@ -167,4 +167,5 @@ echo ""
 echo ""
 
 # main steps
+outdir="${outdir%/}"
 python -u ${scMutrace_src_dir}/src/3_runStep0_noisy.py --vcfpath ${vcfpath} --id ${id} --barcode ${cellbarcode} --binsize ${binsize} --clustersize ${clustersize} --dpsize ${minsequencingdepth} --altdpsize ${minaltdpsize} --cellsize ${mincellnumber} --altcellsize ${minaltcellnumber} --lowBaseCutoff ${lowBaseCutoff} --outdir ${outdir} --bam ${bamfile} --ref ${ref} --min_bq ${min_bq} --min_mq ${min_mq} --cbtag ${cbtag} --nprocs ${nprocs}

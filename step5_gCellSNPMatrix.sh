@@ -100,4 +100,5 @@ do
 done < "${contigfile}"
 
 # generate Cell-SNP Matrix
+outputdir="${outputdir%/}"
 python3 ${scMutrace_src_dir}/src/3_runStep1_gCellSNPMatrix.py --outdir ${outputdir} --jobconfig ${contigfile} --reference ${ref} --min_bq ${min_bq} --min_mq ${min_mq} --cbtag ${cbtag} --nprocs ${nprocs}

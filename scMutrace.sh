@@ -302,6 +302,7 @@ validate_column_count "$barcode"
 echo "Barcode file header and format are correct."
 
 # main steps
+outdir="${outdir%/}"
 
 # step0_excludeBGCell.sh
 echo "making the output directory.."${id}

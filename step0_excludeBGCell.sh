@@ -106,6 +106,8 @@ echo "nprocs: ${nprocs}"
 echo "OUTPUT: ${outdir}"
 echo ""
 
+outdir="${outdir%/}"
+
 # main steps
 # if cellbarcode check is true, then split bam file
 if [ ${barcodecheck} == "true" ]; then

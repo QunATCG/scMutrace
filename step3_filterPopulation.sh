@@ -82,4 +82,5 @@ echo ""
 echo ""
 
 # main steps
+outdir="${outdir%/}"
 python -u ${scMutrace_src_dir}/src/2_runStep1_FilterSNPHarder.py --outdir ${outdir} --casevcfdir ${casevcfdir} --caseid ${id} --exclude ${removeitem} --include ${includeitem} --nprocs ${nprocs}

@@ -158,7 +158,7 @@ def main():
         if COREUSE > mp.cpu_count():
             COREUSE = mp.cpu_count() - 1
             print("Cores is over computer max cpus...")
-    filterPath = outPath + "filterVCF/"
+    filterPath = outPath + "/filterVCF/"
     quainfos = list(range(10, 100, 1))
     model3ProbabilityDic = create_model3_probabilityDic(errorP, quainfos)
     make_dir_check(filterPath)
