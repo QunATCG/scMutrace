@@ -81,6 +81,47 @@ echo "nprocs: ${nprocs}"
 echo ""
 echo ""
 
+# check removeitem and includeitem files
+if [ "$removeitem" == "NotAvailable" ]; then
+    echo "No removeitem list provided, skipping."
+else
+    if [ ! -f "$removeitem" ]; then
+        echo "Error: removeitem list file $removeitem does not exist!"
+        exit 1
+    fi
+
+    while read -r rPath rName; do
+        [[ -z "$rPath" || "$rPath" =~ ^# ]] && continue
+
+        if [ ! -f "$rPath" ]; then
+            echo "Error: file $rPath ($rName) in $removeitem does not exist!"
+            exit 1
+        fi
+    done < "$removeitem"
+
+    echo "All removeitem files exist"
+fi
+
+if [ "$includeitem" == "NotAvailable" ]; then
+    echo "No includeitem list provided, skipping."
+else
+    if [ ! -f "$includeitem" ]; then
+        echo "Error: includeitem list file $includeitem does not exist!"
+        exit 1
+    fi
+
+    while read -r iPath iName; do
+        [[ -z "$iPath" || "$iPath" =~ ^# ]] && continue
+
+        if [ ! -f "$iPath" ]; then
+            echo "Error: file $iPath ($iName) in $includeitem does not exist!"
+            exit 1
+        fi
+    done < "$includeitem"
+
+    echo "All includeitem files exist"
+fi
+
 # main steps
 outdir="${outdir%/}"
 python -u ${scMutrace_src_dir}/src/2_runStep1_FilterSNPHarder.py --outdir ${outdir} --casevcfdir ${casevcfdir} --caseid ${id} --exclude ${removeitem} --include ${includeitem} --nprocs ${nprocs}
