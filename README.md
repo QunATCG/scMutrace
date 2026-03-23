@@ -168,7 +168,7 @@ Cell barcode file should contain all cells that passed quality control (QC). Thi
 If a cell barcode file is not provided, all cells in the BAM file will be included in the analysis. You need to extract all cell barcodes directly from the BAM file, you can use the following command (using `ENCFF491HQL.bam` as an example):
 
 ```shell
-samtools view ENCFF491HQL.bam | cut -f 12- | tr "\t" "\n" | grep "CB:Z:" | uniq | awk -F':' '{print $3}' > ENCFF491HQL.cellbarcode
+samtools view ENCFF491HQL.bam | cut -f 12- | tr "\t" "\n" | grep "^CB:Z:" | sed 's/CB:Z://' | sort | uniq > ENCFF491HQL.cellbarcode
 ```
 
 ## Start
