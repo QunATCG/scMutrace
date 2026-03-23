@@ -38,7 +38,6 @@ helpFunction() {
     echo -e "\t -r \t[removeitems:str] Database files to be excluded (tab-separated format: path id)."
     echo -e "\t -i \t[includeitems:str] Database files to be included (tab-separated format: path id)."
     echo "Optional Arguments:"
-    echo -e "\t -x \t[barcodecheck:str] if barcode check, split bam based on cell barcodes (false or true, default: true.)."
     echo -e "\t -u \t[umi:str] umi to be used to remove duplicated reads (default: CB, if XX, no umi)."
     echo -e "\t -t \t[ncut:int] Number of read bases to be trimed cut (default: 10)."
     echo -e "\t -p \t[nprocs:int] Number of processes to use (default: 1)."
