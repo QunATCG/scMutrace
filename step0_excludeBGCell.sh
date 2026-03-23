@@ -14,7 +14,7 @@ helpFunction(){
     echo "Exclude background cells and trim sequencing reads"
     echo ""
     echo "Usage:"
-    echo "$0 -b BAMFILE[str] -f REF[str] -x BARCODECHECK[true] -c CELLBARCODE[str] -C CELLBARCODETAG[str] -u UMITAG[str] -t ncut[int] -s SAMPLEID[str] -p nprocs[int] -O OUTPUT[str]"
+    echo "$0 -b BAMFILE[str] -f REF[str] -x BARCODECHECK[true] -c CELLBARCODE[str] -C CELLBARCODETAG[str] -g CONTIGFILE[str] -u UMITAG[str] -t ncut[int] -s SAMPLEID[str] -p nprocs[int] -O OUTPUT[str]"
     echo ""
     echo "Options:"
     echo -e "\t -b \t[bam] bam file path to exclude background cells"
