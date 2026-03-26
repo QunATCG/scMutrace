@@ -88,4 +88,4 @@ echo ""
 
 # main steps
 outdir="${outdir%/}"
-python -u ${scMutrace_src_dir}/src/2_runStep0_FilterSNP.py --outdir ${outdir} --vcfdir ${vcfdir} --id ${id} --nprocs ${nprocs} --backp ${backp} --errorp ${errorp} --model3
+python -u ${scMutrace_src_dir}/src/2_runStep0_FilterSNP.py --outdir ${outdir} --vcfdir ${vcfdir} --iternum ${iteration} --id ${id} --nprocs ${nprocs} --backp ${backp} --errorp ${errorp} --model3
