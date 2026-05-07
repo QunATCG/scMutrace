@@ -112,7 +112,7 @@ def split_multi_files(CORES, pathdir):
 
 # batch window
 # input example: 1_1_249250621
-def batch_config_window(configItem, groupNum = None):
+def batch_config_window_0(configItem, groupNum = None):
     """
     Splits a configuration item into a list of windows based on the specified group number.
     Args:
@@ -142,6 +142,30 @@ def batch_config_window(configItem, groupNum = None):
     for i in range(1, len(configWindowList)):
         restmp = [chr, configWindowList[i-1], configWindowList[i]]
         res.append(restmp)
+    return res
+
+def batch_config_window(configItem, groupNum=5, overlap=20):
+    chrom, startPos, endPos = configItem.split("_")
+    startPos = int(startPos)
+    endPos = int(endPos)
+    intervalLength = endPos - startPos
+    if intervalLength <= 0:
+        raise ValueError("end position must be larger than start position")
+    if groupNum <= 0:
+        raise ValueError("groupNum must be > 0")
+    winSize = math.ceil(intervalLength / groupNum)
+    res = []
+    for i in range(groupNum):
+        winStart = startPos + i * winSize
+        winEnd = min(winStart + winSize, endPos)
+        # add overlap except first window
+        if i != 0:
+            winStart = max(startPos, winStart - overlap)
+        # add overlap except last window
+        if i != groupNum - 1:
+            winEnd = min(endPos, winEnd + overlap)
+        if winStart < endPos:
+            res.append([chrom, winStart, winEnd])
     return res
 
 # check re_exp

@@ -1,6 +1,7 @@
 # import
 import os
 import re
+import math
 import pysam
 import timeit
 import argparse
@@ -55,36 +56,29 @@ def make_dir_check(dirPath):
         print(f"{dirPath} already exists")
     print(f"Directory created: {dirPath}")
 
-def batch_config_window(configItem, groupNum = None):
-    """
-    Splits a configuration item into a list of windows based on the specified group number.
-    Args:
-        configItem (str): A string in the format "chr_start_end" where 'chr' is the chromosome,
-                            'start' is the starting position, and 'end' is the ending position.
-        groupNum (int, optional): The number of groups to split the window into. If not provided,
-                                    defaults to 5.
-    Returns:
-        list: A list of lists, where each sublist contains the chromosome, start, and end positions
-                of each window.
-    Example:
-        >>> batch_config_window("chr1_0_1000", 5)
-        [['chr1', 1, 200], ['chr1', 200, 400], ['chr1', 400, 600], ['chr1', 600, 800], ['chr1', 800, 1000]]
-    """
+
+def batch_config_window(configItem, groupNum=5, overlap=20):
+    chrom, startPos, endPos = configItem.split("_")
+    startPos = int(startPos)
+    endPos = int(endPos)
+    intervalLength = endPos - startPos
+    if intervalLength <= 0:
+        raise ValueError("end position must be larger than start position")
+    if groupNum <= 0:
+        raise ValueError("groupNum must be > 0")
+    winSize = math.ceil(intervalLength / groupNum)
     res = []
-    chr = configItem.split("_")[0]
-    startPos = int(configItem.split("_")[1])
-    end = int(configItem.split("_")[2])
-    # Set default groupNum if not provided
-    if groupNum is None:
-        groupNum = 5
-    # Determine window size based on groupNum
-    winSize = int((end - startPos) / groupNum)
-    # Create list of window start points, ensuring the last point matches 'end'
-    configWindowList = list(range(startPos, end, winSize)) + [end]
-    # Generate windows based on configWindowList
-    for i in range(1, len(configWindowList)):
-        restmp = [chr, configWindowList[i-1], configWindowList[i]]
-        res.append(restmp)
+    for i in range(groupNum):
+        winStart = startPos + i * winSize
+        winEnd = min(winStart + winSize, endPos)
+        # add overlap except first window
+        if i != 0:
+            winStart = max(startPos, winStart - overlap)
+        # add overlap except last window
+        if i != groupNum - 1:
+            winEnd = min(endPos, winEnd + overlap)
+        if winStart < endPos:
+            res.append([chrom, winStart, winEnd])
     return res
 
 def merge_VCF_filesShell(outPath, VCFtmpPath, IDSample, chrTag):
