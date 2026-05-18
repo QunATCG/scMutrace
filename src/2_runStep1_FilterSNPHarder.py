@@ -140,7 +140,7 @@ def bedtools_intersect_v0(path1, path2, pathdatabase):
     return locListCommon, locListUniq
 
 def bedtools_intersect_v(path1, path2, pathdatabase):
-    '''Perform an intersection between two BED files using bedtools and return common and unique positions (faster).
+    '''Perform an intersection between two BED files using bedtools and return common and unique positions (faster version).
 
     Args:
         path1 (str): Path to the input BED file.
