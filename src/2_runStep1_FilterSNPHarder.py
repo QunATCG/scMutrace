@@ -140,55 +140,44 @@ def bedtools_intersect_v0(path1, path2, pathdatabase):
     return locListCommon, locListUniq
 
 def bedtools_intersect_v(path1, path2, pathdatabase):
-    '''Perform an intersection between two BED files using bedtools and return common and unique positions (faster version).
-
-    Args:
-        path1 (str): Path to the input BED file.
-        path2 (str): Path to the output file where the intersection results will be written.
-        pathdatabase (str): Path to the database BED file.
-
-    Returns:
-        tuple: A tuple containing two lists:
-            - locListCommon (list): List of positions that are common between the input and database BED files.
-            - locListUniq (list): List of positions that are unique to the input BED file.
-
-    Raises:
-        FileNotFoundError: If any of the specified files (path1 or pathdatabase) do not exist.
-        subprocess.CalledProcessError: If the bedtools intersect command fails.
-    '''
     if not os.path.exists(path1):
-        raise FileNotFoundError(path1)
+        raise FileNotFoundError(f"File not found: {path1}")
     if not os.path.exists(pathdatabase):
-        raise FileNotFoundError(pathdatabase)
+        raise FileNotFoundError(f"File not found: {pathdatabase}")
 
-    if subprocess.run(["which", "bedtools"], capture_output=True).returncode != 0:
-        raise EnvironmentError("bedtools not found")
+    if subprocess.run(["which", "bedtools"], capture_output=True, text=True).returncode != 0:
+        raise EnvironmentError("bedtools is not installed or not found in the system PATH.")
 
     cmd = ["bedtools", "intersect", "-a", path1, "-b", pathdatabase, "-wa", "-wb"]
-
     with open(path2, "w") as out:
         subprocess.run(cmd, stdout=out, check=True)
+    common_seen = set()
+    locListCommon = []
 
-    common_set = set()
-
-    # intersection file
-    with open(path2) as f:
+    with open(path2, "r") as f:
         for line in f:
             cols = line.rstrip().split("\t")
-            source_pos = cols[1]
-            common_set.add(source_pos)
+            sourcePos = cols[1]
+            targetPosStart = cols[4]
+            targetPosEnd = cols[5]
 
-    # set lookup O(1)
-    uniq_set = set()
+            if int(sourcePos) < int(targetPosStart) or int(sourcePos) > int(targetPosEnd):
+                continue
 
-    with open(path1) as f:
+            if sourcePos not in common_seen:
+                common_seen.add(sourcePos)
+                locListCommon.append(sourcePos)
+    uniq_seen = set()
+    locListUniq = []
+    with open(path1, "r") as f:
         for line in f:
             cols = line.rstrip().split("\t")
             pos = cols[1]
-            if pos not in common_set:
-                uniq_set.add(pos)
+            if pos not in common_seen and pos not in uniq_seen:
+                uniq_seen.add(pos)
+                locListUniq.append(pos)
 
-    return list(common_set), list(uniq_set)
+    return locListCommon, locListUniq
 
 def sort_vcf_loc(PathVCFIn, PathVCFOut):
     """

@@ -259,8 +259,8 @@ def check_noisy_bg(targetVcfPath, pos, altGTCheck):
             # check if the altGT is intersect with the altGTCheck
             if altGTCheck != "None" and altgt_tmp != "None":
                 if set(altgt_tmp.split(",")) & set(altGTCheck):
-                    if abs(int(line[1]) - int(pos)) > 10:
-                        sameMutCount = sameMutCount + 1
+                    #if abs(int(line[1]) - int(pos)) > 10:
+                    #    sameMutCount = sameMutCount + 1
                     if abs(int(line[1]) - int(pos)) <= 10:
                         sameMutCount = sameMutCount + 1
     return mutCount, sameMutCount
