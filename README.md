@@ -237,3 +237,4 @@ samtools view test.bam | head -40000 | cut -f 5 | sort | uniq  -c | sort -n | aw
 # Citing scMutrace
 
 # License
+[MIT License](./LICENSE)
