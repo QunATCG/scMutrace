@@ -50,7 +50,10 @@ def merge_filteredVcf_file(sampleID, filteredVcfPaths, dirPath):
     Raises:
         subprocess.CalledProcessError: If an error occurs while executing the shell commands.
     """
-    chrs = list(set([i.split(sampleID + "_")[1].split(".")[0] for i in filteredVcfPaths]))
+    chrs = list(set([
+            Path(VCFPath).name.split(sampleID + "_")[1].split(".")[0]
+            for VCFPath in filteredVcfPaths
+        ]))
     for chr in chrs:
         tmpipaths = [j for j in filteredVcfPaths if re.search(sampleID + "_" + str(chr) + ".vcf", j) != None]
         tmpsql = " ".join(tmpipaths)
@@ -97,8 +100,8 @@ def filter_snp_threeModel(VCFPath, outPath, a1, b1, a2, b2, model3ProbabilityDic
     Returns:
         None
     """
-    nametag = Path(VCFPath).stem
-    log_path = os.path.join(logDir, f"step2_{nametag}.log")
+    nametag = Path(VCFPath).name
+    log_path = os.path.join(logDir, f"step2_filterSNP_{nametag}.log")
     logFile = open(log_path, "w")
     start_time = timeit.default_timer()
     try:
