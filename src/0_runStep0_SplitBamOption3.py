@@ -71,6 +71,392 @@ def generate_config_range(refasta, contigSelfInPath):
             configDic[refChr] = sqlConfig
     return configDic, chrList
 
+def mark_visium_duplicates(input_bam, output_bam, cb_tag="CB", ub_tag="UB", strip_cb_suffix=False, choose_best=True, tmp_dir=None, batch_size=100_000,):
+    """
+    Mark duplicate reads in Visium / Visium HD BAM using:
+        CB + UB + genomic fragment position
+    Paired-end:
+        key = CB + UB + chr + fragment_start + fragment_end
+    Single-end / abnormal pair:
+        key = CB + UB + chr + start + end + strand
+    Duplicate reads are marked with BAM flag 0x400.
+    Reads are NOT removed.
+    Memory-optimized version:
+        - best_read is stored in SQLite instead of Python dict
+        - duplicate query names are stored in SQLite instead of Python set
+        - suitable for very large coordinate-sorted BAMs
+    Parameters
+    ----------
+    input_bam : str
+        Input coordinate-sorted BAM.
+    output_bam : str
+        Output BAM.
+    cb_tag : str
+        Cell/bin barcode tag, usually "CB".
+    ub_tag : str
+        Corrected UMI tag, usually "UB".
+    strip_cb_suffix : bool
+        Remove trailing "-1" etc. from CB if True.
+    choose_best : bool
+        If True, retain the fragment with:
+            1. highest MAPQ
+            2. highest total base quality
+        If False, retain the first fragment encountered.
+    tmp_dir : str or None
+        Directory for temporary SQLite database.
+        For HPC, ideally use fast local scratch storage.
+    batch_size : int
+        Number of records between SQLite commits.
+    """
+    # ============================================================
+    # Temporary SQLite database
+    # ============================================================
+    if tmp_dir is None:
+        tmp_dir = tempfile.gettempdir()
+    os.makedirs(tmp_dir, exist_ok=True)
+    fd, db_path = tempfile.mkstemp(prefix="visium_dedup_", suffix=".sqlite", dir=tmp_dir)
+    os.close(fd)
+    print(f"Temporary database: {db_path}")
+    conn = sqlite3.connect(db_path)
+    # Faster SQLite settings for temporary data
+    conn.execute("PRAGMA journal_mode = OFF")
+    conn.execute("PRAGMA synchronous = OFF")
+    conn.execute("PRAGMA temp_store = MEMORY")
+    conn.execute("PRAGMA locking_mode = EXCLUSIVE")
+
+    # ============================================================
+    # Table 1: best representative per molecule family
+    # ============================================================
+    print("\n[Pass 1/3] Finding representative reads...")
+    conn.execute(
+        """
+        CREATE TABLE best_read (
+            cb TEXT NOT NULL,
+            ub TEXT NOT NULL,
+            tid INTEGER NOT NULL,
+            start INTEGER NOT NULL,
+            end INTEGER NOT NULL,
+            extra INTEGER NOT NULL,
+
+            query_name TEXT NOT NULL,
+
+            mapq INTEGER NOT NULL,
+            baseq INTEGER NOT NULL,
+
+            PRIMARY KEY (
+                cb,
+                ub,
+                tid,
+                start,
+                end,
+                extra
+            )
+        ) WITHOUT ROWID
+        """
+    )
+
+    bam = pysam.AlignmentFile(input_bam, "rb")
+    processed = 0
+    usable = 0
+
+    cursor = conn.cursor()
+
+    for read in bam.fetch(until_eof=True):
+        processed += 1
+        if not valid_for_family(read):
+            continue
+        cb, ub = get_cb_ub(read, cb_tag, ub_tag, strip_cb_suffix)
+        if cb is None:
+            continue
+        key = get_key(read, cb, ub)
+        # paired read2
+        if key is None:
+            continue
+        usable += 1
+        mapq, baseq = get_score(read)
+        (
+            cb,
+            ub,
+            tid,
+            start,
+            end,
+            extra,
+        ) = key
+
+        if choose_best:
+            # Insert if absent.
+            #
+            # If family already exists:
+            #   replace only when new MAPQ is better
+            #   or MAPQ equal and baseQ is better.
+            cursor.execute(
+                """
+                INSERT INTO best_read (
+                    cb,
+                    ub,
+                    tid,
+                    start,
+                    end,
+                    extra,
+                    query_name,
+                    mapq,
+                    baseq
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+
+                ON CONFLICT (
+                    cb,
+                    ub,
+                    tid,
+                    start,
+                    end,
+                    extra
+                )
+
+                DO UPDATE SET
+                    query_name = excluded.query_name,
+                    mapq = excluded.mapq,
+                    baseq = excluded.baseq
+
+                WHERE
+                    excluded.mapq > best_read.mapq
+
+                    OR (
+                        excluded.mapq = best_read.mapq
+                        AND
+                        excluded.baseq > best_read.baseq
+                    )
+                """,
+                (
+                    cb,
+                    ub,
+                    tid,
+                    start,
+                    end,
+                    extra,
+                    read.query_name,
+                    mapq,
+                    baseq,
+                ),
+            )
+
+        else:
+
+            # Keep first encountered read
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO best_read (
+                    cb,
+                    ub,
+                    tid,
+                    start,
+                    end,
+                    extra,
+                    query_name,
+                    mapq,
+                    baseq
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    cb,
+                    ub,
+                    tid,
+                    start,
+                    end,
+                    extra,
+                    read.query_name,
+                    mapq,
+                    baseq,
+                ),
+            )
+        if usable % batch_size == 0:
+            conn.commit()
+            print(
+                f"\r  usable fragments: {usable:,}",
+                end="",
+                flush=True,
+            )
+    bam.close()
+    conn.commit()
+    print(
+        f"\n  reads scanned:     {processed:,}"
+        f"\n  fragments checked: {usable:,}"
+    )
+
+    n_families = conn.execute(
+        "SELECT COUNT(*) FROM best_read"
+    ).fetchone()[0]
+
+    print(f"  molecule families: {n_families:,}")
+
+    # ============================================================
+    # Table 2: duplicate QNAMEs
+    # ============================================================
+    print("\n[Pass 2/3] Identifying duplicate query names...")
+    conn.execute(
+        """
+        CREATE TABLE duplicate_names (
+            query_name TEXT PRIMARY KEY
+        ) WITHOUT ROWID
+        """
+    )
+    bam = pysam.AlignmentFile(input_bam, "rb")
+    checked = 0
+    duplicate_fragments = 0
+    select_best = conn.cursor()
+    insert_dup = conn.cursor()
+    for read in bam.fetch(until_eof=True):
+        if not valid_for_family(read):
+            continue
+        cb, ub = get_cb_ub(read, cb_tag, ub_tag, strip_cb_suffix)
+        if cb is None:
+            continue
+        key = get_key(read, cb, ub)
+        if key is None:
+            continue
+        checked += 1
+
+        (
+            cb,
+            ub,
+            tid,
+            start,
+            end,
+            extra,
+        ) = key
+
+        result = select_best.execute(
+            """
+            SELECT query_name
+            FROM best_read
+            WHERE
+                cb = ?
+                AND ub = ?
+                AND tid = ?
+                AND start = ?
+                AND end = ?
+                AND extra = ?
+            """,
+            (
+                cb,
+                ub,
+                tid,
+                start,
+                end,
+                extra,
+            ),
+        ).fetchone()
+
+        if result is None:
+            continue
+
+        representative_name = result[0]
+
+        if read.query_name != representative_name:
+            insert_dup.execute(
+                """
+                INSERT OR IGNORE INTO duplicate_names
+                VALUES (?)
+                """,
+                (read.query_name,),
+            )
+            duplicate_fragments += 1
+        if checked % batch_size == 0:
+            conn.commit()
+            print(
+                f"\r  fragments checked: {checked:,}",
+                end="",
+                flush=True,
+            )
+    bam.close()
+    conn.commit()
+
+    print(f"\n  duplicate fragments: {duplicate_fragments:,}")
+
+    n_duplicate_names = conn.execute(
+        "SELECT COUNT(*) FROM duplicate_names"
+    ).fetchone()[0]
+
+    print(f"  duplicate QNAMEs:     {n_duplicate_names:,}")
+
+    # best_read is no longer needed.
+    # Drop it to reduce DB size / lookup overhead.
+    conn.execute("DROP TABLE best_read")
+    conn.commit()
+
+    # ============================================================
+    # Pass 3:
+    # mark BOTH mates using query_name
+    # ============================================================
+
+    print("\n[Pass 3/3] Writing duplicate-marked BAM...")
+
+    bam = pysam.AlignmentFile(input_bam, "rb")
+    out = pysam.AlignmentFile(
+        output_bam,
+        "wb",
+        template=bam,
+    )
+    lookup_dup = conn.cursor()
+    total_reads = 0
+    duplicate_reads = 0
+    for read in bam.fetch(until_eof=True):
+        total_reads += 1
+        result = lookup_dup.execute(
+            """
+            SELECT 1
+            FROM duplicate_names
+            WHERE query_name = ?
+            """,
+            (read.query_name,),
+        ).fetchone()
+
+        if result is not None:
+            read.is_duplicate = True
+            duplicate_reads += 1
+        out.write(read)
+        if total_reads % 1_000_000 == 0:
+            print(
+                f"\r  reads written: {total_reads:,}",
+                end="",
+                flush=True,
+            )
+    bam.close()
+    out.close()
+    conn.close()
+
+    # ============================================================
+    # Index
+    # ============================================================
+
+    print("Indexing output BAM...")
+    pysam.index(output_bam)
+
+    # Remove temporary database
+    try:
+        os.remove(db_path)
+    except OSError:
+        pass
+
+    # ============================================================
+    # Summary
+    # ============================================================
+
+    print("\nDone.")
+    print(f"Total reads:      {total_reads:,}")
+    print(f"Duplicate reads:  {duplicate_reads:,}")
+
+    if total_reads > 0:
+        print(
+            f"Duplicate rate:   "
+            f"{duplicate_reads / total_reads:.2%}"
+        )
+    else:
+        print("Duplicate rate:   NA")
+
+    print(f"Output:           {output_bam}")
+
 # split bam based on barcode
 def split_bam_basedList(bam_Path, barcodeSubList, ChrList, configValue, subam_path, seqTag, nameOut, ncut, barcodetag):
     bam = pysam.AlignmentFile(bam_Path, 'rb')
