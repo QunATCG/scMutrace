@@ -23,7 +23,7 @@ helpFunction(){
     echo -e "\t -c \t[barcode] cell barcode to be included"
     echo -e "\t -C \t[cellbarcodetag] cell barcode tag in bam file (default: CB)"
     echo -e "\t -g \t[contigFile] Contig information in tab-separated format: Chr\tstart\tend"
-    echo -e "\t -u \t[umi] umi to be used to remove duplicated reads (default: CB, if XX, no umi)"
+    echo -e "\t -u \t[umi] umi to be used to remove duplicated reads (default: UB, if XX, no umi)"
     echo -e "\t -t \t[ncut] number of reads bases will be cut (default: 10)"
     echo -e "\t -s \t[id] sample id"
     echo -e "\t -p \t[nprocs] number of processes (default: 1)"
@@ -37,7 +37,7 @@ helpFunction(){
 ncut=10
 nprocs=1
 cellbarcodetag="CB"
-umitag="CB"
+umitag="UB"
 barcodecheck="true"
 
 
@@ -110,57 +110,21 @@ outdir="${outdir%/}"
 
 # main steps
 # if cellbarcode check is true, then split bam file
-if [ ${barcodecheck} == "true" ]; then
-    echo "making the output directory.."${id}
-    mkdir -p ${outdir}
-    echo "Exclude background cells and trim reads.."${id}
-    python -u ${scMutrace_src_dir}/src/0_runStep0_SplitBamOption3.py --bam ${bam} --ref ${ref} --barcode ${barcode} --splitCheck --ncut ${ncut} \
-        --contigFile ${contigFile} --id ${id} --barcodetag ${cellbarcodetag} --nprocs ${nprocs} --outdir ${outdir}
-    if [ $? -ne 0 ]; then
-        echo "Failed to exclude background cells and trim reads."
-        exit 1
-    fi
-    echo "samtools merge bam files.."${id}
-    samtools merge -@ ${nprocs} -o ${outdir}/ExcludeBG_${id}.bam ${outdir}/${id}_*tmp.SMT.bam
-    echo "samtools sort..${id}"
-    samtools sort -@ ${nprocs} ${outdir}/ExcludeBG_${id}.bam -o ${outdir}/ExcludeBG_${id}.sort.bam
-    echo "samtools index..${id}"
-    samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.bam
-    rm ${outdir}/ExcludeBG_${id}.bam
-    rm ${outdir}/*tmp.SMT.bam*
-    if [ ${umitag} != "XX" ]; then
-        samtools view -@ ${nprocs} -h ${outdir}/ExcludeBG_${id}.sort.bam | perl -pe 's/CB:Z:([A-Z]*)-1/CB:Z:$1/' | samtools view -@ ${nprocs} -b -o ${outdir}/ExcludeBG_${id}.sort.reCB.bam
-        samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.reCB.bam
-        echo "picard rmdup.."${id}
-        java -jar ${scMutrace_src_dir}/software/picard.jar MarkDuplicates --BARCODE_TAG ${umitag} --REMOVE_DUPLICATES --INPUT ${outdir}/ExcludeBG_${id}.sort.reCB.bam --METRICS_FILE ${outdir}/ExcludeBG_${id}.picard_dup_metrics.txt --OUTPUT ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
-        echo "samtools index rmdup.."${id}
-        samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
-        rm ${outdir}/ExcludeBG_${id}.sort.reCB.bam ${outdir}/ExcludeBG_${id}.sort.reCB.bam.bai
-        echo "Done!"${id}
-    fi
-    if [ ${umitag} == "XX" ]; then
-        echo "picard rmdup.."${id}
-        java -jar ${scMutrace_src_dir}/software/picard.jar MarkDuplicates --REMOVE_DUPLICATES --INPUT ${outdir}/ExcludeBG_${id}.sort.bam --METRICS_FILE ${outdir}/ExcludeBG_${id}.picard_dup_metrics.txt --OUTPUT ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
-        echo "samtools index rmdup.."${id}
-        samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
-        echo "Done!"${id}
-    fi
-elif [ ${barcodecheck} == "false" ]; then
-    if [ ${umitag} != "XX" ]; then
-        samtools view -@ ${nprocs} -h ${bam} | perl -pe 's/CB:Z:([A-Z]*)-1/CB:Z:$1/' | samtools view -@ ${nprocs} -b -o ${outdir}/ExcludeBG_${id}.sort.reCB.bam
-        samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.reCB.bam
-        echo "picard rmdup.."${id}
-        java -jar ${scMutrace_src_dir}/software/picard.jar MarkDuplicates --BARCODE_TAG ${umitag} --REMOVE_DUPLICATES --INPUT ${outdir}/ExcludeBG_${id}.sort.reCB.bam --METRICS_FILE ${outdir}/ExcludeBG_${id}.picard_dup_metrics.txt --OUTPUT ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
-        echo "samtools index rmdup.."${id}
-        samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
-        rm ${outdir}/ExcludeBG_${id}.sort.reCB.bam ${outdir}/ExcludeBG_${id}.sort.reCB.bam.bai
-        echo "Done!"${id}
-    fi
-    if [ ${umitag} == "XX" ]; then
-        echo "picard rmdup.."${id}
-        java -jar ${scMutrace_src_dir}/software/picard.jar MarkDuplicates --REMOVE_DUPLICATES --INPUT ${outdir}/ExcludeBG_${id}.sort.bam --METRICS_FILE ${outdir}/ExcludeBG_${id}.picard_dup_metrics.txt --OUTPUT ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
-        echo "samtools index rmdup.."${id}
-        samtools index -@ ${nprocs} ${outdir}/ExcludeBG_${id}.sort.rmdupicard.bam
-        echo "Done!"${id}
-    fi
+echo "making the output directory.."${id}
+mkdir -p ${outdir}
+echo "Exclude background cells and trim reads.."${id}
+python -u ${scMutrace_src_dir}/src/0_runStep0_SplitBamOption3.py \
+    --bam ${bam} \
+    --ref ${ref} \
+    --barcode ${barcode} \
+    --barcodetag ${cellbarcodetag} \
+    --umitag ${umitag} \
+    --splitCheck \
+    --id ${id} --ncut 10 --nprocs 4 \
+    --contigFile ${contigFile} \
+    --outdir ${outdir}
+
+if [ $? -ne 0 ]; then
+    echo "Failed to exclude background cells and trim reads."
+    exit 1
 fi

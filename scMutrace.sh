@@ -113,7 +113,7 @@ includeitem="NotAvailable"
 cellbarcodetag="CB"
 barcodecheck="true"
 ratioUser=0.005
-umi="CB"
+umi="UB"
 
 # Check if no arguments are passed
 if [ $# -eq 0 ]; then
