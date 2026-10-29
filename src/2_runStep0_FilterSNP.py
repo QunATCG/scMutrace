@@ -5,6 +5,7 @@ import argparse
 import multiprocessing as mp
 from py_utils import *
 import subprocess
+from pathlib import Path
 
 def initialize_parser():
     parser = argparse.ArgumentParser(description='filter SNP based on 3Model')
@@ -27,6 +28,15 @@ def initialize_parser():
 
 def err_call_back(err):
     print(f'apply_async error:{str(err)}')
+
+def finished_callback(result):
+    print(
+        f"[DONE] {result['file']} | "
+        f"total_sites={result['total_sites']:,} | "
+        f"pass_sites={result['final_variants']:,} | "
+        f"log={result['log']}",
+        flush=True,
+    )
 
 def merge_filteredVcf_file(sampleID, filteredVcfPaths, dirPath):
     """
@@ -60,7 +70,7 @@ def merge_filteredVcf_file(sampleID, filteredVcfPaths, dirPath):
             print(f"Output: {e.output}")
 
 
-def filter_snp_threeModel(VCFPath, outPath, a1, b1, a2, b2, model3ProbabilityDic, quainfos, iternum, errorP, backP, m1check, m2check, m3check):
+def filter_snp_threeModel(VCFPath, outPath, a1, b1, a2, b2, model3ProbabilityDic, quainfos, iternum, errorP, backP, m1check, m2check, m3check, logDir):
     """
     Filters SNPs using a three-model approach and writes the results to an output file.
 
@@ -87,14 +97,25 @@ def filter_snp_threeModel(VCFPath, outPath, a1, b1, a2, b2, model3ProbabilityDic
     Returns:
         None
     """
+    nametag = Path(VCFPath).stem
+    log_path = os.path.join(logDir, f"step2_{nametag}.log")
+    logFile = open(log_path, "w")
+    start_time = timeit.default_timer()
     try:
         with open(VCFPath, "r") as vcfile, open(outPath, "w+") as outfile:
+            p_to_log(logFile, "=" * 80)
+            p_to_log(logFile, "scMutrace mutation calling")
+            p_to_log(logFile, "=" * 80)
+            p_to_log(logFile, f"Start time                  : {time.strftime('%Y-%m-%d %H:%M:%S')}")
             fileRowNum = get_Vcf_rownum(VCFPath)
             counttmp = 0
+            countpass = 0
             for line in vcfile:
                 counttmp += 1
                 if counttmp % 5000 == 0:
-                    print("Processed " + str(counttmp) + "/" + str(fileRowNum) + " positions")
+                    p_to_log(logFile, 
+                                f"Processed {counttmp:,}  | {fileRowNum:,} sites"
+                            )
                 lineSets = line.split("\t")
                 refBase = lineSets[2]
                 baseQualityInfoOnesite = lineSets[11]
@@ -115,10 +136,27 @@ def filter_snp_threeModel(VCFPath, outPath, a1, b1, a2, b2, model3ProbabilityDic
                     supportEvidence = "Weak"
                     filtercheck = "PASS_3Model"
                 sql = line.strip() + "\t" + filterinfo + "\t" + filtercheck + "\t" + statpvalue + "\t" + supportEvidence + "\t" + iteresampleNum
+                countpass += 1
                 outfile.writelines(sql + "\n")
                 outfile.flush()
             print("Done for " + VCFPath)
             cmd = ["rm", VCFPath]
+            elapsed = timeit.default_timer() - start_time
+            hours = int(elapsed // 3600)
+            minutes = int((elapsed % 3600) // 60)
+            seconds = elapsed % 60
+            p_to_log(logFile, "")
+            p_to_log(logFile, "=" * 80)
+            p_to_log(logFile, "Summary")
+            p_to_log(logFile, "=" * 80)
+            p_to_log(logFile, f"PASS sites                  : {countpass:,}")
+            p_to_log(logFile, "")
+            p_to_log(logFile, f"Elapsed time                 : "
+                    f"{hours:02d}:{minutes:02d}:{seconds:05.2f}")
+            p_to_log(logFile, f"Output                      : {outPath}")
+            p_to_log(logFile, "=" * 80)
+            p_to_log(logFile, "Done.")
+            p_to_log(logFile, "=" * 80)
             try:
                 subprocess.run(cmd, check=True)
             except subprocess.CalledProcessError as e:
@@ -127,6 +165,13 @@ def filter_snp_threeModel(VCFPath, outPath, a1, b1, a2, b2, model3ProbabilityDic
                 print(f"Output: {e.output}")
     except (IndexError, ValueError) as e:
         print(f"An error occurred: {e}")
+    return {
+                "file": f"{VCFPath}",
+                "total_sites": fileRowNum,
+                "final_variants": countpass,
+                "log": log_path,
+            }
+    
 
 def main():
     parser = initialize_parser()
@@ -159,9 +204,11 @@ def main():
             COREUSE = mp.cpu_count() - 1
             print("Cores is over computer max cpus...")
     filterPath = outPath + "/filterVCF/"
+    logDir = os.path.join(outPath, "logs")
     quainfos = list(range(10, 100, 1))
     model3ProbabilityDic = create_model3_probabilityDic(errorP, quainfos)
     make_dir_check(filterPath)
+    make_dir_check(logDir)
     # split file
     print("Splitting files...")
     split_multi_files(COREUSE, VCFDir)
@@ -178,7 +225,7 @@ def main():
         print("Your cores is " + str(COREUSE))
         results = []
         for i in range(0, NumberVCF):
-            result = p.apply_async(filter_snp_threeModel, args = (vcfilesInpaths[i], vcfilesOutpaths[i], a1, b1, a2, b2, model3ProbabilityDic, quainfos, iternum, errorP, backP, m1check, m2check, m3check,), error_callback=err_call_back)
+            result = p.apply_async(filter_snp_threeModel, args = (vcfilesInpaths[i], vcfilesOutpaths[i], a1, b1, a2, b2, model3ProbabilityDic, quainfos, iternum, errorP, backP, m1check, m2check, m3check,logDir,), callback=finished_callback, error_callback=err_call_back)
             results.append(result)
         print('Waiting for all subprocesses done...')
         p.close()
@@ -188,7 +235,7 @@ def main():
         print('All subprocesses done.')
     else:
         for i in range(0, len(vcfilesInpaths)):
-            filter_snp_threeModel(vcfilesInpaths[i], vcfilesOutpaths[i], a1, b1, a2, b2, model3ProbabilityDic, quainfos, iternum, errorP, backP, m1check, m2check, m3check)
+            filter_snp_threeModel(vcfilesInpaths[i], vcfilesOutpaths[i], a1, b1, a2, b2, model3ProbabilityDic, quainfos, iternum, errorP, backP, m1check, m2check, m3check, logDir)
     print("Merging vcf files...")
     merge_filteredVcf_file(IDSample, vcfilesOutpaths, filterPath)
 

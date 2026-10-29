@@ -608,13 +608,13 @@ def split_bam_basedList(bam_Path, barcodeSubList, ChrList, configValue, subam_pa
     rmdupBamPath = outBamPath.replace(".tmp.",".rmdup.")
     log_dir = os.path.join(subam_path, "logs")
     os.makedirs(log_dir, exist_ok=True)
-    log_path = os.path.join(log_dir, f"step1_{nameOut}_{chrtmp}_{startmp}_{endtmp}.{seqTag}.splitrmdup.log")
+    log_path = os.path.join(log_dir, f"step0_{nameOut}_{chrtmp}_{startmp}_{endtmp}.{seqTag}.splitrmdup.log")
     with open(log_path, "w", buffering=1) as log_file:
         with (contextlib.redirect_stdout(log_file), contextlib.redirect_stderr(log_file)):
             start_time = timeit.default_timer()
             try:
                 print("=" * 80, flush=True)
-                print("spMutrace mutation calling")
+                print("scMutrace mutation calling")
                 print(f"PID:          {os.getpid()}", flush=True)
                 print(f"Region:       {chrtmp}:{startmp}-{endtmp}", flush=True)
                 print(f"Seq tag:      {seqTag}", flush=True)

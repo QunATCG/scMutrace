@@ -9,6 +9,8 @@ import os
 import re
 import math
 import pysam
+import time
+import timeit
 import random
 import linecache
 import subprocess
@@ -27,6 +29,11 @@ BASIC_BASE = ["A", "T", "C", "G", "D", "I"]
 BASIC_BASE_CAN = ["A", "T", "C", "G", "N"]
 
 ####################
+def p_to_log(logFile, msg="", end="\n", flush=True):
+    print(msg, end=end, file=logFile)
+    if flush:
+        logFile.flush()
+
 # make dir
 def make_dir_check(dirPath):
     """
@@ -494,7 +501,7 @@ def cal_pError_fromBaseQuality(baseQuality):
     pError = 10 ** (-int(baseQuality) / 10)
     return pError
 
-def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_altcov, min_cell, min_altcell, max_nm, cbtag, ratioUser):
+def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_altcov, min_cell, min_altcell, max_nm, cbtag, ratioUser, logDir):
     """
     Count mutation information from BAM file and write to VCF file.
 
@@ -530,14 +537,45 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
     refFasta = pysam.FastaFile(referencePath)
     # pileups
     bam_pileups = pysamData.pileup(contig = str(chr), start = int(start), end = int(end), max_depth = 100000000, min_base_quality = min_bq, min_mapping_quality = min_mq)
-    count_num_iter = 0
+    log_path = os.path.join(logDir, f"step1_{chr}_{start}_{end}.log")
+    logFile = open(log_path, "w")
+    start_time = timeit.default_timer()
+    p_to_log(logFile, "=" * 80)
+    p_to_log(logFile, "scMutrace mutation calling")
+    p_to_log(logFile, "=" * 80)
+    p_to_log(logFile, f"Start time                  : {time.strftime('%Y-%m-%d %H:%M:%S')}")
+    p_to_log(logFile, f"BAM                         : {os.path.basename(BamPath)}")
+    p_to_log(logFile, f"Reference                   : {os.path.basename(referencePath)}")
+    p_to_log(logFile, f"Region                      : {chr}:{start:,}-{end:,}")
+    p_to_log(logFile, "")
+    p_to_log(logFile, "Parameters")
+    p_to_log(logFile, "-" * 80)
+    p_to_log(logFile, f"min_cov                     : {min_cov}")
+    p_to_log(logFile, f"min_altcov                  : {min_altcov}")
+    p_to_log(logFile, f"min_cell                    : {min_cell}")
+    p_to_log(logFile, f"min_altcell                 : {min_altcell}")
+    p_to_log(logFile, f"min_bq                      : {min_bq}")
+    p_to_log(logFile, f"min_mq                      : {min_mq}")
+    p_to_log(logFile, f"max_nm                      : {max_nm}")
+    p_to_log(logFile, "")
+    p_to_log(logFile, "Running...")
+    p_to_log(logFile, "=" * 80)
+    site_total = 0
+    site_dp = 0
+    site_alt = 0
+    site_cell = 0
+    site_final = 0
+    read_total = 0
+    read_highNM = 0
     # out vcf
     outPath = os.path.join(outVcfPath, f"VCF_{chr}_{start}_{end}.vcf")
     outVcfFile = open(outPath, "w+")
     for bam_pileup in bam_pileups:
-        count_num_iter += 1
-        if count_num_iter % 500000 == 0:
-            print("Processed " + str(count_num_iter) + " reads")
+        site_total += 1
+        if site_total % 500000 == 0:
+            p_to_log(logFile, 
+                        f"Processed {site_total:,} sites"
+                    )
         # PileupColumn
         # the position in the reference sequence (0-based)
         # -------------------------------------------------
@@ -589,6 +627,7 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
             CELL_COUNTS_R_DIC = {"A": [], "T": [], "C": [], "G": [], "N": [], "D": [], "I": []}
             # Check each reads in this column
             for i in range(0, READS_NUM):
+                read_total += 1
                 # a pysam.AlignedSegment object of the aligned read
                 # -------------------------------------------------
                 # READ_ALIGNMENT > pysam.AlignedSegment
@@ -609,6 +648,7 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
                         if tagCheck_NM:
                             NM_count = READ_ALIGNMENT.opt("NM")
                             if NM_count > max_nm:
+                                read_highNM += 1
                                 continue
                         else:
                             tagCheck_NM = READ_ALIGNMENT.has_tag("nM")
@@ -617,6 +657,7 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
                             if tagCheck_NM:
                                 NM_count = READ_ALIGNMENT.opt("nM")
                                 if NM_count > max_nm:
+                                    read_highNM += 1
                                     continue
                     # BASE
                     BASE_READ_ALIGNMENT = NEW_BASE_PILEUP_LIST[i]
@@ -645,17 +686,20 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
             if dp_check:
                 if int(DP_TOTAL) < int(min_cov):
                     continue
+            site_dp += 1
             DP_ALT_REAL = count_base_fromDic(BASE_COUNTS_DIC, [REF_BASE, "N"])
             if alt_check == True and int(DP_ALT_REAL) < int(min_altcov):
                 continue
             if DP_TOTAL >= 1000 and DP_ALT_REAL <= (float(ratioUser) * DP_TOTAL):
                 continue
+            site_alt += 1
             # CELL NUMBER
             # CELL MUTINFO Total
             COUNTINFOCELL, COUNTINFOALT, COUNTOTALCELL, COUNTOTALALT, COUNTOTALCELLALT = get_mut_total(CELL_COUNTS_DIC, REF_BASE)
             #CELL_NUM = len(set(CELLS))
             if cell_check == True and COUNTOTALCELL < int(min_cell) and COUNTOTALALT < int(min_altcell):
                 continue
+            site_cell += 1
             CELLUNIQ, CELLMUTCOUNTINFO = get_mut_bycell(CELL_COUNTS_DIC)
             CELLUNIQ_F, CELLMUTCOUNTINFO_F = get_mut_bycell(CELL_COUNTS_F_DIC)
             CELLUNIQ_R, CELLMUTCOUNTINFO_R = get_mut_bycell(CELL_COUNTS_R_DIC)
@@ -678,11 +722,41 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
             SQL_0 = f"{chr}\t{POS_PILEUP + 1}\t{REF_BASE}\t{DP_TOTAL}\t{COUNTINFOALT}\t{COUNTOTALALT}\t{COUNTOTALCELL}\t{COUNTINFOCELL}\t{COUNTOTALCELLALT}"
             SQL_1 = f"{CELLUNIQ_STR}\t{CELLMUTCOUNTINFO_STR}\t{BASE_QUALITIES_INFO}\t{CELLUNIQ_F_INDEX}\t{CELLMUTCOUNTINFO_F_STR}\t{CELLUNIQ_R_INDEX}\t{CELLMUTCOUNTINFO_R_STR}"
             SQL = f"{SQL_0}\t{SQL_1}"
+            site_final += 1
             outVcfFile.writelines(SQL + "\n")
             outVcfFile.flush()
     refFasta.close()
     outVcfFile.close()
-    print(f'count_mut_information ###---### sub task was done: {chr}_{start}_{end}')
+    elapsed = timeit.default_timer() - start_time
+    hours = int(elapsed // 3600)
+    minutes = int((elapsed % 3600) // 60)
+    seconds = elapsed % 60
+    p_to_log(logFile, "")
+    p_to_log(logFile, "=" * 80)
+    p_to_log(logFile, "Summary")
+    p_to_log(logFile, "=" * 80)
+    p_to_log(logFile, f"Total pileup sites          : {site_total:,}")
+    p_to_log(logFile, f"Passed DP filter            : {site_dp:,}")
+    p_to_log(logFile, f"Passed ALT filter           : {site_alt:,}")
+    p_to_log(logFile, f"Passed Cell filter          : {site_cell:,}")
+    p_to_log(logFile, f"Final variants              : {site_final:,}")
+    p_to_log(logFile, "")
+    p_to_log(logFile, "")
+    p_to_log(logFile, f"Total reads                 : {read_total:,}")
+    p_to_log(logFile, f"High mismatch reads         : {read_highNM:,}")
+    p_to_log(logFile, "")
+    p_to_log(logFile, f"Elapsed time                 : "
+            f"{hours:02d}:{minutes:02d}:{seconds:05.2f}")
+    p_to_log(logFile, f"Output                      : {outPath}")
+    p_to_log(logFile, "=" * 80)
+    p_to_log(logFile, "Done.")
+    p_to_log(logFile, "=" * 80)
+    return {
+            "region": f"{chr}_{start}_{end}",
+            "total_sites": site_total,
+            "final_variants": site_final,
+            "log": log_path,
+        }
 
 # target extract snp from bam
 def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_alt, min_cell, max_nm, cbtag, binSize, id):

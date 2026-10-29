@@ -33,6 +33,15 @@ def initialize_parser():
 def err_call_back(err):
     print(f'apply_async error: {str(err)}')
 
+def finished_callback(result):
+    print(
+        f"[DONE] {result['region']} | "
+        f"total_sites={result['total_sites']:,} | "
+        f"pass_sites={result['final_variants']:,} | "
+        f"log={result['log']}",
+        flush=True,
+    )
+
 def merge_VCF_filesShell(outPath, VCFtmpPath, IDSample, chrTag):
     """
     Merges VCF files for a specific chromosome tag and sample ID, and removes the temporary files.
@@ -81,6 +90,7 @@ def main():
     COREUSE = args.nprocs
     ratioUser = float(args.ratio)
     outDirPath = args.outdir
+    logDir = os.path.join(outDirPath, "logs")
     outDirPathVCFTmp = os.path.join(outDirPath, "tmpVCF")
     
     # clean tmpVCF if it exists
@@ -98,6 +108,7 @@ def main():
     # make dir
     make_dir_check(outDirPath)
     make_dir_check(outDirPathVCFTmp)
+    make_dir_check(logDir)
     make_dir_check(VcfPOSOUT)
     
     print("Processing " + bam_Path)
@@ -123,7 +134,7 @@ def main():
             p = mp.get_context("fork").Pool(COREUSE)
             print("Your cores is " + str(COREUSE))
             for config_i in K:
-                p.apply_async(count_mut_information, args=(bam_Path, ref_Path, outDirPathVCFTmp, config_i, minbq, minmq, True, True, True, nmCheckStates, min_cov, min_altcov, min_cell, min_altcell, max_nm, cbtag, ratioUser), error_callback=err_call_back)
+                p.apply_async(count_mut_information, args=(bam_Path, ref_Path, outDirPathVCFTmp, config_i, minbq, minmq, True, True, True, nmCheckStates, min_cov, min_altcov, min_cell, min_altcell, max_nm, cbtag, ratioUser,logDir,), callback=finished_callback, error_callback=err_call_back)
             print('Waiting for all subprocesses done...')
             p.close()
             p.join()
@@ -132,10 +143,21 @@ def main():
             print("Your cores is 1")
             for config_i in K:
                 print(config_i)
-                count_mut_information(BamPath=bam_Path, referencePath=ref_Path, outVcfPath=outDirPathVCFTmp, config_posList=config_i, min_bq=minbq, min_mq=minmq, dp_check=True, alt_check=True, cell_check=True, nm_check=nmCheckStates, min_cov=min_cov, min_altcov=min_altcov, min_cell=min_cell, min_altcell=min_altcell, max_nm=max_nm, cbtag=cbtag, ratioUser=ratioUser)
+                count_mut_information(BamPath=bam_Path, referencePath=ref_Path, outVcfPath=outDirPathVCFTmp, config_posList=config_i, min_bq=minbq, min_mq=minmq, dp_check=True, alt_check=True, cell_check=True, nm_check=nmCheckStates, min_cov=min_cov, min_altcov=min_altcov, min_cell=min_cell, min_altcell=min_altcell, max_nm=max_nm, cbtag=cbtag, ratioUser=ratioUser, logDir = logDir)
         
         print("Merging... " + bam_Path + " of Chromosome: " + str(config_info.split("_")[0]))
         merge_VCF_filesShell(VcfPOSOUT, outDirPathVCFTmp, nameSplitBamTag, str(config_info.split("_")[0]))
+        print("Merging log files... ")
+        tmplogFiles = [os.path.join(logDir, f"step1_{i[0]}_{i[1]}_{i[2]}.log") for i in K]
+        merged_log = os.path.join(logDir, f'step1_{nameSplitBamTag}_{config_info}.log')
+        with open(merged_log, "w") as fout:
+            for log in tmplogFiles:
+                if not os.path.exists(log):
+                    raise FileNotFoundError(log)
+                with open(log) as fin:
+                    for line in fin:
+                        fout.write(line)
+                os.remove(log)
     else:
         print("No config info")
         print("Please check your config info")
