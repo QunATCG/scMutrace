@@ -16,6 +16,8 @@ import linecache
 import subprocess
 import collections
 import numpy as np
+import logging
+from pathlib import Path
 from scipy import stats
 from random import shuffle
 from scipy.stats import betabinom
@@ -501,7 +503,48 @@ def cal_pError_fromBaseQuality(baseQuality):
     pError = 10 ** (-int(baseQuality) / 10)
     return pError
 
-def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_altcov, min_cell, min_altcell, max_nm, cbtag, ratioUser, logDir):
+def setup_worker_logging(log_path):
+    """
+    One log file per chromosome/region.
+    Safe for multiprocessing workers.
+    """
+    log_path = Path(log_path)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    logger_name = (
+        f"scMutrace.step1.{os.getpid()}.{log_path.stem}"
+    )
+
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+        handler.close()
+
+    formatter = logging.Formatter(
+        "%(asctime)s [%(levelname)s] "
+        "[PID:%(process)d] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    handler = logging.FileHandler(
+        log_path,
+        mode="w",
+        encoding="utf-8"
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    return logger
+
+def close_worker_logging(logger):
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+        handler.close()
+
+def count_mut_information_v0(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_altcov, min_cell, min_altcell, max_nm, cbtag, ratioUser, logDir):
     """
     Count mutation information from BAM file and write to VCF file.
 
@@ -537,29 +580,42 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
     refFasta = pysam.FastaFile(referencePath)
     # pileups
     bam_pileups = pysamData.pileup(contig = str(chr), start = int(start), end = int(end), max_depth = 100000000, min_base_quality = min_bq, min_mapping_quality = min_mq)
-    log_path = os.path.join(logDir, f"step1_{chr}_{start}_{end}.log")
-    logFile = open(log_path, "w")
+    log_path = os.path.join(
+        logDir,
+        f"step1_{chr}_{start}_{end}.log"
+    )
+
+    logger = setup_worker_logging(log_path)
+
     start_time = timeit.default_timer()
-    p_to_log(logFile, "=" * 80)
-    p_to_log(logFile, "scMutrace mutation calling")
-    p_to_log(logFile, "=" * 80)
-    p_to_log(logFile, f"Start time                  : {time.strftime('%Y-%m-%d %H:%M:%S')}")
-    p_to_log(logFile, f"BAM                         : {os.path.basename(BamPath)}")
-    p_to_log(logFile, f"Reference                   : {os.path.basename(referencePath)}")
-    p_to_log(logFile, f"Region                      : {chr}:{start:,}-{end:,}")
-    p_to_log(logFile, "")
-    p_to_log(logFile, "Parameters")
-    p_to_log(logFile, "-" * 80)
-    p_to_log(logFile, f"min_cov                     : {min_cov}")
-    p_to_log(logFile, f"min_altcov                  : {min_altcov}")
-    p_to_log(logFile, f"min_cell                    : {min_cell}")
-    p_to_log(logFile, f"min_altcell                 : {min_altcell}")
-    p_to_log(logFile, f"min_bq                      : {min_bq}")
-    p_to_log(logFile, f"min_mq                      : {min_mq}")
-    p_to_log(logFile, f"max_nm                      : {max_nm}")
-    p_to_log(logFile, "")
-    p_to_log(logFile, "Running...")
-    p_to_log(logFile, "=" * 80)
+    last_progress_time = start_time
+
+    logger.info("=" * 70)
+    logger.info("scMutrace Step 1: Mutation Calling")
+    logger.info("=" * 70)
+
+    logger.info("Input BAM: %s", BamPath)
+    logger.info("Reference: %s", referencePath)
+    logger.info("Region: %s:%d-%d", chr, start, end)
+    logger.info("Output directory: %s", outVcfPath)
+
+    logger.info("Parameters:")
+    logger.info("  min_cov: %s", min_cov)
+    logger.info("  min_altcov: %s", min_altcov)
+    logger.info("  min_cell: %s", min_cell)
+    logger.info("  min_altcell: %s", min_altcell)
+    logger.info("  min_bq: %s", min_bq)
+    logger.info("  min_mq: %s", min_mq)
+    logger.info("  max_nm: %s", max_nm)
+    logger.info("  cbtag: %s", cbtag)
+    logger.info("  ratioUser: %s", ratioUser)
+
+    logger.info(
+        "Filter switches: DP=%s ALT=%s CELL=%s NM=%s",
+        dp_check, alt_check, cell_check, nm_check
+    )
+
+    logger.info("Starting pileup processing...")
     site_total = 0
     site_dp = 0
     site_alt = 0
@@ -573,9 +629,26 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
     for bam_pileup in bam_pileups:
         site_total += 1
         if site_total % 500000 == 0:
-            p_to_log(logFile, 
-                        f"Processed {site_total:,} sites"
-                    )
+            now = timeit.default_timer()
+            elapsed = now - start_time
+            interval = now - last_progress_time
+            speed = (
+                500_000 / interval
+                if interval > 0
+                else 0
+            )
+            logger.info(
+                "PROGRESS | Sites=%s | "
+                "Final=%s | Reads=%s | "
+                "Speed=%.1f sites/s | "
+                "Elapsed=%.2f min",
+                f"{site_total:,}",
+                f"{site_final:,}",
+                f"{read_total:,}",
+                speed,
+                elapsed / 60
+            )
+            last_progress_time = now
         # PileupColumn
         # the position in the reference sequence (0-based)
         # -------------------------------------------------
@@ -725,38 +798,671 @@ def count_mut_information(BamPath, referencePath, outVcfPath, config_posList, mi
             site_final += 1
             outVcfFile.writelines(SQL + "\n")
             outVcfFile.flush()
+    pysamData.close()
     refFasta.close()
     outVcfFile.close()
     elapsed = timeit.default_timer() - start_time
-    hours = int(elapsed // 3600)
-    minutes = int((elapsed % 3600) // 60)
-    seconds = elapsed % 60
-    p_to_log(logFile, "")
-    p_to_log(logFile, "=" * 80)
-    p_to_log(logFile, "Summary")
-    p_to_log(logFile, "=" * 80)
-    p_to_log(logFile, f"Total pileup sites          : {site_total:,}")
-    p_to_log(logFile, f"Passed DP filter            : {site_dp:,}")
-    p_to_log(logFile, f"Passed ALT filter           : {site_alt:,}")
-    p_to_log(logFile, f"Passed Cell filter          : {site_cell:,}")
-    p_to_log(logFile, f"Final variants              : {site_final:,}")
-    p_to_log(logFile, "")
-    p_to_log(logFile, "")
-    p_to_log(logFile, f"Total reads                 : {read_total:,}")
-    p_to_log(logFile, f"High mismatch reads         : {read_highNM:,}")
-    p_to_log(logFile, "")
-    p_to_log(logFile, f"Elapsed time                 : "
-            f"{hours:02d}:{minutes:02d}:{seconds:05.2f}")
-    p_to_log(logFile, f"Output                      : {outPath}")
-    p_to_log(logFile, "=" * 80)
-    p_to_log(logFile, "Done.")
-    p_to_log(logFile, "=" * 80)
+
+    logger.info("=" * 70)
+    logger.info("TASK FINISHED SUCCESSFULLY")
+    logger.info("=" * 70)
+
+    logger.info("Region: %s:%d-%d", chr, start, end)
+
+    logger.info("Total pileup sites: %s", f"{site_total:,}")
+    logger.info("Passed DP filter: %s", f"{site_dp:,}")
+    logger.info("Passed ALT filter: %s", f"{site_alt:,}")
+    logger.info("Passed Cell filter: %s", f"{site_cell:,}")
+    logger.info("Final variants: %s", f"{site_final:,}")
+
+    logger.info("Total reads: %s", f"{read_total:,}")
+    logger.info("High mismatch reads: %s", f"{read_highNM:,}")
+
+    logger.info("Elapsed time: %.2f min", elapsed / 60)
+
+    logger.info("Output: %s", outPath)
+    logger.info("Log: %s", log_path)
+    logger.info("=" * 70)
+
+    close_worker_logging(logger)
+
     return {
-            "region": f"{chr}_{start}_{end}",
+        "region": f"{chr}_{start}_{end}",
+        "total_sites": site_total,
+        "final_variants": site_final,
+        "reads_processed": read_total,
+        "elapsed_seconds": round(elapsed, 2),
+        "log": log_path,
+        "status": "SUCCESS"
+    }
+
+
+def count_mut_information(
+    BamPath,
+    referencePath,
+    outVcfPath,
+    config_posList,
+    min_bq,
+    min_mq,
+    dp_check,
+    alt_check,
+    cell_check,
+    nm_check,
+    min_cov,
+    min_altcov,
+    min_cell,
+    min_altcell,
+    max_nm,
+    cbtag,
+    nameSplitBamTag,
+    ratioUser,
+    logDir
+):
+    """
+    Count mutation information from a BAM file.
+
+    Outputs
+    -------
+    VCF_{chrom}_{start}_{end}.vcf
+        Original scMutrace tab-separated mutation information.
+
+    step1_{chrom}_{start}_{end}.log
+        Per-region execution log.
+
+    Returns
+    -------
+    dict
+        Region, total sites, final variants, elapsed time,
+        output path, log path and status.
+    """
+
+    chrom = str(config_posList[0])
+    start = int(config_posList[1])
+    end = int(config_posList[2])
+
+    Path(outVcfPath).mkdir(parents=True, exist_ok=True)
+    Path(logDir).mkdir(parents=True, exist_ok=True)
+
+    outPath = os.path.join(
+        outVcfPath,
+        f"VCF_{chrom}_{start}_{end}.vcf"
+    )
+
+    log_path = os.path.join(
+        logDir,
+        f"step1_{nameSplitBamTag}_{chrom}_{start}_{end}.log"
+    )
+
+    logger = setup_worker_logging(log_path)
+
+    start_time = timeit.default_timer()
+    last_progress_time = start_time
+
+    pysamData = None
+    refFasta = None
+    outVcfFile = None
+
+    site_total = 0
+    site_dp = 0
+    site_alt = 0
+    site_cell = 0
+    site_final = 0
+
+    read_total = 0
+    read_highNM = 0
+
+    try:
+        logger.info("=" * 80)
+        logger.info("scMutrace Step 1: Mutation Calling")
+        logger.info("=" * 80)
+
+        logger.info("Input BAM: %s", BamPath)
+        logger.info("Reference: %s", referencePath)
+        logger.info(
+            "Region: %s:%d-%d",
+            chrom, start, end
+        )
+        logger.info("Output: %s", outPath)
+
+        logger.info("-" * 80)
+        logger.info("Parameters")
+        logger.info("-" * 80)
+
+        logger.info("min_cov: %s", min_cov)
+        logger.info("min_altcov: %s", min_altcov)
+        logger.info("min_cell: %s", min_cell)
+        logger.info("min_altcell: %s", min_altcell)
+        logger.info("min_bq: %s", min_bq)
+        logger.info("min_mq: %s", min_mq)
+        logger.info("max_nm: %s", max_nm)
+        logger.info("cbtag: %s", cbtag)
+        logger.info("ratioUser: %s", ratioUser)
+
+        logger.info(
+            "Filters | DP=%s ALT=%s CELL=%s NM=%s",
+            dp_check, alt_check, cell_check, nm_check
+        )
+
+        logger.info("-" * 80)
+        logger.info("Opening BAM and reference...")
+
+        pysamData = pysam.AlignmentFile(BamPath, "rb")
+        refFasta = pysam.FastaFile(referencePath)
+        outVcfFile = open(outPath, "w")
+
+        bam_pileups = pysamData.pileup(
+            contig=chrom,
+            start=start,
+            end=end,
+            max_depth=100000000,
+            min_base_quality=min_bq,
+            min_mapping_quality=min_mq
+        )
+
+        logger.info("Starting pileup processing...")
+
+        # =====================================================
+        # Pileup processing
+        # =====================================================
+
+        for bam_pileup in bam_pileups:
+
+            site_total += 1
+
+            if site_total % 500_000 == 0:
+                now = timeit.default_timer()
+                elapsed = now - start_time
+                interval = now - last_progress_time
+
+                speed = (
+                    500_000 / interval
+                    if interval > 0 else 0
+                )
+
+                logger.info(
+                    "PROGRESS | Sites=%s | Final=%s | "
+                    "Reads=%s | Speed=%.1f sites/s | "
+                    "Elapsed=%.2f min",
+                    f"{site_total:,}",
+                    f"{site_final:,}",
+                    f"{read_total:,}",
+                    speed,
+                    elapsed / 60
+                )
+
+                last_progress_time = now
+
+            # 0-based pileup position
+            POS_PILEUP = bam_pileup.reference_pos
+
+            REF_BASE = refFasta.fetch(
+                chrom,
+                POS_PILEUP,
+                POS_PILEUP + 1
+            ).upper()
+
+            DP = bam_pileup.get_num_aligned()
+
+            if REF_BASE.upper() != "N":
+
+                # ---------------------------------------------
+                # Initial DP filter
+                # ---------------------------------------------
+                if dp_check and DP < int(min_cov):
+                    continue
+
+                BASE_QUALITY_LIST = (
+                    bam_pileup.get_query_qualities()
+                )
+
+                BASE_PILEUP_LIST = (
+                    bam_pileup.get_query_sequences(
+                        mark_matches=True,
+                        add_indels=True
+                    )
+                )
+
+                NEW_BASE_PILEUP_LIST, COUNTNUMALT = (
+                    count_base_typeNum(
+                        BASE_PILEUP_LIST,
+                        REF_BASE,
+                        False
+                    )
+                )
+
+                # ---------------------------------------------
+                # Initial ALT filter
+                # ---------------------------------------------
+                if alt_check and COUNTNUMALT < int(min_altcov):
+                    continue
+
+                if (
+                    DP >= 1000
+                    and COUNTNUMALT <= float(ratioUser) * DP
+                ):
+                    continue
+
+                READS_THIS_COLUMN = bam_pileup.pileups
+                READS_NUM = len(READS_THIS_COLUMN)
+
+                CELLS = {}
+
+                BASE_COUNTS_DIC = {
+                    "A": 0, "T": 0, "C": 0, "G": 0,
+                    "N": 0, "D": 0, "I": 0
+                }
+
+                BASE_COUNTS_F_DIC = {
+                    "A": 0, "T": 0, "C": 0, "G": 0,
+                    "N": 0, "D": 0, "I": 0
+                }
+
+                BASE_COUNTS_R_DIC = {
+                    "A": 0, "T": 0, "C": 0, "G": 0,
+                    "N": 0, "D": 0, "I": 0
+                }
+
+                CELL_COUNTS_DIC = {
+                    "A": [], "T": [], "C": [], "G": [],
+                    "N": [], "D": [], "I": []
+                }
+
+                CELL_COUNTS_F_DIC = {
+                    "A": [], "T": [], "C": [], "G": [],
+                    "N": [], "D": [], "I": []
+                }
+
+                CELL_COUNTS_R_DIC = {
+                    "A": [], "T": [], "C": [], "G": [],
+                    "N": [], "D": [], "I": []
+                }
+
+                # =============================================
+                # Process reads at this pileup site
+                # =============================================
+
+                for i in range(READS_NUM):
+
+                    read_total += 1
+
+                    READ_ALIGNMENT = (
+                        READS_THIS_COLUMN[i].alignment
+                    )
+
+                    if (
+                        READ_ALIGNMENT.is_duplicate is False
+                        and READ_ALIGNMENT.is_secondary is False
+                        and READ_ALIGNMENT.is_supplementary is False
+                        and READ_ALIGNMENT.is_mapped is True
+                    ):
+
+                        # -------------------------------------
+                        # Cell barcode
+                        # -------------------------------------
+                        tagCheck = READ_ALIGNMENT.has_tag(cbtag)
+
+                        if tagCheck:
+                            CELLBARCODE = (
+                                READ_ALIGNMENT.get_tag(cbtag)
+                                .split("-")[0]
+                            )
+                        else:
+                            continue
+
+                        # -------------------------------------
+                        # Mismatch filter
+                        # -------------------------------------
+                        if nm_check:
+
+                            tagCheck_NM = (
+                                READ_ALIGNMENT.has_tag("NM")
+                            )
+
+                            if tagCheck_NM:
+                                NM_count = (
+                                    READ_ALIGNMENT.get_tag("NM")
+                                )
+
+                                if NM_count > max_nm:
+                                    read_highNM += 1
+                                    continue
+
+                            else:
+                                tagCheck_NM = (
+                                    READ_ALIGNMENT.has_tag("nM")
+                                )
+
+                                if not tagCheck_NM:
+                                    logger.warning(
+                                        "No NM/nM tag for read %s",
+                                        READ_ALIGNMENT.query_name
+                                    )
+
+                                if tagCheck_NM:
+                                    NM_count = (
+                                        READ_ALIGNMENT.get_tag("nM")
+                                    )
+
+                                    if NM_count > max_nm:
+                                        read_highNM += 1
+                                        continue
+
+                        # -------------------------------------
+                        # Base information
+                        # -------------------------------------
+                        BASE_READ_ALIGNMENT = (
+                            NEW_BASE_PILEUP_LIST[i]
+                        )
+
+                        if BASE_READ_ALIGNMENT in ("NA", "O"):
+                            continue
+
+                        BASE_PILEUP = BASE_QUALITY_LIST[i]
+
+                        if CELLBARCODE not in CELLS:
+                            CELLS[CELLBARCODE] = {
+                                "A": [], "T": [], "C": [],
+                                "G": [], "N": [], "D": [], "I": []
+                            }
+
+                        CELLS[CELLBARCODE][
+                            BASE_READ_ALIGNMENT
+                        ].append(BASE_PILEUP)
+
+                        BASE_COUNTS_DIC[
+                            BASE_READ_ALIGNMENT
+                        ] += 1
+
+                        # -------------------------------------
+                        # Strand information
+                        # -------------------------------------
+                        if READ_ALIGNMENT.is_reverse:
+
+                            BASE_COUNTS_R_DIC[
+                                BASE_READ_ALIGNMENT
+                            ] += 1
+
+                            CELL_COUNTS_R_DIC[
+                                BASE_READ_ALIGNMENT
+                            ].append(CELLBARCODE)
+
+                        else:
+
+                            BASE_COUNTS_F_DIC[
+                                BASE_READ_ALIGNMENT
+                            ] += 1
+
+                            CELL_COUNTS_F_DIC[
+                                BASE_READ_ALIGNMENT
+                            ].append(CELLBARCODE)
+
+                        CELL_COUNTS_DIC[
+                            BASE_READ_ALIGNMENT
+                        ].append(CELLBARCODE)
+
+                # =============================================
+                # Final DP and ALT filtering
+                # =============================================
+
+                DP_TOTAL = count_base_fromDic(
+                    BASE_COUNTS_DIC,
+                    ["N"]
+                )
+
+                if dp_check:
+                    if int(DP_TOTAL) < int(min_cov):
+                        continue
+
+                site_dp += 1
+
+                DP_ALT_REAL = count_base_fromDic(
+                    BASE_COUNTS_DIC,
+                    [REF_BASE, "N"]
+                )
+
+                if (
+                    alt_check
+                    and int(DP_ALT_REAL) < int(min_altcov)
+                ):
+                    continue
+
+                if (
+                    DP_TOTAL >= 1000
+                    and DP_ALT_REAL <= (
+                        float(ratioUser) * DP_TOTAL
+                    )
+                ):
+                    continue
+
+                site_alt += 1
+
+                # =============================================
+                # Cell information
+                # =============================================
+
+                (
+                    COUNTINFOCELL,
+                    COUNTINFOALT,
+                    COUNTOTALCELL,
+                    COUNTOTALALT,
+                    COUNTOTALCELLALT
+                ) = get_mut_total(
+                    CELL_COUNTS_DIC,
+                    REF_BASE
+                )
+
+                if (
+                    cell_check
+                    and COUNTOTALCELL < int(min_cell)
+                    and COUNTOTALALT < int(min_altcell)
+                ):
+                    continue
+
+                site_cell += 1
+
+                CELLUNIQ, CELLMUTCOUNTINFO = (
+                    get_mut_bycell(CELL_COUNTS_DIC)
+                )
+
+                CELLUNIQ_F, CELLMUTCOUNTINFO_F = (
+                    get_mut_bycell(CELL_COUNTS_F_DIC)
+                )
+
+                CELLUNIQ_R, CELLMUTCOUNTINFO_R = (
+                    get_mut_bycell(CELL_COUNTS_R_DIC)
+                )
+
+                CELLUNIQ_STR = ";".join(CELLUNIQ)
+
+                CELLMUTCOUNTINFO_STR = ";".join(
+                    CELLMUTCOUNTINFO
+                )
+
+                if len(CELLUNIQ_F) != 0:
+
+                    CELLUNIQ_F_INDEX = ";".join(
+                        [
+                            str(CELLUNIQ.index(i))
+                            for i in CELLUNIQ_F
+                        ]
+                    )
+
+                    CELLMUTCOUNTINFO_F_STR = ";".join(
+                        CELLMUTCOUNTINFO_F
+                    )
+
+                else:
+                    CELLUNIQ_F_INDEX = "None"
+                    CELLMUTCOUNTINFO_F_STR = "None"
+
+                if len(CELLUNIQ_R) != 0:
+
+                    CELLUNIQ_R_INDEX = ";".join(
+                        [
+                            str(CELLUNIQ.index(i))
+                            for i in CELLUNIQ_R
+                        ]
+                    )
+
+                    CELLMUTCOUNTINFO_R_STR = ";".join(
+                        CELLMUTCOUNTINFO_R
+                    )
+
+                else:
+                    CELLUNIQ_R_INDEX = "None"
+                    CELLMUTCOUNTINFO_R_STR = "None"
+
+                CELL_BASE_QUALITES = [
+                    integrate_data_fromQualityDic(CELLS[i])
+                    for i in CELLUNIQ
+                ]
+
+                BASE_QUALITIES_INFO = ";".join(
+                    CELL_BASE_QUALITES
+                )
+
+                # =============================================
+                # Output mutation information
+                # =============================================
+
+                SQL_0 = (
+                    f"{chrom}\t"
+                    f"{POS_PILEUP + 1}\t"
+                    f"{REF_BASE}\t"
+                    f"{DP_TOTAL}\t"
+                    f"{COUNTINFOALT}\t"
+                    f"{COUNTOTALALT}\t"
+                    f"{COUNTOTALCELL}\t"
+                    f"{COUNTINFOCELL}\t"
+                    f"{COUNTOTALCELLALT}"
+                )
+
+                SQL_1 = (
+                    f"{CELLUNIQ_STR}\t"
+                    f"{CELLMUTCOUNTINFO_STR}\t"
+                    f"{BASE_QUALITIES_INFO}\t"
+                    f"{CELLUNIQ_F_INDEX}\t"
+                    f"{CELLMUTCOUNTINFO_F_STR}\t"
+                    f"{CELLUNIQ_R_INDEX}\t"
+                    f"{CELLMUTCOUNTINFO_R_STR}"
+                )
+
+                SQL = f"{SQL_0}\t{SQL_1}"
+
+                site_final += 1
+
+                outVcfFile.write(SQL + "\n")
+
+        # =====================================================
+        # Success summary
+        # =====================================================
+
+        outVcfFile.flush()
+
+        elapsed = timeit.default_timer() - start_time
+
+        hours = int(elapsed // 3600)
+        minutes = int((elapsed % 3600) // 60)
+        seconds = elapsed % 60
+
+        logger.info("=" * 80)
+        logger.info("TASK FINISHED SUCCESSFULLY")
+        logger.info("=" * 80)
+
+        logger.info(
+            "Region: %s:%d-%d",
+            chrom, start, end
+        )
+
+        logger.info(
+            "Total pileup sites: %s",
+            f"{site_total:,}"
+        )
+
+        logger.info(
+            "Passed DP filter: %s",
+            f"{site_dp:,}"
+        )
+
+        logger.info(
+            "Passed ALT filter: %s",
+            f"{site_alt:,}"
+        )
+
+        logger.info(
+            "Passed Cell filter: %s",
+            f"{site_cell:,}"
+        )
+
+        logger.info(
+            "Final variants: %s",
+            f"{site_final:,}"
+        )
+
+        logger.info(
+            "Total reads: %s",
+            f"{read_total:,}"
+        )
+
+        logger.info(
+            "High mismatch reads: %s",
+            f"{read_highNM:,}"
+        )
+
+        logger.info(
+            "Elapsed time: %02d:%02d:%05.2f",
+            hours, minutes, seconds
+        )
+
+        logger.info("Output: %s", outPath)
+        logger.info("Log: %s", log_path)
+        logger.info("=" * 80)
+
+        return {
+            "region": f"{chrom}_{start}_{end}",
             "total_sites": site_total,
+            "passed_dp": site_dp,
+            "passed_alt": site_alt,
+            "passed_cell": site_cell,
             "final_variants": site_final,
+            "reads_processed": read_total,
+            "high_nm_reads": read_highNM,
+            "elapsed_seconds": round(elapsed, 2),
+            "output": outPath,
             "log": log_path,
+            "status": "SUCCESS"
         }
+
+    except Exception:
+
+        elapsed = timeit.default_timer() - start_time
+
+        logger.exception(
+            "TASK FAILED | Region=%s:%d-%d | "
+            "Sites=%d | Final=%d | Elapsed=%.2fs",
+            chrom,
+            start,
+            end,
+            site_total,
+            site_final,
+            elapsed
+        )
+
+        raise
+
+    finally:
+
+        if outVcfFile is not None:
+            outVcfFile.close()
+
+        if refFasta is not None:
+            refFasta.close()
+
+        if pysamData is not None:
+            pysamData.close()
+
+        close_worker_logging(logger)
+
 
 # target extract snp from bam
 def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_alt, min_cell, max_nm, cbtag, binSize, id):

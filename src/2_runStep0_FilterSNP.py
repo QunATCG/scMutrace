@@ -6,6 +6,9 @@ import multiprocessing as mp
 from py_utils import *
 import subprocess
 from pathlib import Path
+import logging
+from pathlib import Path
+import time
 
 def initialize_parser():
     parser = argparse.ArgumentParser(description='filter SNP based on 3Model')
@@ -73,7 +76,35 @@ def merge_filteredVcf_file(sampleID, filteredVcfPaths, dirPath):
             print(f"Output: {e.output}")
 
 
-def filter_snp_threeModel(VCFPath, outPath, a1, b1, a2, b2, model3ProbabilityDic, quainfos, iternum, errorP, backP, m1check, m2check, m3check, logDir):
+def setup_worker_logging_0(log_path):
+    logger_name = f"scMutrace.worker.{os.getpid()}.{Path(log_path).stem}"
+
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+        handler.close()
+
+    formatter = logging.Formatter(
+        "%(asctime)s [%(levelname)s] "
+        "[PID:%(process)d] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    handler = logging.FileHandler(
+        log_path,
+        mode="w",
+        encoding="utf-8"
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    return logger
+
+
+def filter_snp_threeModel(VCFPath, outPath, a1, b1, a2, b2, model3ProbabilityDic, quainfos, iternum, errorP, backP, m1check, m2check, m3check, logDir, IDSample):
     """
     Filters SNPs using a three-model approach and writes the results to an output file.
 
@@ -101,24 +132,21 @@ def filter_snp_threeModel(VCFPath, outPath, a1, b1, a2, b2, model3ProbabilityDic
         None
     """
     nametag = Path(VCFPath).name
-    log_path = os.path.join(logDir, f"step2_filterSNP_{nametag}.log")
-    logFile = open(log_path, "w")
+    log_path = os.path.join(logDir, f"step2_{IDSample}_{nametag}.log")
+    logger = setup_worker_logging_0(log_path)
     start_time = timeit.default_timer()
     try:
         with open(VCFPath, "r") as vcfile, open(outPath, "w+") as outfile:
-            p_to_log(logFile, "=" * 80)
-            p_to_log(logFile, "scMutrace mutation calling")
-            p_to_log(logFile, "=" * 80)
-            p_to_log(logFile, f"Start time                  : {time.strftime('%Y-%m-%d %H:%M:%S')}")
+            logger.info("=" * 70)
+            logger.info("scMutrace Step 2: filter SNPs")
+            logger.info("=" * 70)
             fileRowNum = get_Vcf_rownum(VCFPath)
             counttmp = 0
             countpass = 0
             for line in vcfile:
                 counttmp += 1
                 if counttmp % 5000 == 0:
-                    p_to_log(logFile, 
-                                f"Processed {counttmp:,}  | {fileRowNum:,} sites"
-                            )
+                    logger.info(f"Processed {counttmp:,}  | {fileRowNum:,} sites")
                 lineSets = line.split("\t")
                 refBase = lineSets[2]
                 baseQualityInfoOnesite = lineSets[11]
@@ -148,18 +176,12 @@ def filter_snp_threeModel(VCFPath, outPath, a1, b1, a2, b2, model3ProbabilityDic
             hours = int(elapsed // 3600)
             minutes = int((elapsed % 3600) // 60)
             seconds = elapsed % 60
-            p_to_log(logFile, "")
-            p_to_log(logFile, "=" * 80)
-            p_to_log(logFile, "Summary")
-            p_to_log(logFile, "=" * 80)
-            p_to_log(logFile, f"PASS sites                  : {countpass:,}")
-            p_to_log(logFile, "")
-            p_to_log(logFile, f"Elapsed time                 : "
-                    f"{hours:02d}:{minutes:02d}:{seconds:05.2f}")
-            p_to_log(logFile, f"Output                      : {outPath}")
-            p_to_log(logFile, "=" * 80)
-            p_to_log(logFile, "Done.")
-            p_to_log(logFile, "=" * 80)
+            logger.info("=" * 70)
+            logger.info("TASK FINISHED SUCCESSFULLY")
+            logger.info("File: %s", VCFPath)
+            logger.info("PASS sites: %s", f"{countpass:,}")
+            logger.info("Output: %s", f"{outPath:,}")
+            logger.info("Elapsed time: %.2f s", f"{hours:02d}:{minutes:02d}:{seconds:05.2f}")
             try:
                 subprocess.run(cmd, check=True)
             except subprocess.CalledProcessError as e:
@@ -228,7 +250,7 @@ def main():
         print("Your cores is " + str(COREUSE))
         results = []
         for i in range(0, NumberVCF):
-            result = p.apply_async(filter_snp_threeModel, args = (vcfilesInpaths[i], vcfilesOutpaths[i], a1, b1, a2, b2, model3ProbabilityDic, quainfos, iternum, errorP, backP, m1check, m2check, m3check,logDir,), callback=finished_callback, error_callback=err_call_back)
+            result = p.apply_async(filter_snp_threeModel, args = (vcfilesInpaths[i], vcfilesOutpaths[i], a1, b1, a2, b2, model3ProbabilityDic, quainfos, iternum, errorP, backP, m1check, m2check, m3check,logDir, IDSample,), callback=finished_callback, error_callback=err_call_back)
             results.append(result)
         print('Waiting for all subprocesses done...')
         p.close()
@@ -238,7 +260,7 @@ def main():
         print('All subprocesses done.')
     else:
         for i in range(0, len(vcfilesInpaths)):
-            filter_snp_threeModel(vcfilesInpaths[i], vcfilesOutpaths[i], a1, b1, a2, b2, model3ProbabilityDic, quainfos, iternum, errorP, backP, m1check, m2check, m3check, logDir)
+            filter_snp_threeModel(vcfilesInpaths[i], vcfilesOutpaths[i], a1, b1, a2, b2, model3ProbabilityDic, quainfos, iternum, errorP, backP, m1check, m2check, m3check, logDir, IDSample)
     print("Merging vcf files...")
     merge_filteredVcf_file(IDSample, vcfilesOutpaths, filterPath)
 

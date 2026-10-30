@@ -4,14 +4,15 @@ import sys
 import pysam
 import timeit
 import argparse
-import gc
 import sqlite3
 import tempfile
 import traceback
 import contextlib
-from collections import defaultdict
 from py_utils import make_dir_check
 import multiprocessing as mp
+import logging
+from pathlib import Path
+import time
 
 '''
 Option 1:
@@ -71,7 +72,6 @@ def err_call_back(error):
         f"[ERROR] {error}",
         flush=True
     )
-
 
 def get_cb_ub(read, cb_tag, ub_tag, strip_cb_suffix = False):
     if not read.has_tag(cb_tag):
@@ -576,7 +576,7 @@ def mark_visium_duplicates(input_bam, output_bam, cb_tag="CB", ub_tag="UB", stri
     print(f"Output:           {output_bam}")
 
 # split bam based on barcode
-def split_bam_basedList(bam_Path, barcodeSubList, ChrList, configValue, subam_path, seqTag, nameOut, ncut, barcodetag, ub_tag, tmp_dir, strip_cb_suffix=False, choose_best=True):
+def split_bam_basedList_v1(bam_Path, barcodeSubList, ChrList, configValue, subam_path, seqTag, nameOut, ncut, barcodetag, ub_tag, tmp_dir, strip_cb_suffix=False, choose_best=True):
     """
     split bam based on barcode and chromosome list, and cut the first ncut bases of each read's left and right ends
     Parameters
@@ -718,6 +718,278 @@ def split_bam_basedList(bam_Path, barcodeSubList, ChrList, configValue, subam_pa
                 # still knows this worker failed.
                 raise
 
+def setup_worker_logging_0(log_path):
+    logger_name = f"scMutrace.worker.{os.getpid()}.{Path(log_path).stem}"
+
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+        handler.close()
+
+    formatter = logging.Formatter(
+        "%(asctime)s [%(levelname)s] "
+        "[PID:%(process)d] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    handler = logging.FileHandler(
+        log_path,
+        mode="w",
+        encoding="utf-8"
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    return logger
+
+
+def split_bam_basedList(
+    bam_Path,
+    barcodeSubList,
+    ChrList,
+    configValue,
+    subam_path,
+    seqTag,
+    nameOut,
+    ncut,
+    barcodetag,
+    ub_tag,
+    tmp_dir,
+    strip_cb_suffix=False,
+    choose_best=True
+):
+    chrtmp, startmp, endtmp = configValue.split("_", 2)
+    startmp = int(startmp)
+    endtmp = int(endtmp)
+
+    outBamPath = os.path.join(
+        subam_path,
+        f"{nameOut}_{chrtmp}_{startmp}_{endtmp}.tmp.{seqTag}.bam"
+    )
+
+    rmdupBamPath = outBamPath.replace(".tmp.", ".rmdup.")
+
+    log_dir = Path(subam_path) / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    log_path = log_dir / (
+        f"step0_{nameOut}_{chrtmp}_{startmp}_{endtmp}."
+        f"{seqTag}.splitrmdup.log"
+    )
+
+    logger = setup_worker_logging_0(log_path)
+
+    task_start = time.perf_counter()
+
+    count_num = 0
+    reads_written = 0
+
+    try:
+        logger.info("=" * 70)
+        logger.info("scMutrace Step 0: BAM processing started")
+        logger.info("Region: %s:%d-%d", chrtmp, startmp, endtmp)
+        logger.info("Seq tag: %s", seqTag)
+        logger.info("Input BAM: %s", bam_Path)
+        logger.info("Temporary BAM: %s", outBamPath)
+        logger.info("Output BAM: %s", rmdupBamPath)
+        logger.info("Trim bases: %d", ncut)
+        logger.info("Barcode tag: %s", barcodetag)
+        logger.info("UMI tag: %s", ub_tag)
+        logger.info("=" * 70)
+
+        # ----------------------------------------
+        # Step 1: Split BAM
+        # ----------------------------------------
+        step_start = time.perf_counter()
+
+        logger.info("[Step 1/3] Splitting BAM started")
+
+        barcode_set = (
+            set(barcodeSubList)
+            if barcodeSubList is not None
+            else None
+        )
+
+        with pysam.AlignmentFile(bam_Path, "rb") as bam:
+            with pysam.AlignmentFile(
+                outBamPath, "wb", template=bam
+            ) as outfile:
+
+                for read in bam.fetch(
+                    contig=chrtmp,
+                    start=startmp,
+                    stop=endtmp
+                ):
+                    count_num += 1
+
+                    if count_num % 5_000_000 == 0:
+                        logger.info(
+                            "Processed %s reads",
+                            f"{count_num:,}"
+                        )
+
+                    if not read.has_tag(barcodetag):
+                        continue
+
+                    cb_read = read.get_tag(barcodetag)
+
+                    if barcode_set is not None:
+                        if cb_read not in barcode_set:
+                            continue
+
+                    if read.reference_name not in ChrList:
+                        continue
+
+                    cigar = read.cigartuples
+
+                    if cigar and len(cigar) > 1:
+                        cut_l = (
+                            cigar[0][1] + ncut
+                            if cigar[0][0] == 4
+                            else ncut
+                        )
+                        cut_r = (
+                            cigar[-1][1] + ncut
+                            if cigar[-1][0] == 4
+                            else ncut
+                        )
+                    else:
+                        cut_l = ncut
+                        cut_r = ncut
+
+                    base_quality = read.query_qualities
+
+                    if base_quality is not None:
+                        read_length = len(base_quality)
+
+                        left_end = min(cut_l, read_length)
+                        right_start = max(
+                            0, read_length - cut_r
+                        )
+
+                        for i in range(left_end):
+                            base_quality[i] = 0
+
+                        for i in range(right_start, read_length):
+                            base_quality[i] = 0
+
+                        read.query_qualities = base_quality
+
+                    outfile.write(read)
+                    reads_written += 1
+
+        split_elapsed = time.perf_counter() - step_start
+
+        logger.info(
+            "[Step 1/3] Completed | "
+            "Scanned=%s | Written=%s | Time=%.2fs",
+            f"{count_num:,}",
+            f"{reads_written:,}",
+            split_elapsed
+        )
+
+        # ----------------------------------------
+        # Step 2: Index temporary BAM
+        # ----------------------------------------
+        step_start = time.perf_counter()
+
+        logger.info("[Step 2/3] Indexing temporary BAM")
+
+        pysam.index(outBamPath)
+
+        index_elapsed = time.perf_counter() - step_start
+
+        logger.info(
+            "[Step 2/3] Completed | Time=%.2fs",
+            index_elapsed
+        )
+
+        # ----------------------------------------
+        # Step 3: Mark duplicates
+        # ----------------------------------------
+        step_start = time.perf_counter()
+
+        logger.info("[Step 3/3] Marking duplicates")
+
+        mark_visium_duplicates(
+            outBamPath,
+            rmdupBamPath,
+            barcodetag,
+            ub_tag,
+            strip_cb_suffix,
+            choose_best,
+            tmp_dir,
+            batch_size=100_000
+        )
+
+        rmdup_elapsed = time.perf_counter() - step_start
+
+        logger.info(
+            "[Step 3/3] Completed | Time=%.2fs",
+            rmdup_elapsed
+        )
+
+        if not os.path.isfile(rmdupBamPath):
+            raise RuntimeError(
+                f"Output BAM not found: {rmdupBamPath}"
+            )
+
+        output_size = os.path.getsize(rmdupBamPath)
+
+        # Remove temporary files only after success
+        os.remove(outBamPath)
+
+        tmp_index = f"{outBamPath}.bai"
+        if os.path.exists(tmp_index):
+            os.remove(tmp_index)
+
+        total_elapsed = time.perf_counter() - task_start
+
+        logger.info("=" * 70)
+        logger.info("TASK FINISHED SUCCESSFULLY")
+        logger.info("Region: %s", configValue)
+        logger.info("Reads scanned: %s", f"{count_num:,}")
+        logger.info("Reads written: %s", f"{reads_written:,}")
+        logger.info("Split time: %.2f s", split_elapsed)
+        logger.info("Index time: %.2f s", index_elapsed)
+        logger.info("Dedup time: %.2f s", rmdup_elapsed)
+        logger.info("Total time: %.2f s", total_elapsed)
+        logger.info(
+            "Output BAM size: %.2f GB",
+            output_size / (1024 ** 3)
+        )
+        logger.info("Output BAM: %s", rmdupBamPath)
+        logger.info("Log: %s", log_path)
+        logger.info("=" * 70)
+
+        return {
+            "region": configValue,
+            "log": str(log_path),
+            "reads_scanned": count_num,
+            "reads_written": reads_written,
+            "elapsed_seconds": round(total_elapsed, 2),
+            "status": "SUCCESS"
+        }
+
+    except Exception:
+        total_elapsed = time.perf_counter() - task_start
+
+        logger.exception(
+            "TASK FAILED | Region=%s | Elapsed=%.2fs",
+            configValue,
+            total_elapsed
+        )
+
+        raise
+
+    finally:
+        for handler in logger.handlers[:]:
+            logger.removeHandler(handler)
+            handler.close()
+
 def main():
     parser = initialize_parser()
     args = parser.parse_args()
@@ -743,7 +1015,7 @@ def main():
     else:
         with open(barcodePath, "r") as fin, open(f"{outDirPath}/barcodeList.txt", "w") as fout:
             for line in fin:
-                barcodeTmp = line.split()[0].strip().split("-")[0]
+                barcodeTmp = line.split()[0].strip()
                 if barcodeTmp not in barcodeListCell:
                     fout.write(barcodeTmp + "\n")
                     barcodeListCell.add(barcodeTmp)

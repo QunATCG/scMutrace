@@ -4,7 +4,8 @@ import sqlite3
 import argparse
 import gzip
 import re
-import multiprocessing as mp
+import logging
+import time
 
 def normalize_chrom(chrom):
     chrom = str(chrom).strip()
@@ -199,19 +200,115 @@ def filter_vcf(input_vcf, output_prefix, config_path):
     print("-----------------------------")
     for key, value in counts.items():
         print(f"{key:12s}: {value:,}")
+    return counts
+
+def setup_logging(log_dir):
+    log_dir = Path(log_dir)
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file = log_dir / f"step3_filterDB.log"
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=[
+            logging.FileHandler(log_file, encoding="utf-8"),
+            logging.StreamHandler()
+        ],
+        force=True
+    )
+
+    return log_file
 
 
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-i", "--input", required=True)
-    parser.add_argument("-o", "--output-prefix", required=True)
+    parser.add_argument("-i", "--input-dir", required=True)
+    parser.add_argument("-o", "--output-dir", required=True)
     parser.add_argument("-c", "--config", required=True)
+    parser.add_argument("-l", "--log-dir", default=None)
 
     args = parser.parse_args()
 
-    filter_vcf(
-        input_vcf=args.input,
-        output_prefix=args.output_prefix,
-        config_path=args.config
+    input_dir = Path(args.input_dir)
+    output_dir = Path(args.output_dir)
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    log_dir = (
+        Path(args.log_dir)
+        if args.log_dir
+        else output_dir / "logs"
     )
+
+    log_file = setup_logging(log_dir)
+
+    vcf_files = sorted(input_dir.glob("*_filter.vcf"))
+
+    logging.info("VCF filtering started")
+    logging.info("Input directory: %s", input_dir)
+    logging.info("Output directory: %s", output_dir)
+    logging.info("Database config: %s", args.config)
+    logging.info("Number of VCF files: %d", len(vcf_files))
+
+    if not vcf_files:
+        logging.error("No VCF files found in %s", input_dir)
+        raise SystemExit(1)
+
+    total_start = time.perf_counter()
+    failed_files = 0
+
+    for vcf_file in vcf_files:
+
+        logging.info("=" * 60)
+        logging.info("Processing: %s", vcf_file.name)
+
+        start = time.perf_counter()
+
+        output_prefix = output_dir / vcf_file.stem
+
+        try:
+            counts = filter_vcf(
+                input_vcf=vcf_file,
+                output_prefix=output_prefix,
+                config_path=args.config
+            )
+
+            elapsed = time.perf_counter() - start
+
+
+            logging.info(
+                "SUCCESS: %s | Total=%d | Somatic=%d | "
+                "Germline=%d | Filtered=%d | Time=%.2fs",
+                vcf_file.name,
+                counts["total"],
+                counts["somatic"],
+                counts["germline"],
+                counts["filtered"],
+                elapsed
+            )
+
+        except Exception:
+            failed_files += 1
+            elapsed = time.perf_counter() - start
+
+            logging.exception(
+                "FAILED: %s after %.2f seconds",
+                vcf_file.name,
+                elapsed
+            )
+
+
+    total_elapsed = time.perf_counter() - total_start
+
+    logging.info("=" * 60)
+    logging.info("All VCF files processed")
+    logging.info("Total files: %d", len(vcf_files))
+    logging.info("Successful: %d", len(vcf_files) - failed_files)
+    logging.info("Failed: %d", failed_files)
+    logging.info("Total elapsed: %.2f seconds", total_elapsed)
+    logging.info("Log file: %s", log_file)
+
+    if failed_files:
+        raise SystemExit(1)
