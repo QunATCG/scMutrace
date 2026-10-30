@@ -219,20 +219,32 @@ def setup_logging(log_dir):
 
     return log_file
 
+def merge_files(file_list, output_file):
+    total = 0
+
+    with open(output_file, "w") as fout:
+        for file in file_list:
+            with open(file, "r") as fin:
+                for line in fin:
+                    if line.strip():
+                        fout.write(line)
+                        total += 1
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-i", "--input-dir", required=True)
+    parser.add_argument("-v", "--vcf-dir", required=True)
+    parser.add_argument("-i", "--id", required=True)
     parser.add_argument("-o", "--output-dir", required=True)
     parser.add_argument("-c", "--config", required=True)
     parser.add_argument("-l", "--log-dir", default=None)
 
     args = parser.parse_args()
 
-    input_dir = Path(args.input_dir)
-    output_dir = Path(args.output_dir)
+    input_dir = Path(args.vcf_dir)
+    output_dir = Path(f"{args.output_dir}/DB/")
+    sample_id = args.id
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -259,6 +271,11 @@ if __name__ == "__main__":
     total_start = time.perf_counter()
     failed_files = 0
 
+    somatic_vcfs = []
+    germline_vcfs = []
+    somatic_path = f"{output_dir}/../../{sample_id}.somatic_candidates.vcf"
+    germline_path = f"{output_dir}/../../{sample_id}.germline_candidates.vcf"
+
     for vcf_file in vcf_files:
 
         logging.info("=" * 60)
@@ -274,6 +291,8 @@ if __name__ == "__main__":
                 output_prefix=output_prefix,
                 config_path=args.config
             )
+            somatic_vcfs.append(f"{output_prefix}.somatic_candidates.vcf")
+            germline_vcfs.append(f"{output_prefix}.germline_candidates.vcf")
 
             elapsed = time.perf_counter() - start
 
@@ -299,7 +318,8 @@ if __name__ == "__main__":
                 elapsed
             )
 
-
+    merge_files(somatic_vcfs, somatic_path)
+    merge_files(germline_vcfs, germline_path)
     total_elapsed = time.perf_counter() - total_start
 
     logging.info("=" * 60)
@@ -309,6 +329,5 @@ if __name__ == "__main__":
     logging.info("Failed: %d", failed_files)
     logging.info("Total elapsed: %.2f seconds", total_elapsed)
     logging.info("Log file: %s", log_file)
-
     if failed_files:
         raise SystemExit(1)

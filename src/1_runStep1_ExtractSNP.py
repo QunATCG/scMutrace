@@ -59,7 +59,7 @@ def merge_VCF_filesShell(outPath, VCFtmpPath, IDSample, chrTag):
     VCFtmpTotal = [i for i in filesTotal if re.match("VCF_" + str(chrTag) + "_", i) is not None]
     VCFtmpTotalPaths = [os.path.join(VCFtmpPath, i) for i in VCFtmpTotal]
     VCFtmpTotalPathsSQL = " ".join(VCFtmpTotalPaths)
-    cmd_merge_vcf = f"cat {VCFtmpTotalPathsSQL} >> {os.path.join(outPath, f'VCF_{IDSample}_{chrTag}.vcf')}"
+    cmd_merge_vcf = f"cat {VCFtmpTotalPathsSQL} > {os.path.join(outPath, f'VCF_{IDSample}_{chrTag}.vcf')}"
     cmd_rm_vcf = f"rm -f {VCFtmpTotalPathsSQL}"
     try:
         subprocess.run(cmd_merge_vcf, shell=True, check=True)
