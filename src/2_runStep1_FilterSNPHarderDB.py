@@ -1,8 +1,10 @@
+from pathlib import Path
+from bisect import bisect_right
 import sqlite3
 import argparse
 import gzip
 import re
-from pathlib import Path
+import multiprocessing as mp
 
 def normalize_chrom(chrom):
     chrom = str(chrom).strip()
@@ -21,8 +23,8 @@ def open_vcf(path, mode="rt"):
         return gzip.open(path, mode)
     return open(path, mode)
 
-
-class RegionDB:
+class RegionDB_v0:
+    # need big mem
     def __init__(self, name, db_path, table_name, action):
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", table_name):
             raise ValueError(f"Invalid table name: {table_name}")
@@ -49,6 +51,61 @@ class RegionDB:
     def close(self):
         self.conn.close()
 
+class RegionDB:
+    def __init__(self, name, db_path, table_name, action):
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", table_name):
+            raise ValueError(f"Invalid table name: {table_name}")
+
+        self.name = name
+        self.action = action
+        self.table_name = table_name
+
+        db_path = Path(db_path).resolve()
+        self.conn = sqlite3.connect(
+            f"file:{db_path}?mode=ro", uri=True
+        )
+
+        self.current_chrom = None
+        self.starts = []
+        self.ends = []
+
+    def load_chrom(self, chrom):
+        chrom = normalize_chrom(chrom)
+
+        sql = f"""
+            SELECT START, END
+            FROM "{self.table_name}"
+            WHERE CHROM = ?
+            ORDER BY START, END
+        """
+
+        starts, ends = [], []
+
+        for start, end in self.conn.execute(sql, (chrom,)):
+            start, end = int(start), int(end)
+
+            if not starts or start > ends[-1] + 1:
+                starts.append(start)
+                ends.append(end)
+            else:
+                ends[-1] = max(ends[-1], end)
+
+        self.current_chrom = chrom
+        self.starts = starts
+        self.ends = ends
+
+    def contains(self, chrom, pos):
+        chrom = normalize_chrom(chrom)
+
+        if chrom != self.current_chrom:
+            self.load_chrom(chrom)
+
+        idx = bisect_right(self.starts, pos) - 1
+        return idx >= 0 and pos <= self.ends[idx]
+
+    def close(self):
+        self.conn.close()
+
 
 def load_databases(config_path):
     databases = []
@@ -68,13 +125,11 @@ def load_databases(config_path):
             )
     return databases
 
-def annotate_info(info, hits):
+def annotate_info(hits):
     if not hits:
-        return info
-    annotation = "REGION_DB=" + ",".join(hits)
-    if info == ".":
-        return annotation
-    return info + ";" + annotation
+        return "None"
+    annotation = ",".join(hits)
+    return annotation
 
 def filter_vcf(input_vcf, output_prefix, config_path):
     databases = load_databases(config_path)
@@ -121,8 +176,8 @@ def filter_vcf(input_vcf, output_prefix, config_path):
                     if db.contains(chrom, pos):
                         hits.append(db.name)
                         actions.add(db.action)
-                fields[7] = annotate_info(fields[7], hits)
-                output_line = "\t".join(fields) + "\n"
+                ann_info = annotate_info(hits)
+                output_line = line.strip() + "\t" + ann_info + "\n"
                 # Priority: filter > germline > somatic
                 if "filter" in actions:
                     ff.write(output_line)
