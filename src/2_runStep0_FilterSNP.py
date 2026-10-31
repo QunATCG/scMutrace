@@ -7,7 +7,6 @@ from py_utils import *
 import subprocess
 from pathlib import Path
 import logging
-from pathlib import Path
 import time
 
 def initialize_parser():
@@ -180,7 +179,7 @@ def filter_snp_threeModel(VCFPath, outPath, a1, b1, a2, b2, model3ProbabilityDic
             logger.info("TASK FINISHED SUCCESSFULLY")
             logger.info("File: %s", VCFPath)
             logger.info("PASS sites: %s", f"{countpass:,}")
-            logger.info("Output: %s", f"{outPath:,}")
+            logger.info("Output: %s", f"{outPath:}")
             logger.info("Elapsed time: %.2f s", f"{hours:02d}:{minutes:02d}:{seconds:05.2f}")
             try:
                 subprocess.run(cmd, check=True)

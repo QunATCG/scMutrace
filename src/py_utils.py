@@ -1465,7 +1465,7 @@ def count_mut_information(
 
 
 # target extract snp from bam
-def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_alt, min_cell, max_nm, cbtag, binSize, id):
+def target_extractsnp_fromBAM(Bam, referencePath, outVcfPath, config_posList, min_bq, min_mq, dp_check, alt_check, cell_check, nm_check, min_cov, min_alt, min_cell, max_nm, cbtag, binSize, id):
     """
     Count mutation information from BAM file and write to VCF file.
 
@@ -1488,7 +1488,7 @@ def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList
     Returns:
     None
     """
-    pysamData = pysam.AlignmentFile(BamPath, 'rb')
+    #pysamData = pysam.AlignmentFile(BamPath, 'rb')
     # chr
     chr = str(config_posList[0])
     # start
@@ -1498,7 +1498,7 @@ def target_extractsnp_fromBAM(BamPath, referencePath, outVcfPath, config_posList
     # ref
     refFasta = pysam.FastaFile(referencePath)
     # pileups
-    bam_pileups = pysamData.pileup(contig = str(chr), start = int(start), end = int(end), max_depth = 100000000, min_base_quality = min_bq, min_mapping_quality = min_mq)
+    bam_pileups = Bam.pileup(contig = str(chr), start = int(start), end = int(end), max_depth = 100000000, min_base_quality = min_bq, min_mapping_quality = min_mq)
     # out vcf
     outPath = os.path.join(outVcfPath, f"VCF_{chr}_{config_posList[1]}_{config_posList[1]}_{id}_random.vcf")
     outVcfFile = open(outPath, "w+")
