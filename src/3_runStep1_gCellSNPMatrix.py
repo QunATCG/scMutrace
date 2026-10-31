@@ -6,8 +6,13 @@ import argparse
 import pandas as pd
 import numpy as np
 from py_utils import *
+import logging
 import multiprocessing as mp
+from pathlib import Path
 from collections import defaultdict
+import anndata as ad
+from scipy.sparse import coo_matrix, csr_matrix
+from scipy.io import mmwrite
 
 # Function to generate gCellSNP matrix
 def initialize_parser():
@@ -23,6 +28,19 @@ def initialize_parser():
 
 # define basic base
 BASIC_BASE = ["A", "T", "C", "G", "D", "I"]
+
+logger = logging.getLogger(__name__)
+
+# Genotype encoding
+# 0 = NoCall
+# 1 = WT
+# 2 = Mut
+STATUS_MAP = {
+    "NoCall": 0,
+    "WT": 1,
+    "Mut": 2
+}
+
 
 def err_call_back(err):
     print(f'apply_async error:{str(err)}')
@@ -122,7 +140,8 @@ def get_all_mut_info(mutinfoPath, jobconfigPath, outpathDir, referencePath, min_
                             continue
                         idtmp = jobLineSets[0]
                         bamTmp = jobLineSets[2]
-                        target_extractsnp_fromBAM(bamTmp, referencePath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, True, True, True, 1, 0, 1, 5, cbtag, 5, idtmp)
+                        pysamData = pysam.AlignmentFile(bamTmp, 'rb')
+                        target_extractsnp_fromBAM(pysamData, referencePath, outdirTmp, [chr, pos, pos], min_bq, min_mq, True, True, True, True, 1, 0, 1, 5, cbtag, 5, idtmp)
                         #target_extractsnp_fromBAM(bamTmp, referencePath, outdirTmp, [chr, pos, pos], 0, min_mq, True, True, True, True, 1, 0, 1, 5, cbtag, 5, idtmp + "_noisy")
                         targetVcfPath = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_{idtmp}_random.vcf")
                         #targetVcfPath_noisy = os.path.join(outdirTmp, f"VCF_{chr}_{pos}_{pos}_{idtmp}_noisy_random.vcf")
@@ -267,11 +286,192 @@ def generate_snp_sample_mutInfo(gCSMPath, outpath):
                 out.write(f"{pos}\t{idtmp}\t{statustmp}\n")
 
 # generate gCellSNP matrix
-def generate_gCellSNP_matrix(outpath, vcfpath):
+def generate_gCellSNP_matrix_v0(outpath, vcfpath):
     df = pd.read_csv(vcfpath, sep='\t', header=None, names=['Location', 'Cell', 'Status'])
     matrix = df.pivot_table(index='Location', columns='Cell', values='Status', aggfunc=lambda x: 'Mut' if 'Mut' in x.values else 'WT').fillna('NoCall')
     matrix = matrix.reindex(sorted(matrix.columns), axis=1)
     matrix.to_csv(outpath, sep=',', index=True)
+
+
+def generate_gCellSNP_matrix(
+    outpath,
+    vcfpath,
+    chunksize=100000,
+    save_csv=True,
+):
+    """
+    Generate a Cell x SNP genotype matrix.
+    Input:
+        Location    Cell    Status
+        chr1_100_A_G    Cell1    Mut
+        chr1_100_A_G    Cell2    WT
+        chr1_200_C_T    Cell1    Mut
+    Encoding:
+        0 = NoCall
+        1 = WT
+        2 = Mut
+    Duplicate rule:
+        Mut > WT > NoCall
+    Output:
+        outpath                          Original SNP x Cell CSV
+        result/mtx/gCellSNPMatrix.mtx
+        result/mtx/gCellSNPMatrix.h5ad
+        result/mtx/gCellSNPMatrix.csv
+        result/mtx/gCellSNPMatrix.cells.tsv
+        result/mtx/gCellSNPMatrix.variants.tsv
+    """
+    outpath = Path(outpath)
+    vcfpath = Path(vcfpath)
+    output_dir = outpath.parent / "result" / "mtx"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    prefix = outpath.stem
+    logger.info("Reading genotype records: %s", vcfpath)
+    # Cell and SNP index mapping
+    cell_index = {}
+    snp_index = {}
+    # Store unique Cell-SNP pairs
+    # key = (cell_index, snp_index)
+    # value = genotype code
+    genotype = {}
+    total_records = 0
+    invalid_records = 0
+
+    reader = pd.read_csv(
+        vcfpath,
+        sep="\t",
+        header=None,
+        names=["Location", "Cell", "Status"],
+        dtype="string",
+        chunksize=chunksize,
+    )
+    for chunk_id, chunk in enumerate(reader, start=1):
+        chunk = chunk.dropna(
+            subset=["Location", "Cell", "Status"]
+        )
+        for loc, cell, status in chunk.itertuples(
+            index=False, name=None
+        ):
+            code = STATUS_MAP.get(status)
+            if code is None:
+                invalid_records += 1
+                continue
+            if cell not in cell_index:
+                cell_index[cell] = len(cell_index)
+            if loc not in snp_index:
+                snp_index[loc] = len(snp_index)
+            i = cell_index[cell]
+            j = snp_index[loc]
+            if code == 0:
+                continue
+            key = (i, j)
+            # Mut has priority over WT
+            if code > genotype.get(key, 0):
+                genotype[key] = code
+            total_records += 1
+        logger.info(
+            "Chunk %d processed | Cells=%d | SNPs=%d | Pairs=%d",
+            chunk_id,
+            len(cell_index),
+            len(snp_index),
+            len(genotype)
+        )
+
+    # Build sparse matrix
+    logger.info("Building sparse matrix")
+    if genotype:
+        keys = np.asarray(
+            list(genotype.keys()),
+            dtype=np.int64
+        )
+        rows = keys[:, 0]
+        cols = keys[:, 1]
+        values = np.fromiter(
+            genotype.values(),
+            dtype=np.uint8,
+            count=len(genotype)
+        )
+        matrix = coo_matrix(
+            (values, (rows, cols)),
+            shape=(len(cell_index), len(snp_index)),
+            dtype=np.uint8
+        ).tocsr()
+    else:
+        matrix = csr_matrix(
+            (len(cell_index), len(snp_index)),
+            dtype=np.uint8
+        )
+    # Recover index order
+    cells = list(cell_index.keys())
+    snps = list(snp_index.keys())
+    # Metadata
+    cells_df = pd.DataFrame({
+        "cell_id": cells
+    })
+    snps_df = pd.DataFrame({
+        "variant_id": snps
+    })
+    # Save MTX
+    mtx_path = output_dir / f"{prefix}.mtx"
+    mmwrite(str(mtx_path), matrix)
+    # Save metadata
+    cells_df.to_csv(
+        output_dir / f"{prefix}.cells.tsv",
+        sep="\t",
+        index=False
+    )
+    snps_df.to_csv(
+        output_dir / f"{prefix}.variants.tsv",
+        sep="\t",
+        index=False
+    )
+    # Create AnnData
+    adata = ad.AnnData(
+        X=matrix,
+        obs=cells_df.set_index("cell_id"),
+        var=snps_df.set_index("variant_id")
+    )
+    adata.uns["genotype_encoding"] = (
+        "0=NoCall,1=WT,2=Mut"
+    )
+    adata.uns["matrix_orientation"] = "Cell x SNP"
+    # Save H5AD
+    h5ad_path = output_dir / f"{prefix}.h5ad"
+    adata.write_h5ad(
+        h5ad_path,
+        compression="gzip"
+    )
+    # Save CSV
+    if save_csv:
+        logger.info("Writing Cell x SNP CSV")
+        csv_path = output_dir / f"{prefix}.csv"
+        df = pd.DataFrame.sparse.from_spmatrix(
+            matrix,
+            index=cells,
+            columns=snps
+        )
+        df.to_csv(
+            csv_path,
+            index_label="cell_id"
+        )
+        # Preserve original SNP x Cell CSV format
+        logger.info("Writing original SNP x Cell CSV")
+        status_df = df.T.replace({
+            0: "NoCall",
+            1: "WT",
+            2: "Mut"
+        })
+        status_df.to_csv(
+            outpath,
+            index_label="Location"
+        )
+    logger.info("Matrix generation completed")
+    logger.info("Cells: %s", f"{len(cells):,}")
+    logger.info("SNPs: %s", f"{len(snps):,}")
+    logger.info("Nonzero entries: %s", f"{matrix.nnz:,}")
+    logger.info("Invalid records: %s", invalid_records)
+    logger.info("Output directory: %s", output_dir)
+    return adata
+
 
 def generate_gCellSNP_matrix_chunked_sparse(outpath, vcfpath, chunksize=100000):
     """

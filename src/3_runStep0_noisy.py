@@ -438,14 +438,14 @@ def get_cellmutInfo_forTest(
         return get_cellmutInfo_forTest(*vcfPathIn)
     chunk_name = tmpSplitFile
     log_dir = logDir or os.path.join(os.path.dirname(os.path.abspath(vcfPathOut)), 'logs')
-    log_path = os.path.join(log_dir, f'step3_{chunk_name}.log')
+    log_path = os.path.join(log_dir, f'step4_{chunk_name}.log')
     logger = setup_worker_logging_0(log_path)
     started = time.perf_counter()
     try:
         logger.info("=" * 70)
-        logger.info("scMutrace Step 3: filter noise SNPs")
+        logger.info("scMutrace Step 4: filter noise SNPs")
         logger.info("=" * 70)
-        logger.info('scMutrace Step 3: filter noise; input=%s output=%s', vcfPathIn, vcfPathOut)
+        logger.info('scMutrace Step 4: filter noise; input=%s output=%s', vcfPathIn, vcfPathOut)
         counts = _process_chunk(
             vcfPathIn, vcfPathOut, cellTypeDic, cellsize, altcellsize,
             lowBaseCutoff, bamPath, refPath, outdirTmp, min_bq, min_mq,

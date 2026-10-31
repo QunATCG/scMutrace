@@ -135,7 +135,7 @@ def filter_snp_threeModel(VCFPath, outPath, a1, b1, a2, b2, model3ProbabilityDic
     logger = setup_worker_logging_0(log_path)
     start_time = timeit.default_timer()
     try:
-        with open(VCFPath, "r") as vcfile, open(outPath, "w+") as outfile:
+        with open(VCFPath, "r") as vcfile, open(outPath, "w") as outfile:
             logger.info("=" * 70)
             logger.info("scMutrace Step 2: filter SNPs")
             logger.info("=" * 70)
@@ -180,7 +180,7 @@ def filter_snp_threeModel(VCFPath, outPath, a1, b1, a2, b2, model3ProbabilityDic
             logger.info("File: %s", VCFPath)
             logger.info("PASS sites: %s", f"{countpass:,}")
             logger.info("Output: %s", f"{outPath:}")
-            logger.info("Elapsed time: %.2f s", f"{hours:02d}:{minutes:02d}:{seconds:05.2f}")
+            logger.info("Elapsed time: %s", f"{hours:02d}:{minutes:02d}:{seconds:05.2f}")
             try:
                 subprocess.run(cmd, check=True)
             except subprocess.CalledProcessError as e:
@@ -239,9 +239,9 @@ def main():
     vcfilestotal_pos_vcf = os.listdir(VCFDir)
     vcfilestotal = [i for i in vcfilestotal_pos_vcf if re.match("splitVcf_", i) != None]
     vcfilesInpaths = [VCFDir + i for i in vcfilestotal]
-    print(vcfilesInpaths)
+    #print(vcfilesInpaths)
     vcfilesOutpaths = [filterPath + IDSample + "_" + i.split("_")[-1] + "_filter.vcf" for i in vcfilestotal]
-    print(vcfilesOutpaths)
+    #print(vcfilesOutpaths)
     NumberVCF = len(vcfilesInpaths)
     if COREUSE > 1:
         print('Parent process %s.' % os.getpid())

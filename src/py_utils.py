@@ -1102,10 +1102,8 @@ def count_mut_information(
                         tagCheck = READ_ALIGNMENT.has_tag(cbtag)
 
                         if tagCheck:
-                            CELLBARCODE = (
-                                READ_ALIGNMENT.get_tag(cbtag)
-                                .split("-")[0]
-                            )
+                            #CELLBARCODE = (READ_ALIGNMENT.get_tag(cbtag).split("-")[0])
+                            CELLBARCODE = READ_ALIGNMENT.get_tag(cbtag)
                         else:
                             continue
 
@@ -1566,7 +1564,8 @@ def target_extractsnp_fromBAM(Bam, referencePath, outVcfPath, config_posList, mi
                     # CELLS
                     tagCheck = READ_ALIGNMENT.has_tag(cbtag)
                     if tagCheck:
-                        CELLBARCODE = READ_ALIGNMENT.opt(cbtag).split("-")[0]
+                        #CELLBARCODE = READ_ALIGNMENT.opt(cbtag).split("-")[0]
+                        CELLBARCODE = READ_ALIGNMENT.opt(cbtag)
                     else:
                         continue
                     # num_mismatch
